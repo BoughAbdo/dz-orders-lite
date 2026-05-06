@@ -14,14 +14,11 @@ export default function Login() {
 
   const handleSubmit = async () => {
     setError('')
-    console.log('calling api...')
     try {
       const res = await api.post('/auth/login', form)
-      console.log('res:', res)
       login(res.data.token, res.data.user)
       window.location.href = '/'
     } catch (err) {
-      console.log('catch error:', err)
       setError(err.response?.data?.message || 'حدث خطأ')
     }
   }
@@ -31,8 +28,9 @@ export default function Login() {
       <div className="bg-white rounded-2xl shadow p-8 w-full max-w-md">
 
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">DZ Orders</h1>
-          <p className="text-gray-500 text-sm mt-1">سجّل دخولك لمتابعة طلباتك</p>
+          <img src="/logo.png" alt="طلبيات" className="w-16 h-16 mx-auto mb-3" />
+          <h1 className="text-2xl font-bold text-gray-800">طلبيات</h1>
+          <p className="text-gray-500 text-sm mt-1">نظّم طلبياتك بسهولة</p>
         </div>
 
         {error && (
