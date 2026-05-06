@@ -28,7 +28,13 @@ export default function Login() {
       <div className="bg-white rounded-2xl shadow p-8 w-full max-w-md">
 
         <div className="text-center mb-8">
-          <img src="/logo.png" alt="طلبيات" className="w-16 h-16 mx-auto mb-3" />
+          <img
+            src="/logo.png"
+            alt="طلبيات"
+            className="w-16 h-16 mx-auto mb-3"
+            loading="eager"
+            fetchPriority="high"
+          />
           <h1 className="text-2xl font-bold text-gray-800">طلبيات</h1>
           <p className="text-gray-500 text-sm mt-1">نظّم طلبياتك بسهولة</p>
         </div>
