@@ -30,7 +30,7 @@ export default function Login() {
         <div className="text-center mb-8">
           <img
             src="/logo.png"
-            alt="طلبيات"
+            alt=""
             className="w-16 h-16 mx-auto mb-3"
             loading="eager"
             fetchPriority="high"
