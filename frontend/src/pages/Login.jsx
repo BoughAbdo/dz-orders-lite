@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
+import { FiEye, FiEyeOff, FiPackage, FiMessageCircle, FiBarChart2 } from 'react-icons/fi'
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
@@ -36,15 +37,15 @@ export default function Login() {
         </p>
         <div className="mt-12 flex flex-col gap-4 w-full max-w-xs">
           <div className="flex items-center gap-3 bg-white/10 rounded-xl p-4">
-            <span className="text-2xl">📦</span>
+            <FiPackage className="text-2xl flex-shrink-0" />
             <span className="text-sm">تتبع كل طلب بسهولة</span>
           </div>
           <div className="flex items-center gap-3 bg-white/10 rounded-xl p-4">
-            <span className="text-2xl">📱</span>
+            <FiMessageCircle className="text-2xl flex-shrink-0" />
             <span className="text-sm">راسل زبائنك عبر واتساب</span>
           </div>
           <div className="flex items-center gap-3 bg-white/10 rounded-xl p-4">
-            <span className="text-2xl">📊</span>
+            <FiBarChart2 className="text-2xl flex-shrink-0" />
             <span className="text-sm">إحصائيات يومية واضحة</span>
           </div>
         </div>
@@ -104,7 +105,7 @@ export default function Login() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
                   >
-                    {showPassword ? '🙈' : '👁️'}
+                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </button>
                 </div>
               </div>
