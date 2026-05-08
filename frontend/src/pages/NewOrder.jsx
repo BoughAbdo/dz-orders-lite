@@ -12,6 +12,8 @@ import {
   FiTruck,
   FiFileText,
   FiSave,
+  FiChevronDown,
+  FiSearch,
 } from 'react-icons/fi'
 
 const wilayas = [
@@ -95,7 +97,7 @@ export default function NewOrder() {
     product: '',
     price: '',
     deliveryPrice: '',
-    notes: ''
+    notes: '',
   })
 
   const [loading, setLoading] = useState(false)
@@ -126,7 +128,7 @@ export default function NewOrder() {
       await api.post('/orders', {
         ...form,
         price: Number(form.price),
-        deliveryPrice: Number(form.deliveryPrice) || 0
+        deliveryPrice: Number(form.deliveryPrice) || 0,
       })
 
       navigate('/orders')
@@ -197,32 +199,14 @@ export default function NewOrder() {
           />
 
           <div className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                الولاية *
-              </label>
-
-              <div className="relative">
-                <select
-                  name="wilaya"
-                  value={form.wilaya}
-                  onChange={handleChange}
-                  className="w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
-                >
-                  <option value="">اختر الولاية</option>
-                  {wilayas.map(wilaya => (
-                    <option key={wilaya.code} value={wilaya.name}>
-                      {wilaya.code} - {wilaya.name}
-                    </option>
-                  ))}
-                </select>
-
-                <FiMapPin
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                  size={18}
-                />
-              </div>
-            </div>
+            <WilayaSelect
+              label="الولاية *"
+              value={form.wilaya}
+              wilayas={wilayas}
+              onChange={(wilayaName) => {
+                setForm({ ...form, wilaya: wilayaName })
+              }}
+            />
 
             <FormField
               label="البلدية"
@@ -366,6 +350,125 @@ function FormField({
           size={18}
         />
       </div>
+    </div>
+  )
+}
+
+function WilayaSelect({ label, value, wilayas, onChange }) {
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const selectedWilaya = wilayas.find(wilaya => wilaya.name === value)
+
+  const filteredWilayas = wilayas.filter(wilaya => {
+    const query = search.trim().toLowerCase()
+
+    return (
+      wilaya.name.toLowerCase().includes(query) ||
+      wilaya.code.includes(query)
+    )
+  })
+
+  return (
+    <div className="relative">
+      <label className="block text-sm font-bold text-slate-700 mb-2">
+        {label}
+      </label>
+
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`relative w-full rounded-2xl border px-4 py-3.5 pr-11 pl-11 text-right text-[15px] font-semibold outline-none transition duration-200
+          ${open
+            ? 'border-blue-500 bg-white ring-4 ring-blue-100/70'
+            : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
+          }
+          ${selectedWilaya ? 'text-slate-900' : 'text-slate-400'}
+        `}
+      >
+        {selectedWilaya
+          ? `${selectedWilaya.code} - ${selectedWilaya.name}`
+          : 'اختر الولاية'
+        }
+
+        <FiMapPin
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+          size={18}
+        />
+
+        <FiChevronDown
+          className={`absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-transform duration-200 ${
+            open ? 'rotate-180' : ''
+          }`}
+          size={18}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl shadow-slate-200/80">
+          <div className="p-3 border-b border-slate-100">
+            <div className="relative">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-right text-sm font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
+                placeholder="ابحث بالاسم أو الرقم..."
+                autoFocus
+              />
+
+              <FiSearch
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                size={17}
+              />
+            </div>
+          </div>
+
+          <div className="max-h-72 overflow-y-auto p-2">
+            {filteredWilayas.length === 0 ? (
+              <div className="px-4 py-6 text-center text-sm font-medium text-slate-400">
+                لا توجد ولاية بهذا البحث
+              </div>
+            ) : (
+              filteredWilayas.map(wilaya => {
+                const active = value === wilaya.name
+
+                return (
+                  <button
+                    key={wilaya.code}
+                    type="button"
+                    onClick={() => {
+                      onChange(wilaya.name)
+                      setOpen(false)
+                      setSearch('')
+                    }}
+                    className={`flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-3 text-right transition duration-200
+                      ${active
+                        ? 'bg-blue-50 text-blue-700'
+                        : 'text-slate-700 hover:bg-slate-50'
+                      }
+                    `}
+                  >
+                    <span className="text-sm font-bold">
+                      {wilaya.name}
+                    </span>
+
+                    <span
+                      className={`flex h-8 min-w-8 items-center justify-center rounded-xl text-xs font-black
+                        ${active
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-100 text-slate-500'
+                        }
+                      `}
+                    >
+                      {wilaya.code}
+                    </span>
+                  </button>
+                )
+              })
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
