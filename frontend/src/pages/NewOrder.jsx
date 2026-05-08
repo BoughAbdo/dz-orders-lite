@@ -15,23 +15,75 @@ import {
 } from 'react-icons/fi'
 
 const wilayas = [
-  'أدرار', 'الشلف', 'الأغواط', 'أم البواقي', 'باتنة', 'بجاية', 'بسكرة', 'بشار',
-  'البليدة', 'البويرة', 'تمنراست', 'تبسة', 'تلمسان', 'تيارت', 'تيزي وزو', 'الجزائر',
-  'الجلفة', 'جيجل', 'سطيف', 'سعيدة', 'سكيكدة', 'سيدي بلعباس', 'عنابة', 'قالمة',
-  'قسنطينة', 'المدية', 'مستغانم', 'المسيلة', 'معسكر', 'ورقلة', 'وهران', 'البيض',
-  'إليزي', 'برج بوعريريج', 'بومرداس', 'الطارف', 'تندوف', 'تيسمسيلت', 'الوادي',
-  'خنشلة', 'سوق أهراس', 'تيبازة', 'ميلة', 'عين الدفلى', 'النعامة', 'عين تيموشنت',
-  'غرداية', 'غليزان',
-  'تيميمون',
-  'برج باجي مختار',
-  'أولاد جلال',
-  'بني عباس',
-  'عين صالح',
-  'عين قزام',
-  'تقرت',
-  'جانت',
-  'المغير',
-  'المنيعة'
+  { code: '01', name: 'أدرار' },
+  { code: '02', name: 'الشلف' },
+  { code: '03', name: 'الأغواط' },
+  { code: '04', name: 'أم البواقي' },
+  { code: '05', name: 'باتنة' },
+  { code: '06', name: 'بجاية' },
+  { code: '07', name: 'بسكرة' },
+  { code: '08', name: 'بشار' },
+  { code: '09', name: 'البليدة' },
+  { code: '10', name: 'البويرة' },
+  { code: '11', name: 'تمنراست' },
+  { code: '12', name: 'تبسة' },
+  { code: '13', name: 'تلمسان' },
+  { code: '14', name: 'تيارت' },
+  { code: '15', name: 'تيزي وزو' },
+  { code: '16', name: 'الجزائر' },
+  { code: '17', name: 'الجلفة' },
+  { code: '18', name: 'جيجل' },
+  { code: '19', name: 'سطيف' },
+  { code: '20', name: 'سعيدة' },
+  { code: '21', name: 'سكيكدة' },
+  { code: '22', name: 'سيدي بلعباس' },
+  { code: '23', name: 'عنابة' },
+  { code: '24', name: 'قالمة' },
+  { code: '25', name: 'قسنطينة' },
+  { code: '26', name: 'المدية' },
+  { code: '27', name: 'مستغانم' },
+  { code: '28', name: 'المسيلة' },
+  { code: '29', name: 'معسكر' },
+  { code: '30', name: 'ورقلة' },
+  { code: '31', name: 'وهران' },
+  { code: '32', name: 'البيض' },
+  { code: '33', name: 'إليزي' },
+  { code: '34', name: 'برج بوعريريج' },
+  { code: '35', name: 'بومرداس' },
+  { code: '36', name: 'الطارف' },
+  { code: '37', name: 'تندوف' },
+  { code: '38', name: 'تيسمسيلت' },
+  { code: '39', name: 'الوادي' },
+  { code: '40', name: 'خنشلة' },
+  { code: '41', name: 'سوق أهراس' },
+  { code: '42', name: 'تيبازة' },
+  { code: '43', name: 'ميلة' },
+  { code: '44', name: 'عين الدفلى' },
+  { code: '45', name: 'النعامة' },
+  { code: '46', name: 'عين تموشنت' },
+  { code: '47', name: 'غرداية' },
+  { code: '48', name: 'غليزان' },
+  { code: '49', name: 'تيميمون' },
+  { code: '50', name: 'برج باجي مختار' },
+  { code: '51', name: 'أولاد جلال' },
+  { code: '52', name: 'بني عباس' },
+  { code: '53', name: 'عين صالح' },
+  { code: '54', name: 'عين قزام' },
+  { code: '55', name: 'تقرت' },
+  { code: '56', name: 'جانت' },
+  { code: '57', name: 'المغير' },
+  { code: '58', name: 'المنيعة' },
+  { code: '59', name: 'آفلو' },
+  { code: '60', name: 'بريكة' },
+  { code: '61', name: 'القنطرة' },
+  { code: '62', name: 'بئر العاتر' },
+  { code: '63', name: 'العريشة' },
+  { code: '64', name: 'قصر الشلالة' },
+  { code: '65', name: 'عين وسارة' },
+  { code: '66', name: 'مسعد' },
+  { code: '67', name: 'قصر البخاري' },
+  { code: '68', name: 'بوسعادة' },
+  { code: '69', name: 'الأبيض سيدي الشيخ' },
 ]
 
 export default function NewOrder() {
@@ -52,6 +104,13 @@ export default function NewOrder() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  const handleNumericChange = (e) => {
+    const { name, value } = e.target
+    const onlyNumbers = value.replace(/\D/g, '')
+
+    setForm({ ...form, [name]: onlyNumbers })
   }
 
   const handleSubmit = async () => {
@@ -120,8 +179,11 @@ export default function NewOrder() {
               icon={FiPhone}
               name="phone"
               value={form.phone}
-              onChange={handleChange}
+              onChange={handleNumericChange}
               placeholder="0550000000"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={15}
             />
           </div>
         </div>
@@ -148,8 +210,10 @@ export default function NewOrder() {
                   className="w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
                 >
                   <option value="">اختر الولاية</option>
-                  {wilayas.map(w => (
-                    <option key={w} value={w}>{w}</option>
+                  {wilayas.map(wilaya => (
+                    <option key={wilaya.code} value={wilaya.name}>
+                      {wilaya.code} - {wilaya.name}
+                    </option>
                   ))}
                 </select>
 
@@ -194,20 +258,24 @@ export default function NewOrder() {
                 label="السعر *"
                 icon={FiDollarSign}
                 name="price"
-                type="number"
+                type="text"
                 value={form.price}
-                onChange={handleChange}
+                onChange={handleNumericChange}
                 placeholder="5500"
+                inputMode="numeric"
+                pattern="[0-9]*"
               />
 
               <FormField
                 label="سعر التوصيل"
                 icon={FiTruck}
                 name="deliveryPrice"
-                type="number"
+                type="text"
                 value={form.deliveryPrice}
-                onChange={handleChange}
+                onChange={handleNumericChange}
                 placeholder="600"
+                inputMode="numeric"
+                pattern="[0-9]*"
               />
             </div>
 
@@ -269,7 +337,10 @@ function FormField({
   value,
   onChange,
   placeholder,
-  type = 'text'
+  type = 'text',
+  inputMode,
+  pattern,
+  maxLength,
 }) {
   return (
     <div>
@@ -283,6 +354,9 @@ function FormField({
           name={name}
           value={value}
           onChange={onChange}
+          inputMode={inputMode}
+          pattern={pattern}
+          maxLength={maxLength}
           className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
           placeholder={placeholder}
         />
