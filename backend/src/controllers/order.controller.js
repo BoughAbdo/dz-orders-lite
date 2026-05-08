@@ -1,3 +1,4 @@
+// controllers/order.controller.js
 const Order = require('../models/order.model');
 
 // جلب كل الطلبات
@@ -88,15 +89,45 @@ exports.updateStatus = async (req, res) => {
   try {
     const { status } = req.body;
 
-    const order = await Order.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user.id },
-      { status },
-      { new: true }
-    );
+    const allowedStatuses = ['new', 'confirmed', 'shipped', 'delivered', 'returned'];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: 'حالة الطلب غير صالحة' });
+    }
+
+    const order = await Order.findOne({
+      _id: req.params.id,
+      userId: req.user.id
+    });
 
     if (!order) {
       return res.status(404).json({ message: 'الطلب غير موجود' });
     }
+
+    const finalStatuses = ['delivered', 'returned'];
+
+    if (finalStatuses.includes(order.status)) {
+      return res.status(400).json({
+        message: 'لا يمكن تغيير حالة طلب تم إنهاؤه'
+      });
+    }
+
+    const allowedTransitions = {
+      new: ['confirmed', 'returned'],
+      confirmed: ['shipped', 'returned'],
+      shipped: ['delivered', 'returned'],
+      delivered: [],
+      returned: []
+    };
+
+    if (!allowedTransitions[order.status].includes(status)) {
+      return res.status(400).json({
+        message: 'لا يمكن تغيير الطلب إلى هذه الحالة'
+      });
+    }
+
+    order.status = status;
+    await order.save();
 
     res.status(200).json(order);
 
