@@ -1,3 +1,4 @@
+// frontend/src/pages/NewOrder.jsx
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
@@ -116,8 +117,16 @@ export default function NewOrder() {
   }
 
   const handleSubmit = async () => {
-    if (!form.customerName || !form.product || !form.price || !form.wilaya) {
-      setError('يرجى ملء الحقول الإجبارية')
+    if (
+      !form.customerName.trim() ||
+      !form.phone.trim() ||
+      !form.wilaya.trim() ||
+      !form.city.trim() ||
+      !form.product.trim() ||
+      !form.price ||
+      !form.deliveryPrice
+    ) {
+      setError('يرجى ملء جميع الحقول الإجبارية')
       return
     }
 
@@ -397,9 +406,8 @@ function WilayaSelect({ label, value, wilayas, onChange }) {
         />
 
         <FiChevronDown
-          className={`absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-transform duration-200 ${
-            open ? 'rotate-180' : ''
-          }`}
+          className={`absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''
+            }`}
           size={18}
         />
       </button>

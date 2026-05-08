@@ -18,6 +18,9 @@ import {
   FiRefreshCcw,
   FiCheckCircle,
   FiClock,
+  FiEdit3,
+  FiSave,
+  FiX,
 } from 'react-icons/fi'
 
 const statusLabels = {
@@ -53,13 +56,40 @@ const statusFlow = ['new', 'confirmed', 'shipped', 'delivered']
 export default function OrderDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [statusError, setStatusError] = useState('')
 
+  const [isEditing, setIsEditing] = useState(false)
+  const [editLoading, setEditLoading] = useState(false)
+  const [editError, setEditError] = useState('')
+  const [editForm, setEditForm] = useState({
+    customerName: '',
+    phone: '',
+    wilaya: '',
+    city: '',
+    product: '',
+    price: '',
+    deliveryPrice: '',
+    notes: '',
+  })
+
   useEffect(() => {
     api.get(`/orders/${id}`)
-      .then(res => setOrder(res.data))
+      .then(res => {
+        setOrder(res.data)
+        setEditForm({
+          customerName: res.data.customerName || '',
+          phone: res.data.phone || '',
+          wilaya: res.data.wilaya || '',
+          city: res.data.city || '',
+          product: res.data.product || '',
+          price: String(res.data.price || ''),
+          deliveryPrice: String(res.data.deliveryPrice || ''),
+          notes: res.data.notes || '',
+        })
+      })
       .catch(err => console.error(err))
       .finally(() => setLoading(false))
   }, [id])
@@ -72,6 +102,77 @@ export default function OrderDetail() {
       setOrder(res.data)
     } catch (err) {
       setStatusError(err.response?.data?.message || 'تعذر تغيير حالة الطلب')
+    }
+  }
+
+  const handleEditChange = (e) => {
+    setEditForm({
+      ...editForm,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  const handleEditNumericChange = (e) => {
+    const { name, value } = e.target
+    const onlyNumbers = value.replace(/\D/g, '')
+
+    setEditForm({
+      ...editForm,
+      [name]: onlyNumbers
+    })
+  }
+
+  const startEditing = () => {
+    setEditError('')
+    setIsEditing(true)
+  }
+
+  const cancelEditing = () => {
+    setEditError('')
+    setIsEditing(false)
+
+    setEditForm({
+      customerName: order.customerName || '',
+      phone: order.phone || '',
+      wilaya: order.wilaya || '',
+      city: order.city || '',
+      product: order.product || '',
+      price: String(order.price || ''),
+      deliveryPrice: String(order.deliveryPrice || ''),
+      notes: order.notes || '',
+    })
+  }
+
+  const saveOrder = async () => {
+    if (
+      !editForm.customerName.trim() ||
+      !editForm.phone.trim() ||
+      !editForm.wilaya.trim() ||
+      !editForm.city.trim() ||
+      !editForm.product.trim() ||
+      !editForm.price ||
+      !editForm.deliveryPrice
+    ) {
+      setEditError('يرجى ملء جميع الحقول الإجبارية')
+      return
+    }
+
+    setEditLoading(true)
+    setEditError('')
+
+    try {
+      const res = await api.put(`/orders/${id}`, {
+        ...editForm,
+        price: Number(editForm.price),
+        deliveryPrice: Number(editForm.deliveryPrice),
+      })
+
+      setOrder(res.data)
+      setIsEditing(false)
+    } catch (err) {
+      setEditError(err.response?.data?.message || 'تعذر تعديل الطلب')
+    } finally {
+      setEditLoading(false)
     }
   }
 
@@ -173,7 +274,7 @@ export default function OrderDetail() {
             <div class="row"><span class="label">المنتج</span><span class="value">${order.product}</span></div>
             <div class="row"><span class="label">السعر</span><span class="value">${order.price} دج</span></div>
             <div class="row"><span class="label">التوصيل</span><span class="value">${order.deliveryPrice} دج</span></div>
-            <div class="row"><span class="label">الإجمالي</span><span class="value total">${order.price + order.deliveryPrice} دج</span></div>
+            <div class="row"><span class="label">الإجمالي</span><span class="value total">${Number(order.price || 0) + Number(order.deliveryPrice || 0)} دج</span></div>
             <div class="row"><span class="label">الحالة</span><span class="value">${statusLabels[order.status]?.label}</span></div>
             ${order.notes ? `<div class="row"><span class="label">ملاحظات</span><span class="value">${order.notes}</span></div>` : ''}
           </div>
@@ -231,137 +332,281 @@ export default function OrderDetail() {
         </span>
       </div>
 
-      <div id="order-detail" className="space-y-4">
-        {/* بيانات الزبون */}
+      {isEditing ? (
         <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <FiUser size={20} />
-            </div>
-
+          <div className="flex items-center justify-between gap-3 mb-5">
             <p className="text-sm font-black text-slate-900">
-              بيانات الزبون
+              تعديل بيانات الطلب
             </p>
+
+            <button
+              type="button"
+              onClick={cancelEditing}
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-50 px-3 py-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-100"
+            >
+              <FiX size={15} />
+              إلغاء
+            </button>
           </div>
 
-          <div className="flex flex-col divide-y divide-slate-100">
-            <DetailRow icon={FiUser} label="الاسم" value={order.customerName} />
-            <DetailRow icon={FiPhone} label="الهاتف" value={order.phone || '—'} />
-            <DetailRow icon={FiMapPin} label="الولاية" value={order.wilaya} />
-            <DetailRow icon={FiHome} label="البلدية" value={order.city || '—'} />
-          </div>
-        </div>
-
-        {/* بيانات الطلب */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <FiPackage size={20} />
+          {editError && (
+            <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-600">
+              {editError}
             </div>
+          )}
 
-            <p className="text-sm font-black text-slate-900">
-              بيانات الطلب
-            </p>
-          </div>
-
-          <div className="flex flex-col divide-y divide-slate-100">
-            <DetailRow icon={FiPackage} label="المنتج" value={order.product} />
-            <DetailRow icon={FiDollarSign} label="السعر" value={`${Number(order.price || 0).toLocaleString()} دج`} />
-            <DetailRow icon={FiTruck} label="التوصيل" value={`${Number(order.deliveryPrice || 0).toLocaleString()} دج`} />
-            <DetailRow
-              icon={FiDollarSign}
-              label="الإجمالي"
-              value={`${total.toLocaleString()} دج`}
-              valueClassName="text-blue-600 font-black"
+          <div className="flex flex-col gap-4">
+            <EditField
+              label="اسم الزبون *"
+              icon={FiUser}
+              name="customerName"
+              value={editForm.customerName}
+              onChange={handleEditChange}
+              placeholder="محمد أمين"
             />
 
-            {order.notes && (
-              <DetailRow icon={FiFileText} label="ملاحظات" value={order.notes} />
-            )}
+            <EditField
+              label="رقم الهاتف *"
+              icon={FiPhone}
+              name="phone"
+              value={editForm.phone}
+              onChange={handleEditNumericChange}
+              placeholder="0550000000"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={15}
+            />
+
+            <EditField
+              label="الولاية *"
+              icon={FiMapPin}
+              name="wilaya"
+              value={editForm.wilaya}
+              onChange={handleEditChange}
+              placeholder="الجزائر"
+            />
+
+            <EditField
+              label="البلدية *"
+              icon={FiHome}
+              name="city"
+              value={editForm.city}
+              onChange={handleEditChange}
+              placeholder="باب الزوار"
+            />
+
+            <EditField
+              label="المنتج *"
+              icon={FiPackage}
+              name="product"
+              value={editForm.product}
+              onChange={handleEditChange}
+              placeholder="حذاء أسود مقاس 42"
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <EditField
+                label="السعر *"
+                icon={FiDollarSign}
+                name="price"
+                value={editForm.price}
+                onChange={handleEditNumericChange}
+                placeholder="5500"
+                inputMode="numeric"
+                pattern="[0-9]*"
+              />
+
+              <EditField
+                label="سعر التوصيل *"
+                icon={FiTruck}
+                name="deliveryPrice"
+                value={editForm.deliveryPrice}
+                onChange={handleEditNumericChange}
+                placeholder="600"
+                inputMode="numeric"
+                pattern="[0-9]*"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">
+                ملاحظات
+              </label>
+
+              <div className="relative">
+                <textarea
+                  name="notes"
+                  value={editForm.notes}
+                  onChange={handleEditChange}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70 resize-none"
+                  placeholder="أي ملاحظات إضافية..."
+                  rows={3}
+                />
+
+                <FiFileText
+                  className="absolute right-4 top-4 text-slate-400 pointer-events-none"
+                  size={18}
+                />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={saveOrder}
+              disabled={editLoading}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-[0.99] text-white font-extrabold py-3.5 transition duration-200 text-sm shadow-lg shadow-blue-600/20 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
+            >
+              <FiSave size={18} />
+              {editLoading ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+            </button>
           </div>
         </div>
-      </div>
+      ) : (
+        <>
+          <div id="order-detail" className="space-y-4">
+            {/* بيانات الزبون */}
+            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <FiUser size={20} />
+                  </div>
 
-      {/* تغيير الحالة */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm mt-4">
-        <p className="text-sm font-black text-slate-900 mb-4">
-          تغيير الحالة
-        </p>
+                  <p className="text-sm font-black text-slate-900">
+                    بيانات الزبون
+                  </p>
+                </div>
 
-        <div className="flex gap-2 flex-wrap">
-          {statusFlow.map(s => {
-            const StatusIcon = statusLabels[s].icon
+                <button
+                  type="button"
+                  onClick={startEditing}
+                  className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-100"
+                >
+                  <FiEdit3 size={15} />
+                  تعديل
+                </button>
+              </div>
 
-            return (
+              <div className="flex flex-col divide-y divide-slate-100">
+                <DetailRow icon={FiUser} label="الاسم" value={order.customerName} />
+                <DetailRow icon={FiPhone} label="الهاتف" value={order.phone || '—'} />
+                <DetailRow icon={FiMapPin} label="الولاية" value={order.wilaya} />
+                <DetailRow icon={FiHome} label="البلدية" value={order.city || '—'} />
+              </div>
+            </div>
+
+            {/* بيانات الطلب */}
+            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <FiPackage size={20} />
+                </div>
+
+                <p className="text-sm font-black text-slate-900">
+                  بيانات الطلب
+                </p>
+              </div>
+
+              <div className="flex flex-col divide-y divide-slate-100">
+                <DetailRow icon={FiPackage} label="المنتج" value={order.product} />
+                <DetailRow icon={FiDollarSign} label="السعر" value={`${Number(order.price || 0).toLocaleString()} دج`} />
+                <DetailRow icon={FiTruck} label="التوصيل" value={`${Number(order.deliveryPrice || 0).toLocaleString()} دج`} />
+                <DetailRow
+                  icon={FiDollarSign}
+                  label="الإجمالي"
+                  value={`${total.toLocaleString()} دج`}
+                  valueClassName="text-blue-600 font-black"
+                />
+
+                {order.notes && (
+                  <DetailRow icon={FiFileText} label="ملاحظات" value={order.notes} />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* تغيير الحالة */}
+          <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm mt-4">
+            <p className="text-sm font-black text-slate-900 mb-4">
+              تغيير الحالة
+            </p>
+
+            <div className="flex gap-2 flex-wrap">
+              {statusFlow.map(s => {
+                const StatusIcon = statusLabels[s].icon
+
+                return (
+                  <button
+                    key={s}
+                    onClick={() => updateStatus(s)}
+                    disabled={isFinalStatus || order.status === s}
+                    className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-extrabold border transition duration-200 disabled:cursor-not-allowed disabled:opacity-60
+                      ${order.status === s
+                        ? statusLabels[s].color
+                        : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100 hover:text-slate-700'
+                      }`}
+                  >
+                    <StatusIcon size={14} />
+                    {statusLabels[s].label}
+                  </button>
+                )
+              })}
+
               <button
-                key={s}
-                onClick={() => updateStatus(s)}
-                disabled={isFinalStatus || order.status === s}
+                onClick={() => updateStatus('returned')}
+                disabled={isFinalStatus || order.status === 'returned'}
                 className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-extrabold border transition duration-200 disabled:cursor-not-allowed disabled:opacity-60
-                  ${order.status === s
-                    ? statusLabels[s].color
+                  ${order.status === 'returned'
+                    ? statusLabels.returned.color
                     : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100 hover:text-slate-700'
                   }`}
               >
-                <StatusIcon size={14} />
-                {statusLabels[s].label}
+                <FiRefreshCcw size={14} />
+                رجع
               </button>
-            )
-          })}
+            </div>
 
-          <button
-            onClick={() => updateStatus('returned')}
-            disabled={isFinalStatus || order.status === 'returned'}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-extrabold border transition duration-200 disabled:cursor-not-allowed disabled:opacity-60
-              ${order.status === 'returned'
-                ? statusLabels.returned.color
-                : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100 hover:text-slate-700'
-              }`}
-          >
-            <FiRefreshCcw size={14} />
-            رجع
-          </button>
-        </div>
+            {isFinalStatus && (
+              <p className="mt-3 text-xs font-semibold text-slate-400">
+                هذا الطلب تم إنهاؤه ولا يمكن تغيير حالته.
+              </p>
+            )}
 
-        {isFinalStatus && (
-          <p className="mt-3 text-xs font-semibold text-slate-400">
-            هذا الطلب تم إنهاؤه ولا يمكن تغيير حالته.
-          </p>
-        )}
-
-        {statusError && (
-          <div className="mt-3 rounded-2xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-600">
-            {statusError}
+            {statusError && (
+              <div className="mt-3 rounded-2xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-600">
+                {statusError}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* أزرار */}
-      <div className="grid grid-cols-3 gap-3 mt-4">
-        <button
-          onClick={openWhatsApp}
-          className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-2xl text-sm font-extrabold transition active:scale-[0.99] shadow-lg shadow-emerald-500/20"
-        >
-          <FiMessageCircle size={18} />
-          واتساب
-        </button>
+          {/* أزرار */}
+          <div className="grid grid-cols-3 gap-3 mt-4">
+            <button
+              onClick={openWhatsApp}
+              className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-2xl text-sm font-extrabold transition active:scale-[0.99] shadow-lg shadow-emerald-500/20"
+            >
+              <FiMessageCircle size={18} />
+              واتساب
+            </button>
 
-        <button
-          onClick={generatePDF}
-          className="flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 py-3 rounded-2xl text-sm font-extrabold transition active:scale-[0.99]"
-        >
-          <FiPrinter size={18} />
-          PDF
-        </button>
+            <button
+              onClick={generatePDF}
+              className="flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 py-3 rounded-2xl text-sm font-extrabold transition active:scale-[0.99]"
+            >
+              <FiPrinter size={18} />
+              PDF
+            </button>
 
-        <button
-          onClick={deleteOrder}
-          className="flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 py-3 rounded-2xl text-sm font-extrabold transition active:scale-[0.99]"
-        >
-          <FiTrash2 size={18} />
-          حذف
-        </button>
-      </div>
+            <button
+              onClick={deleteOrder}
+              className="flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 py-3 rounded-2xl text-sm font-extrabold transition active:scale-[0.99]"
+            >
+              <FiTrash2 size={18} />
+              حذف
+            </button>
+          </div>
+        </>
+      )}
     </Layout>
   )
 }
@@ -379,6 +624,45 @@ function DetailRow({ icon: Icon, label, value, valueClassName = 'text-slate-900 
       <span className={`text-sm text-left ${valueClassName}`}>
         {value}
       </span>
+    </div>
+  )
+}
+
+function EditField({
+  label,
+  icon: Icon,
+  name,
+  value,
+  onChange,
+  placeholder,
+  inputMode,
+  pattern,
+  maxLength,
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-bold text-slate-700 mb-2">
+        {label}
+      </label>
+
+      <div className="relative">
+        <input
+          type="text"
+          name={name}
+          value={value}
+          onChange={onChange}
+          inputMode={inputMode}
+          pattern={pattern}
+          maxLength={maxLength}
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
+          placeholder={placeholder}
+        />
+
+        <Icon
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+          size={18}
+        />
+      </div>
     </div>
   )
 }
