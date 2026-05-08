@@ -2,14 +2,45 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import api from '../services/api'
+import {
+  FiPlus,
+  FiPackage,
+  FiMapPin,
+  FiTag,
+  FiFilter,
+} from 'react-icons/fi'
 
 const statusLabels = {
-  new: { label: 'جديد', color: 'bg-blue-100 text-blue-600' },
-  confirmed: { label: 'مؤكد', color: 'bg-green-100 text-green-600' },
-  shipped: { label: 'قيد التوصيل', color: 'bg-yellow-100 text-yellow-600' },
-  delivered: { label: 'تم التسليم', color: 'bg-emerald-100 text-emerald-600' },
-  returned: { label: 'رجع', color: 'bg-red-100 text-red-600' },
+  new: {
+    label: 'جديد',
+    color: 'bg-blue-50 text-blue-600 border-blue-100',
+  },
+  confirmed: {
+    label: 'مؤكد',
+    color: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+  },
+  shipped: {
+    label: 'قيد التوصيل',
+    color: 'bg-amber-50 text-amber-600 border-amber-100',
+  },
+  delivered: {
+    label: 'تم التسليم',
+    color: 'bg-green-50 text-green-600 border-green-100',
+  },
+  returned: {
+    label: 'رجع',
+    color: 'bg-red-50 text-red-600 border-red-100',
+  },
 }
+
+const filters = [
+  { key: 'all', label: 'الكل' },
+  { key: 'new', label: 'جديد' },
+  { key: 'confirmed', label: 'مؤكد' },
+  { key: 'shipped', label: 'توصيل' },
+  { key: 'delivered', label: 'مسلّم' },
+  { key: 'returned', label: 'رجع' },
+]
 
 export default function Orders() {
   const [orders, setOrders] = useState([])
@@ -17,7 +48,10 @@ export default function Orders() {
   const [filter, setFilter] = useState('all')
 
   useEffect(() => {
+    setLoading(true)
+
     const params = filter !== 'all' ? `?status=${filter}` : ''
+
     api.get(`/orders${params}`)
       .then(res => setOrders(res.data))
       .catch(err => console.error(err))
@@ -26,41 +60,75 @@ export default function Orders() {
 
   return (
     <Layout>
-      <div className="mb-4">
-        <h2 className="text-xl font-bold text-gray-800">الطلبات</h2>
-        <p className="text-gray-400 text-sm mt-1">{orders.length} طلب</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-black tracking-tight text-slate-900">
+            الطلبات
+          </h2>
+
+          <p className="text-slate-500 text-sm font-medium mt-1">
+            {orders.length} طلب
+          </p>
+        </div>
+
+        <Link
+          to="/orders/new"
+          className="hidden sm:inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
+        >
+          <FiPlus size={18} />
+          طلب جديد
+        </Link>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
-        {[
-          { key: 'all', label: 'الكل' },
-          { key: 'new', label: 'جديد' },
-          { key: 'confirmed', label: 'مؤكد' },
-          { key: 'shipped', label: 'توصيل' },
-          { key: 'delivered', label: 'مسلّم' },
-          { key: 'returned', label: 'رجع' },
-        ].map(f => (
-          <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
-            className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition
-              ${filter === f.key
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-gray-500 border border-gray-200'
-              }`}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="bg-white border border-slate-100 rounded-3xl p-3 mb-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-3 text-slate-500">
+          <FiFilter size={16} />
+          <span className="text-xs font-bold">تصفية حسب الحالة</span>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {filters.map(f => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`px-4 py-2 rounded-2xl text-sm font-bold whitespace-nowrap transition duration-200
+                ${filter === f.key
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                  : 'bg-slate-50 text-slate-500 border border-slate-100 hover:bg-slate-100 hover:text-slate-700'
+                }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading ? (
-        <div className="text-center text-gray-400 py-10">جاري التحميل...</div>
+        <div className="bg-white border border-slate-100 rounded-3xl p-10 text-center text-slate-400 font-medium shadow-sm">
+          جاري التحميل...
+        </div>
       ) : orders.length === 0 ? (
-        <div className="text-center text-gray-400 py-10">
-          <p className="text-4xl mb-3">📦</p>
-          <p>لا يوجد طلبات</p>
+        <div className="bg-white border border-slate-100 rounded-3xl p-10 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-50 text-slate-400">
+            <FiPackage size={30} />
+          </div>
+
+          <p className="text-slate-900 text-lg font-black">
+            لا يوجد طلبات
+          </p>
+
+          <p className="text-slate-500 text-sm font-medium mt-1">
+            ابدأ بإضافة أول طلب لمتجرك
+          </p>
+
+          <Link
+            to="/orders/new"
+            className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
+          >
+            <FiPlus size={18} />
+            إضافة طلب
+          </Link>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -68,29 +136,62 @@ export default function Orders() {
             <Link
               key={order._id}
               to={`/orders/${order._id}`}
-              className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm"
+              className="group bg-white rounded-3xl p-4 border border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/70"
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-gray-800">{order.customerName}</span>
-                <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusLabels[order.status]?.color}`}>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div>
+                  <h3 className="font-black text-slate-900 leading-6">
+                    {order.customerName}
+                  </h3>
+
+                  <div className="flex items-center gap-1.5 mt-1 text-slate-400">
+                    <FiMapPin size={14} />
+                    <span className="text-xs font-bold">
+                      {order.wilaya || 'بدون ولاية'}
+                    </span>
+                  </div>
+                </div>
+
+                <span
+                  className={`text-xs px-3 py-1.5 rounded-full font-extrabold border ${statusLabels[order.status]?.color}`}
+                >
                   {statusLabels[order.status]?.label}
                 </span>
               </div>
-              <p className="text-sm text-gray-500">{order.product}</p>
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-sm text-gray-400">{order.wilaya}</span>
-                <span className="text-sm font-medium text-gray-700">{order.price} دج</span>
+
+              <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-3">
+                <div className="flex items-center gap-2 text-slate-600">
+                  <FiPackage size={16} className="text-slate-400" />
+                  <p className="text-sm font-bold line-clamp-1">
+                    {order.product}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center gap-1.5 text-slate-400">
+                  <FiTag size={14} />
+                  <span className="text-xs font-bold">
+                    السعر
+                  </span>
+                </div>
+
+                <span className="text-base font-black text-slate-900">
+                  {Number(order.price || 0).toLocaleString()} دج
+                </span>
               </div>
             </Link>
           ))}
         </div>
       )}
 
+      {/* Floating button for mobile */}
       <Link
         to="/orders/new"
-        className="fixed bottom-20 left-4 bg-blue-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-lg"
+        className="sm:hidden fixed bottom-20 left-4 bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-xl shadow-blue-600/30 transition active:scale-95"
+        aria-label="إضافة طلب جديد"
       >
-        +
+        <FiPlus size={26} />
       </Link>
     </Layout>
   )
