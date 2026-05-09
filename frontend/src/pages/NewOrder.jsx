@@ -1,5 +1,5 @@
 // frontend/src/pages/NewOrder.jsx
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import api from '../services/api'
@@ -104,6 +104,16 @@ export default function NewOrder() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const errorRef = useRef(null)
+
+  const scrollToError = () => {
+    setTimeout(() => {
+      errorRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }, 0)
+  }
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -127,6 +137,7 @@ export default function NewOrder() {
       !form.deliveryPrice
     ) {
       setError('يرجى ملء جميع الحقول الإجبارية')
+      scrollToError()
       return
     }
 
@@ -137,12 +148,13 @@ export default function NewOrder() {
       await api.post('/orders', {
         ...form,
         price: Number(form.price),
-        deliveryPrice: Number(form.deliveryPrice) || 0,
+        deliveryPrice: Number(form.deliveryPrice),
       })
 
       navigate('/orders')
     } catch (err) {
       setError(err.response?.data?.message || 'حدث خطأ')
+      scrollToError()
     } finally {
       setLoading(false)
     }
@@ -161,7 +173,10 @@ export default function NewOrder() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-100 text-red-600 text-sm font-semibold p-3 rounded-2xl mb-5 text-right">
+        <div
+          ref={errorRef}
+          className="bg-red-50 border border-red-100 text-red-600 text-sm font-semibold p-3 rounded-2xl mb-5 text-right"
+        >
           {error}
         </div>
       )}
@@ -186,7 +201,7 @@ export default function NewOrder() {
             />
 
             <FormField
-              label="رقم الهاتف"
+              label="رقم الهاتف *"
               icon={FiPhone}
               name="phone"
               value={form.phone}
@@ -218,7 +233,7 @@ export default function NewOrder() {
             />
 
             <FormField
-              label="البلدية"
+              label="البلدية *"
               icon={FiHome}
               name="city"
               value={form.city}
@@ -260,7 +275,7 @@ export default function NewOrder() {
               />
 
               <FormField
-                label="سعر التوصيل"
+                label="سعر التوصيل *"
                 icon={FiTruck}
                 name="deliveryPrice"
                 type="text"
@@ -406,8 +421,9 @@ function WilayaSelect({ label, value, wilayas, onChange }) {
         />
 
         <FiChevronDown
-          className={`absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''
-            }`}
+          className={`absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-transform duration-200 ${
+            open ? 'rotate-180' : ''
+          }`}
           size={18}
         />
       </button>
