@@ -1,5 +1,5 @@
 // frontend/src/pages/OrderDetail.jsx
-import { useState, useEffect } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import api from '../services/api'
@@ -64,6 +64,8 @@ export default function OrderDetail() {
   const [isEditing, setIsEditing] = useState(false)
   const [editLoading, setEditLoading] = useState(false)
   const [editError, setEditError] = useState('')
+  const editErrorRef = useRef(null)
+
   const [editForm, setEditForm] = useState({
     customerName: '',
     phone: '',
@@ -94,6 +96,15 @@ export default function OrderDetail() {
       .finally(() => setLoading(false))
   }, [id])
 
+  const scrollToEditError = () => {
+    setTimeout(() => {
+      editErrorRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }, 0)
+  }
+
   const updateStatus = async (status) => {
     setStatusError('')
 
@@ -108,7 +119,7 @@ export default function OrderDetail() {
   const handleEditChange = (e) => {
     setEditForm({
       ...editForm,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     })
   }
 
@@ -118,7 +129,7 @@ export default function OrderDetail() {
 
     setEditForm({
       ...editForm,
-      [name]: onlyNumbers
+      [name]: onlyNumbers,
     })
   }
 
@@ -154,6 +165,7 @@ export default function OrderDetail() {
       !editForm.deliveryPrice
     ) {
       setEditError('يرجى ملء جميع الحقول الإجبارية')
+      scrollToEditError()
       return
     }
 
@@ -171,6 +183,7 @@ export default function OrderDetail() {
       setIsEditing(false)
     } catch (err) {
       setEditError(err.response?.data?.message || 'تعذر تعديل الطلب')
+      scrollToEditError()
     } finally {
       setEditLoading(false)
     }
@@ -350,7 +363,10 @@ export default function OrderDetail() {
           </div>
 
           {editError && (
-            <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-600">
+            <div
+              ref={editErrorRef}
+              className="mb-4 rounded-2xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-600"
+            >
               {editError}
             </div>
           )}
