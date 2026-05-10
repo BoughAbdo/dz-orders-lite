@@ -7,8 +7,18 @@ dotenv.config();
 connectDB();
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
+
+// Health check route
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'DZ Orders API is running',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Routes
 app.use('/api/auth', require('./routes/auth.routes'));
@@ -16,4 +26,5 @@ app.use('/api/orders', require('./routes/order.routes'));
 app.use('/api/dashboard', require('./routes/dashboard.routes'));
 
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
