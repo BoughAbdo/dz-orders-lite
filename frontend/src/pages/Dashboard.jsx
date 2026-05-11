@@ -1,4 +1,6 @@
+// frontend/src/pages/Dashboard.jsx
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
@@ -9,7 +11,17 @@ import {
   FiTruck,
   FiRefreshCcw,
   FiTrendingUp,
+  FiAlertTriangle,
+  FiArrowLeft,
 } from 'react-icons/fi'
+
+const statusLabels = {
+  new: 'جديد',
+  confirmed: 'مؤكد',
+  shipped: 'قيد التوصيل',
+  delivered: 'تم التسليم',
+  returned: 'رجع',
+}
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null)
@@ -22,6 +34,19 @@ export default function Dashboard() {
       .catch(err => console.error(err))
       .finally(() => setLoading(false))
   }, [])
+
+  const getOrderAge = (createdAt) => {
+    const createdDate = new Date(createdAt)
+    const diffMs = Date.now() - createdDate.getTime()
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    const diffDays = Math.floor(diffHours / 24)
+
+    if (diffDays >= 1) {
+      return `منذ ${diffDays} يوم`
+    }
+
+    return `منذ ${diffHours} ساعة`
+  }
 
   const statCards = stats ? [
     {
@@ -68,6 +93,7 @@ export default function Dashboard() {
         <h2 className="text-2xl font-black tracking-tight text-slate-900">
           أهلاً {user?.name} 👋
         </h2>
+
         <p className="text-slate-500 text-sm font-medium mt-1">
           نظرة عامة على متجرك
         </p>
@@ -104,6 +130,90 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+
+          {/* Attention Orders */}
+          {stats?.attentionCount > 0 && (
+            <div className="bg-amber-50 border border-amber-100 rounded-3xl p-5 mb-6 shadow-sm">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                    <FiAlertTriangle size={22} />
+                  </div>
+
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">
+                      طلبات تحتاج متابعة
+                    </h3>
+
+                    <p className="text-sm font-semibold text-amber-700 mt-1">
+                      لديك {stats.attentionCount} طلب قديم يحتاج إلى إجراء.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {stats.attentionOrders?.map(order => (
+                  <Link
+                    key={order._id}
+                    to={`/orders/${order._id}`}
+                    className="group bg-white/80 hover:bg-white border border-amber-100 rounded-2xl p-3 transition"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-black text-slate-900 truncate">
+                          {order.customerName}
+                        </p>
+
+                        <p className="text-xs font-semibold text-slate-500 mt-0.5 truncate">
+                          {order.product} — {statusLabels[order.status]}
+                        </p>
+
+                        <p className="text-xs font-medium text-amber-700 mt-1">
+                          {order.reason}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 text-slate-400 group-hover:text-amber-600 transition">
+                        <span className="text-xs font-bold">
+                          {getOrderAge(order.createdAt)}
+                        </span>
+
+                        <FiArrowLeft size={16} />
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              {stats.attentionCount > 5 && (
+                <p className="text-xs font-semibold text-amber-700 mt-3">
+                  يتم عرض أول 5 طلبات فقط. ادخل إلى صفحة الطلبات لمراجعة البقية.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* No Attention Orders */}
+          {stats?.attentionCount === 0 && (
+            <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-4 mb-6 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                  <FiCheckCircle size={20} />
+                </div>
+
+                <div>
+                  <p className="text-sm font-black text-slate-900">
+                    كل الطلبات تحت السيطرة
+                  </p>
+
+                  <p className="text-xs font-semibold text-emerald-700 mt-0.5">
+                    لا توجد طلبات قديمة تحتاج متابعة حالياً.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
