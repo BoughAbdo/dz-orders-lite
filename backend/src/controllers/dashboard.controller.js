@@ -10,8 +10,7 @@ exports.getDashboard = async (req, res) => {
     const now = new Date();
 
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-    const fiveDaysAgo = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+    const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
 
     const attentionFilter = {
       userId: userObjectId,
@@ -22,11 +21,11 @@ exports.getDashboard = async (req, res) => {
         },
         {
           status: 'confirmed',
-          createdAt: { $lte: twoDaysAgo }
+          createdAt: { $lte: oneDayAgo }
         },
         {
           status: 'shipped',
-          createdAt: { $lte: fiveDaysAgo }
+          createdAt: { $lte: twoDaysAgo }
         }
       ]
     };
@@ -81,11 +80,11 @@ exports.getDashboard = async (req, res) => {
       }
 
       if (order.status === 'confirmed') {
-        return 'طلب مؤكد لم ينتقل للتوصيل منذ أكثر من 48 ساعة';
+        return 'طلب مؤكد لم ينتقل للتوصيل منذ أكثر من 24 ساعة';
       }
 
       if (order.status === 'shipped') {
-        return 'طلب قيد التوصيل منذ أكثر من 5 أيام';
+        return 'طلب قيد التوصيل منذ أكثر من يومين';
       }
 
       return 'طلب يحتاج متابعة';
