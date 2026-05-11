@@ -1,4 +1,4 @@
-//frontend/src/pages/Orders.jsx
+// frontend/src/pages/Orders.jsx
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
@@ -11,6 +11,7 @@ import {
   FiFilter,
   FiSearch,
   FiX,
+  FiDownload,
 } from 'react-icons/fi'
 
 const statusLabels = {
@@ -38,7 +39,9 @@ export default function Orders() {
 
   useEffect(() => {
     setLoading(true)
+
     const params = filter !== 'all' ? `?status=${filter}` : ''
+
     api.get(`/orders${params}`)
       .then(res => setOrders(res.data))
       .catch(err => console.error(err))
@@ -47,36 +50,126 @@ export default function Orders() {
 
   const filteredOrders = orders.filter(order => {
     if (!search.trim()) return true
+
     const q = search.toLowerCase()
+
     return (
       order.customerName?.toLowerCase().includes(q) ||
       order.phone?.includes(q) ||
       order.product?.toLowerCase().includes(q) ||
-      order.wilaya?.toLowerCase().includes(q)
+      order.wilaya?.toLowerCase().includes(q) ||
+      order.city?.toLowerCase().includes(q)
     )
   })
+
+  const escapeCSVValue = (value) => {
+    const safeValue = value === undefined || value === null ? '' : String(value)
+    return `"${safeValue.replace(/"/g, '""')}"`
+  }
+
+  const exportToCSV = () => {
+    if (filteredOrders.length === 0) return
+
+    const headers = [
+      'اسم الزبون',
+      'رقم الهاتف',
+      'الولاية',
+      'البلدية',
+      'المنتج',
+      'السعر',
+      'سعر التوصيل',
+      'الإجمالي',
+      'الحالة',
+      'ملاحظات',
+      'تاريخ الطلب',
+    ]
+
+    const rows = filteredOrders.map(order => {
+      const price = Number(order.price || 0)
+      const deliveryPrice = Number(order.deliveryPrice || 0)
+      const total = price + deliveryPrice
+      const createdAt = order.createdAt
+        ? new Date(order.createdAt).toLocaleDateString('ar-DZ')
+        : ''
+
+      return [
+        order.customerName || '',
+        order.phone || '',
+        order.wilaya || '',
+        order.city || '',
+        order.product || '',
+        price,
+        deliveryPrice,
+        total,
+        statusLabels[order.status]?.label || order.status || '',
+        order.notes || '',
+        createdAt,
+      ]
+    })
+
+    const csvContent = [
+      headers.map(escapeCSVValue).join(','),
+      ...rows.map(row => row.map(escapeCSVValue).join(',')),
+    ].join('\n')
+
+    const blob = new Blob(['\uFEFF' + csvContent], {
+      type: 'text/csv;charset=utf-8;',
+    })
+
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    const today = new Date().toISOString().slice(0, 10)
+
+    link.href = url
+    link.download = `orders-${today}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <Layout>
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black tracking-tight text-slate-900">الطلبات</h2>
+          <h2 className="text-2xl font-black tracking-tight text-slate-900">
+            الطلبات
+          </h2>
+
           <p className="text-slate-500 text-sm font-medium mt-1">
             {filteredOrders.length} طلب
           </p>
         </div>
-        <Link
-          to="/orders/new"
-          className="hidden sm:inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
-        >
-          <FiPlus size={18} />
-          طلب جديد
-        </Link>
+
+        <div className="hidden sm:flex items-center gap-2">
+          <button
+            type="button"
+            onClick={exportToCSV}
+            disabled={loading || filteredOrders.length === 0}
+            className="inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-2.5 text-sm font-extrabold text-emerald-600 border border-emerald-100 transition hover:bg-emerald-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+          >
+            <FiDownload size={18} />
+            تصدير CSV
+          </button>
+
+          <Link
+            to="/orders/new"
+            className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
+          >
+            <FiPlus size={18} />
+            طلب جديد
+          </Link>
+        </div>
       </div>
 
       {/* Search */}
       <div className="relative mb-4">
-        <FiSearch size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+        <FiSearch
+          size={16}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+        />
+
         <input
           type="text"
           value={search}
@@ -85,8 +178,10 @@ export default function Orders() {
           className="w-full bg-white border border-slate-100 rounded-2xl py-3 pr-10 pl-10 text-sm font-medium text-slate-700 placeholder:text-slate-400 shadow-sm focus:outline-none focus:border-blue-300 transition"
           dir="rtl"
         />
+
         {search && (
           <button
+            type="button"
             onClick={() => setSearch('')}
             className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
           >
@@ -95,12 +190,26 @@ export default function Orders() {
         )}
       </div>
 
+      {/* Export button on mobile */}
+      <div className="sm:hidden mb-4">
+        <button
+          type="button"
+          onClick={exportToCSV}
+          disabled={loading || filteredOrders.length === 0}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-extrabold text-emerald-600 border border-emerald-100 transition hover:bg-emerald-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+        >
+          <FiDownload size={18} />
+          تصدير الطلبات الظاهرة CSV
+        </button>
+      </div>
+
       {/* Filters */}
       <div className="bg-white border border-slate-100 rounded-3xl p-3 mb-5 shadow-sm">
         <div className="flex items-center gap-2 mb-3 text-slate-500">
           <FiFilter size={16} />
           <span className="text-xs font-bold">تصفية حسب الحالة</span>
         </div>
+
         <div className="flex gap-2 overflow-x-auto pb-1">
           {filters.map(f => (
             <button
@@ -127,12 +236,15 @@ export default function Orders() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-50 text-slate-400">
             <FiPackage size={30} />
           </div>
+
           <p className="text-slate-900 text-lg font-black">
             {search ? 'لا توجد نتائج' : 'لا يوجد طلبات'}
           </p>
+
           <p className="text-slate-500 text-sm font-medium mt-1">
             {search ? `لا يوجد طلبات تطابق "${search}"` : 'ابدأ بإضافة أول طلب لمتجرك'}
           </p>
+
           {!search && (
             <Link
               to="/orders/new"
@@ -156,12 +268,19 @@ export default function Orders() {
                   <h3 className="font-black text-slate-900 leading-6">
                     {order.customerName}
                   </h3>
+
                   <div className="flex items-center gap-1.5 mt-1 text-slate-400">
                     <FiMapPin size={14} />
-                    <span className="text-xs font-bold">{order.wilaya || 'بدون ولاية'}</span>
+
+                    <span className="text-xs font-bold">
+                      {order.wilaya || 'بدون ولاية'}
+                    </span>
                   </div>
                 </div>
-                <span className={`text-xs px-3 py-1.5 rounded-full font-extrabold border ${statusLabels[order.status]?.color}`}>
+
+                <span
+                  className={`text-xs px-3 py-1.5 rounded-full font-extrabold border ${statusLabels[order.status]?.color}`}
+                >
                   {statusLabels[order.status]?.label}
                 </span>
               </div>
@@ -169,7 +288,10 @@ export default function Orders() {
               <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-3">
                 <div className="flex items-center gap-2 text-slate-600">
                   <FiPackage size={16} className="text-slate-400" />
-                  <p className="text-sm font-bold line-clamp-1">{order.product}</p>
+
+                  <p className="text-sm font-bold line-clamp-1">
+                    {order.product}
+                  </p>
                 </div>
               </div>
 
@@ -178,6 +300,7 @@ export default function Orders() {
                   <FiTag size={14} />
                   <span className="text-xs font-bold">السعر</span>
                 </div>
+
                 <span className="text-base font-black text-slate-900">
                   {Number(order.price || 0).toLocaleString()} دج
                 </span>
