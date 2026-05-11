@@ -67,6 +67,15 @@ export default function Orders() {
     return `"${safeValue.replace(/"/g, '""')}"`
   }
 
+  const formatPhoneForCSV = (phone) => {
+    if (!phone) return ''
+
+    const cleanPhone = String(phone).trim()
+
+    // نجعل الهاتف نصاً داخل Excel / Google Sheets حتى لا يُحذف الصفر الأول
+    return `="${cleanPhone}"`
+  }
+
   const exportToCSV = () => {
     if (filteredOrders.length === 0) return
 
@@ -94,7 +103,7 @@ export default function Orders() {
 
       return [
         order.customerName || '',
-        order.phone || '',
+        formatPhoneForCSV(order.phone),
         order.wilaya || '',
         order.city || '',
         order.product || '',
@@ -150,7 +159,7 @@ export default function Orders() {
             className="inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-2.5 text-sm font-extrabold text-emerald-600 border border-emerald-100 transition hover:bg-emerald-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
           >
             <FiDownload size={18} />
-            تصدير CSV
+            تحميل القائمة
           </button>
 
           <Link
@@ -174,7 +183,7 @@ export default function Orders() {
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="ابحث بالاسم، الهاتف، المنتج، الولاية..."
+          placeholder="ابحث بالاسم، الهاتف، المنتج، الولاية، البلدية..."
           className="w-full bg-white border border-slate-100 rounded-2xl py-3 pr-10 pl-10 text-sm font-medium text-slate-700 placeholder:text-slate-400 shadow-sm focus:outline-none focus:border-blue-300 transition"
           dir="rtl"
         />
@@ -190,7 +199,7 @@ export default function Orders() {
         )}
       </div>
 
-      {/* Export button on mobile */}
+      {/* Download button on mobile */}
       <div className="sm:hidden mb-4">
         <button
           type="button"
@@ -199,7 +208,7 @@ export default function Orders() {
           className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-extrabold text-emerald-600 border border-emerald-100 transition hover:bg-emerald-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
         >
           <FiDownload size={18} />
-          تصدير الطلبات الظاهرة CSV
+          تحميل القائمة الظاهرة
         </button>
       </div>
 
