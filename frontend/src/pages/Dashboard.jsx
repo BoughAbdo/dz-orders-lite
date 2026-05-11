@@ -13,6 +13,9 @@ import {
   FiTrendingUp,
   FiAlertTriangle,
   FiArrowLeft,
+  FiCalendar,
+  FiDollarSign,
+  FiPercent,
 } from 'react-icons/fi'
 
 const statusLabels = {
@@ -87,6 +90,44 @@ export default function Dashboard() {
     },
   ] : []
 
+  const quickStats = stats ? [
+    {
+      label: 'طلبات اليوم',
+      value: stats.todayOrders || 0,
+      suffix: 'طلب',
+      icon: FiCalendar,
+      color: 'bg-sky-50 text-sky-600 border-sky-100',
+    },
+    {
+      label: 'مبيعات اليوم',
+      value: (stats.todayRevenue || 0).toLocaleString(),
+      suffix: 'دج',
+      icon: FiDollarSign,
+      color: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    },
+    {
+      label: 'طلبات هذا الأسبوع',
+      value: stats.weekOrders || 0,
+      suffix: 'طلب',
+      icon: FiCalendar,
+      color: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+    },
+    {
+      label: 'مبيعات هذا الأسبوع',
+      value: (stats.weekRevenue || 0).toLocaleString(),
+      suffix: 'دج',
+      icon: FiTrendingUp,
+      color: 'bg-blue-50 text-blue-600 border-blue-100',
+    },
+    {
+      label: 'نسبة الرجوع',
+      value: stats.returnRate || 0,
+      suffix: '%',
+      icon: FiPercent,
+      color: 'bg-rose-50 text-rose-600 border-rose-100',
+    },
+  ] : []
+
   return (
     <Layout>
       <div className="mb-7">
@@ -129,6 +170,39 @@ export default function Dashboard() {
                 <FiTrendingUp className="text-2xl text-white" />
               </div>
             </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+            {quickStats.map((card, i) => {
+              const Icon = card.icon
+
+              return (
+                <div
+                  key={i}
+                  className={`group rounded-3xl p-4 border ${card.color} transition-all duration-300 hover:-translate-y-1 hover:shadow-lg`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-2xl font-black tracking-tight">
+                        {card.value}
+                        <span className="text-xs font-extrabold mr-1 opacity-80">
+                          {card.suffix}
+                        </span>
+                      </p>
+
+                      <p className="text-xs font-bold mt-1 opacity-80">
+                        {card.label}
+                      </p>
+                    </div>
+
+                    <div className="w-10 h-10 rounded-2xl bg-white/70 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                      <Icon className="text-xl" />
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
           {/* Attention Orders */}

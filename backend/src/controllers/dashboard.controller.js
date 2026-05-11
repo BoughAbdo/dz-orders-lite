@@ -1,5 +1,4 @@
-// backend/src/controllers/dashboard.controller.js
-const mongoose = require('mongoose');
+const mongoose = require('mongoose'); 
 const Order = require('../models/order.model');
 
 exports.getDashboard = async (req, res) => {
@@ -11,6 +10,17 @@ exports.getDashboard = async (req, res) => {
 
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+
+    // بداية اليوم
+    const startOfToday = new Date(now);
+    startOfToday.setHours(0, 0, 0, 0);
+
+    // بداية الأسبوع - الاثنين
+    const startOfWeek = new Date(now);
+    const day = startOfWeek.getDay(); // الأحد = 0، الاثنين = 1
+    const diffToMonday = day === 0 ? 6 : day - 1;
+    startOfWeek.setDate(startOfWeek.getDate() - diffToMonday);
+    startOfWeek.setHours(0, 0, 0, 0);
 
     const attentionFilter = {
       userId: userObjectId,
@@ -38,6 +48,10 @@ exports.getDashboard = async (req, res) => {
       delivered,
       returned,
       revenueResult,
+      todayOrders,
+      todayRevenueResult,
+      weekOrders,
+      weekRevenueResult,
       attentionCount,
       attentionOrdersRaw
     ] = await Promise.all([
@@ -48,12 +62,62 @@ exports.getDashboard = async (req, res) => {
       Order.countDocuments({ userId, status: 'delivered' }),
       Order.countDocuments({ userId, status: 'returned' }),
 
-      // حساب المبيعات من سعر المنتج فقط للطلبات المسلّمة
+      // حساب إجمالي المبيعات من سعر المنتج فقط للطلبات المسلّمة
       Order.aggregate([
         {
           $match: {
             userId: userObjectId,
             status: 'delivered'
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            total: {
+              $sum: { $ifNull: ['$price', 0] }
+            }
+          }
+        }
+      ]),
+
+      // طلبات اليوم
+      Order.countDocuments({
+        userId,
+        createdAt: { $gte: startOfToday }
+      }),
+
+      // مبيعات اليوم من الطلبات المسلّمة فقط
+      Order.aggregate([
+        {
+          $match: {
+            userId: userObjectId,
+            status: 'delivered',
+            createdAt: { $gte: startOfToday }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            total: {
+              $sum: { $ifNull: ['$price', 0] }
+            }
+          }
+        }
+      ]),
+
+      // طلبات هذا الأسبوع
+      Order.countDocuments({
+        userId,
+        createdAt: { $gte: startOfWeek }
+      }),
+
+      // مبيعات هذا الأسبوع من الطلبات المسلّمة فقط
+      Order.aggregate([
+        {
+          $match: {
+            userId: userObjectId,
+            status: 'delivered',
+            createdAt: { $gte: startOfWeek }
           }
         },
         {
@@ -102,6 +166,12 @@ exports.getDashboard = async (req, res) => {
     }));
 
     const revenue = revenueResult[0]?.total || 0;
+    const todayRevenue = todayRevenueResult[0]?.total || 0;
+    const weekRevenue = weekRevenueResult[0]?.total || 0;
+
+    const returnRate = total > 0
+      ? Number(((returned / total) * 100).toFixed(1))
+      : 0;
 
     res.status(200).json({
       total,
@@ -111,6 +181,13 @@ exports.getDashboard = async (req, res) => {
       delivered,
       returned,
       revenue,
+
+      todayOrders,
+      todayRevenue,
+      weekOrders,
+      weekRevenue,
+      returnRate,
+
       attentionCount,
       attentionOrders
     });
