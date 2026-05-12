@@ -25,6 +25,9 @@ import {
   FiChevronUp,
 } from 'react-icons/fi'
 
+const STORE_NAME = 'طلبيات'
+const STORE_PHONE = '0550000000'
+
 const statusLabels = {
   new: {
     label: 'جديد',
@@ -215,96 +218,369 @@ export default function OrderDetail() {
     setShowWhatsAppMenu(false)
   }
 
+  const escapeHTML = (value) => {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;')
+  }
+
+  const formatDate = (date) => {
+    if (!date) return '-'
+
+    return new Date(date).toLocaleDateString('ar-DZ', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
+  }
+
   const generatePDF = () => {
+    if (!order) return
+
     const printWindow = window.open('', '_blank')
+
+    if (!printWindow) {
+      alert('يرجى السماح بفتح النوافذ المنبثقة لطباعة الطلب')
+      return
+    }
+
+    const orderTotal = Number(order.price || 0) + Number(order.deliveryPrice || 0)
+    const printedAt = new Date().toLocaleString('ar-DZ')
+    const shortOrderId = order._id ? String(order._id).slice(-8) : '-'
 
     printWindow.document.write(`
       <html lang="ar" dir="rtl">
         <head>
           <meta charset="UTF-8">
-          <title>طلب - ${order.customerName}</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>طلب - ${escapeHTML(order.customerName)}</title>
+
           <style>
+            * {
+              box-sizing: border-box;
+            }
+
             body {
-              font-family: Arial, sans-serif;
+              font-family: Arial, Tahoma, sans-serif;
               direction: rtl;
+              margin: 0;
               padding: 24px;
               color: #0f172a;
+              background: #f8fafc;
             }
 
-            h2 {
-              text-align: center;
-              margin-bottom: 24px;
+            .page {
+              max-width: 820px;
+              margin: 0 auto;
+              background: #ffffff;
+              border: 1px solid #e2e8f0;
+              border-radius: 18px;
+              overflow: hidden;
             }
 
-            h3 {
-              margin-top: 0;
-              color: #1e293b;
+            .header {
+              background: linear-gradient(135deg, #2563eb, #1d4ed8);
+              color: #ffffff;
+              padding: 22px 24px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 16px;
+            }
+
+            .store-name {
+              font-size: 26px;
+              font-weight: 900;
+              margin: 0 0 6px;
+            }
+
+            .store-phone {
+              font-size: 13px;
+              font-weight: 700;
+              color: #dbeafe;
+              margin: 0;
+            }
+
+            .badge {
+              background: rgba(255, 255, 255, 0.14);
+              border: 1px solid rgba(255, 255, 255, 0.22);
+              color: #ffffff;
+              padding: 10px 14px;
+              border-radius: 999px;
+              font-size: 13px;
+              font-weight: 800;
+              white-space: nowrap;
+            }
+
+            .content {
+              padding: 22px;
+            }
+
+            .meta {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 10px;
+              margin-bottom: 16px;
+            }
+
+            .meta-card {
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 14px;
+              padding: 12px;
+            }
+
+            .meta-label {
+              display: block;
+              color: #64748b;
+              font-size: 11px;
+              font-weight: 700;
+              margin-bottom: 5px;
+            }
+
+            .meta-value {
+              display: block;
+              color: #0f172a;
+              font-size: 13px;
+              font-weight: 900;
             }
 
             .section {
-              margin-bottom: 20px;
-              border: 1px solid #e5e7eb;
-              padding: 16px;
-              border-radius: 12px;
+              margin-bottom: 16px;
+              border: 1px solid #e2e8f0;
+              border-radius: 16px;
+              overflow: hidden;
+              background: #ffffff;
+            }
+
+            .section-title {
+              margin: 0;
+              padding: 13px 16px;
+              color: #0f172a;
+              background: #f8fafc;
+              border-bottom: 1px solid #e2e8f0;
+              font-size: 15px;
+              font-weight: 900;
+            }
+
+            .rows {
+              padding: 4px 16px;
             }
 
             .row {
               display: flex;
               justify-content: space-between;
               gap: 16px;
-              margin-bottom: 10px;
+              padding: 12px 0;
               border-bottom: 1px solid #f1f5f9;
-              padding-bottom: 8px;
             }
 
             .row:last-child {
               border-bottom: 0;
-              margin-bottom: 0;
-              padding-bottom: 0;
             }
 
             .label {
               color: #64748b;
+              font-size: 13px;
+              font-weight: 700;
+              white-space: nowrap;
             }
 
             .value {
-              font-weight: bold;
               color: #0f172a;
+              font-size: 13px;
+              font-weight: 900;
+              text-align: left;
+              word-break: break-word;
             }
 
-            .total {
+            .total-row {
+              margin-top: 10px;
+              background: #eff6ff;
+              border: 1px solid #bfdbfe;
+              border-radius: 16px;
+              padding: 16px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 16px;
+            }
+
+            .total-label {
+              color: #1e40af;
+              font-size: 14px;
+              font-weight: 900;
+            }
+
+            .total-value {
               color: #2563eb;
-              font-size: 18px;
+              font-size: 22px;
+              font-weight: 900;
+            }
+
+            .footer {
+              padding: 16px 22px 22px;
+              color: #64748b;
+              text-align: center;
+              font-size: 12px;
+              font-weight: 700;
+            }
+
+            @media print {
+              body {
+                padding: 0;
+                background: #ffffff;
+              }
+
+              .page {
+                max-width: none;
+                border: 0;
+                border-radius: 0;
+              }
+
+              .header {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+
+              .meta-card,
+              .section,
+              .total-row {
+                break-inside: avoid;
+              }
+            }
+
+            @media (max-width: 640px) {
+              body {
+                padding: 12px;
+              }
+
+              .header {
+                align-items: flex-start;
+                flex-direction: column;
+              }
+
+              .meta {
+                grid-template-columns: 1fr;
+              }
             }
           </style>
         </head>
 
         <body>
-          <h2>طلبيات - تفاصيل الطلب</h2>
+          <div class="page">
+            <div class="header">
+              <div>
+                <h1 class="store-name">${escapeHTML(STORE_NAME)}</h1>
+                <p class="store-phone">هاتف المتجر: ${escapeHTML(STORE_PHONE)}</p>
+              </div>
 
-          <div class="section">
-            <h3>بيانات الزبون</h3>
-            <div class="row"><span class="label">الاسم</span><span class="value">${order.customerName}</span></div>
-            <div class="row"><span class="label">الهاتف</span><span class="value">${order.phone || '-'}</span></div>
-            <div class="row"><span class="label">الولاية</span><span class="value">${order.wilaya}</span></div>
-            <div class="row"><span class="label">البلدية</span><span class="value">${order.city || '-'}</span></div>
+              <div class="badge">
+                تفاصيل الطلب
+              </div>
+            </div>
+
+            <div class="content">
+              <div class="meta">
+                <div class="meta-card">
+                  <span class="meta-label">رقم الطلب</span>
+                  <span class="meta-value">#${escapeHTML(shortOrderId)}</span>
+                </div>
+
+                <div class="meta-card">
+                  <span class="meta-label">تاريخ الطلب</span>
+                  <span class="meta-value">${escapeHTML(formatDate(order.createdAt))}</span>
+                </div>
+
+                <div class="meta-card">
+                  <span class="meta-label">تاريخ الطباعة</span>
+                  <span class="meta-value">${escapeHTML(printedAt)}</span>
+                </div>
+              </div>
+
+              <div class="section">
+                <h2 class="section-title">بيانات الزبون</h2>
+
+                <div class="rows">
+                  <div class="row">
+                    <span class="label">الاسم</span>
+                    <span class="value">${escapeHTML(order.customerName)}</span>
+                  </div>
+
+                  <div class="row">
+                    <span class="label">الهاتف</span>
+                    <span class="value">${escapeHTML(order.phone || '-')}</span>
+                  </div>
+
+                  <div class="row">
+                    <span class="label">الولاية</span>
+                    <span class="value">${escapeHTML(order.wilaya)}</span>
+                  </div>
+
+                  <div class="row">
+                    <span class="label">البلدية</span>
+                    <span class="value">${escapeHTML(order.city || '-')}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section">
+                <h2 class="section-title">بيانات الطلب</h2>
+
+                <div class="rows">
+                  <div class="row">
+                    <span class="label">المنتج</span>
+                    <span class="value">${escapeHTML(order.product)}</span>
+                  </div>
+
+                  <div class="row">
+                    <span class="label">السعر</span>
+                    <span class="value">${Number(order.price || 0).toLocaleString()} دج</span>
+                  </div>
+
+                  <div class="row">
+                    <span class="label">التوصيل</span>
+                    <span class="value">${Number(order.deliveryPrice || 0).toLocaleString()} دج</span>
+                  </div>
+
+                  <div class="row">
+                    <span class="label">الحالة</span>
+                    <span class="value">${escapeHTML(statusLabels[order.status]?.label || '-')}</span>
+                  </div>
+
+                  ${order.notes ? `
+                    <div class="row">
+                      <span class="label">ملاحظات</span>
+                      <span class="value">${escapeHTML(order.notes)}</span>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+
+              <div class="total-row">
+                <span class="total-label">الإجمالي</span>
+                <span class="total-value">${orderTotal.toLocaleString()} دج</span>
+              </div>
+            </div>
+
+            <div class="footer">
+              شكراً لثقتكم بنا
+            </div>
           </div>
 
-          <div class="section">
-            <h3>بيانات الطلب</h3>
-            <div class="row"><span class="label">المنتج</span><span class="value">${order.product}</span></div>
-            <div class="row"><span class="label">السعر</span><span class="value">${order.price} دج</span></div>
-            <div class="row"><span class="label">التوصيل</span><span class="value">${order.deliveryPrice} دج</span></div>
-            <div class="row"><span class="label">الإجمالي</span><span class="value total">${Number(order.price || 0) + Number(order.deliveryPrice || 0)} دج</span></div>
-            <div class="row"><span class="label">الحالة</span><span class="value">${statusLabels[order.status]?.label}</span></div>
-            ${order.notes ? `<div class="row"><span class="label">ملاحظات</span><span class="value">${order.notes}</span></div>` : ''}
-          </div>
+          <script>
+            window.onload = function () {
+              window.print()
+            }
+          </script>
         </body>
       </html>
     `)
 
     printWindow.document.close()
-    printWindow.print()
   }
 
   if (loading) {
@@ -765,5 +1041,4 @@ function EditField({
       </div>
     </div>
   )
-}
-
+} 
