@@ -3,6 +3,7 @@ import { useRef, useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import api from '../services/api'
+import { useAuth } from '../context/AuthContext'
 import {
   FiUser,
   FiPhone,
@@ -24,9 +25,6 @@ import {
   FiChevronDown,
   FiChevronUp,
 } from 'react-icons/fi'
-
-const STORE_NAME = 'طلبيات'
-const STORE_PHONE = '0550000000'
 
 const statusLabels = {
   new: {
@@ -61,6 +59,7 @@ const statusFlow = ['new', 'confirmed', 'shipped', 'delivered']
 export default function OrderDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -246,6 +245,9 @@ export default function OrderDetail() {
       alert('يرجى السماح بفتح النوافذ المنبثقة لطباعة الطلب')
       return
     }
+
+    const storeName = user?.businessName || 'طلبيات'
+    const storePhone = user?.phone || ''
 
     const orderTotal = Number(order.price || 0) + Number(order.deliveryPrice || 0)
     const printedAt = new Date().toLocaleString('ar-DZ')
@@ -474,8 +476,8 @@ export default function OrderDetail() {
           <div class="page">
             <div class="header">
               <div>
-                <h1 class="store-name">${escapeHTML(STORE_NAME)}</h1>
-                <p class="store-phone">هاتف المتجر: ${escapeHTML(STORE_PHONE)}</p>
+                <h1 class="store-name">${escapeHTML(storeName)}</h1>
+                ${storePhone ? `<p class="store-phone">هاتف المتجر: ${escapeHTML(storePhone)}</p>` : ''}
               </div>
 
               <div class="badge">
@@ -1041,4 +1043,4 @@ function EditField({
       </div>
     </div>
   )
-} 
+}
