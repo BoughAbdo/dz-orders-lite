@@ -1,5 +1,5 @@
 // frontend/src/pages/Orders.jsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import api from '../services/api'
@@ -525,9 +525,27 @@ export default function Orders() {
 
 function FilterDropdown({ label, value, onChange, options }) {
   const [open, setOpen] = useState(false)
+  const dropdownRef = useRef(null)
 
   const selectedOption =
     options.find(option => option.key === value) || options[0]
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   const handleSelect = (key) => {
     onChange(key)
@@ -535,38 +553,41 @@ function FilterDropdown({ label, value, onChange, options }) {
   }
 
   return (
-    <div className="relative">
-      <label className="block text-xs font-bold text-slate-500 mb-2">
+    <div ref={dropdownRef} className="relative">
+      <label className="block text-xs font-black text-slate-500 mb-2">
         {label}
       </label>
 
       <button
         type="button"
-        onClick={() => setOpen(!open)}
-        onBlur={() => {
-          setTimeout(() => setOpen(false), 120)
-        }}
-        className={`w-full flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm font-extrabold transition duration-200
+        onClick={() => setOpen(prev => !prev)}
+        className={`w-full flex items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-sm font-black transition-all duration-200 shadow-sm
           ${open
             ? 'border-blue-300 bg-white ring-4 ring-blue-100/70 text-slate-900'
-            : 'border-slate-100 bg-slate-50 text-slate-700 hover:bg-white hover:border-blue-200'
+            : 'border-slate-100 bg-slate-50 text-slate-700 hover:bg-white hover:border-blue-200 hover:shadow-md'
           }`}
       >
         <span className="truncate">
           {selectedOption?.label}
         </span>
 
-        <FiChevronDown
-          size={17}
-          className={`shrink-0 text-slate-400 transition duration-200 ${
-            open ? 'rotate-180 text-blue-500' : ''
-          }`}
-        />
+        <span
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition duration-200
+            ${open ? 'bg-blue-50 text-blue-600' : 'bg-white text-slate-400'}
+          `}
+        >
+          <FiChevronDown
+            size={17}
+            className={`transition duration-200 ${
+              open ? 'rotate-180' : ''
+            }`}
+          />
+        </span>
       </button>
 
       {open && (
-        <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-xl shadow-slate-200/80">
-          <div className="max-h-64 overflow-y-auto p-2">
+        <div className="absolute left-0 right-0 z-50 mt-2 rounded-3xl border border-slate-100 bg-white p-2 shadow-2xl shadow-slate-300/60">
+          <div className="max-h-72 overflow-y-auto rounded-2xl">
             {options.map(option => {
               const active = option.key === value
 
@@ -574,11 +595,10 @@ function FilterDropdown({ label, value, onChange, options }) {
                 <button
                   key={option.key}
                   type="button"
-                  onMouseDown={e => e.preventDefault()}
                   onClick={() => handleSelect(option.key)}
-                  className={`w-full flex items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-right text-sm font-extrabold transition
+                  className={`w-full flex items-center justify-between gap-3 rounded-2xl px-3.5 py-3 text-right text-sm font-black transition-all duration-150
                     ${active
-                      ? 'bg-blue-50 text-blue-600'
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                     }`}
                 >
@@ -587,7 +607,7 @@ function FilterDropdown({ label, value, onChange, options }) {
                   </span>
 
                   {active && (
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/20 text-white">
                       <FiCheck size={14} />
                     </span>
                   )}
