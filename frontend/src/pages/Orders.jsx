@@ -13,6 +13,8 @@ import {
   FiX,
   FiDownload,
   FiCalendar,
+  FiChevronDown,
+  FiCheck,
 } from 'react-icons/fi'
 
 const statusLabels = {
@@ -361,43 +363,25 @@ export default function Orders() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-bold text-slate-500 mb-2">
-              الولاية
-            </label>
+          <FilterDropdown
+            label="الولاية"
+            value={wilayaFilter}
+            onChange={setWilayaFilter}
+            options={[
+              { key: 'all', label: 'كل الولايات' },
+              ...uniqueWilayas.map(wilaya => ({
+                key: wilaya,
+                label: wilaya,
+              })),
+            ]}
+          />
 
-            <select
-              value={wilayaFilter}
-              onChange={e => setWilayaFilter(e.target.value)}
-              className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white"
-            >
-              <option value="all">كل الولايات</option>
-
-              {uniqueWilayas.map(wilaya => (
-                <option key={wilaya} value={wilaya}>
-                  {wilaya}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-500 mb-2">
-              التاريخ
-            </label>
-
-            <select
-              value={dateFilter}
-              onChange={e => setDateFilter(e.target.value)}
-              className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white"
-            >
-              {dateFilters.map(item => (
-                <option key={item.key} value={item.key}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <FilterDropdown
+            label="التاريخ"
+            value={dateFilter}
+            onChange={setDateFilter}
+            options={dateFilters}
+          />
         </div>
 
         {dateFilter === 'custom' && (
@@ -411,7 +395,7 @@ export default function Orders() {
                 type="date"
                 value={dateFrom}
                 onChange={e => setDateFrom(e.target.value)}
-                className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white"
+                className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
               />
             </div>
 
@@ -424,7 +408,7 @@ export default function Orders() {
                 type="date"
                 value={dateTo}
                 onChange={e => setDateTo(e.target.value)}
-                className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white"
+                className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
               />
             </div>
           </div>
@@ -536,5 +520,83 @@ export default function Orders() {
         <FiPlus size={26} />
       </Link>
     </Layout>
+  )
+}
+
+function FilterDropdown({ label, value, onChange, options }) {
+  const [open, setOpen] = useState(false)
+
+  const selectedOption =
+    options.find(option => option.key === value) || options[0]
+
+  const handleSelect = (key) => {
+    onChange(key)
+    setOpen(false)
+  }
+
+  return (
+    <div className="relative">
+      <label className="block text-xs font-bold text-slate-500 mb-2">
+        {label}
+      </label>
+
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        onBlur={() => {
+          setTimeout(() => setOpen(false), 120)
+        }}
+        className={`w-full flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm font-extrabold transition duration-200
+          ${open
+            ? 'border-blue-300 bg-white ring-4 ring-blue-100/70 text-slate-900'
+            : 'border-slate-100 bg-slate-50 text-slate-700 hover:bg-white hover:border-blue-200'
+          }`}
+      >
+        <span className="truncate">
+          {selectedOption?.label}
+        </span>
+
+        <FiChevronDown
+          size={17}
+          className={`shrink-0 text-slate-400 transition duration-200 ${
+            open ? 'rotate-180 text-blue-500' : ''
+          }`}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-xl shadow-slate-200/80">
+          <div className="max-h-64 overflow-y-auto p-2">
+            {options.map(option => {
+              const active = option.key === value
+
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => handleSelect(option.key)}
+                  className={`w-full flex items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-right text-sm font-extrabold transition
+                    ${active
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                >
+                  <span className="truncate">
+                    {option.label}
+                  </span>
+
+                  {active && (
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+                      <FiCheck size={14} />
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
