@@ -1,4 +1,3 @@
-//frontend/src/components/Layout.jsx
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -7,6 +6,7 @@ import {
   FiPlusCircle,
   FiLogOut,
   FiShoppingBag,
+  FiSettings,
 } from 'react-icons/fi'
 
 export default function Layout({ children }) {
@@ -23,13 +23,17 @@ export default function Layout({ children }) {
     { path: '/', label: 'الرئيسية', icon: FiBarChart2 },
     { path: '/orders', label: 'الطلبات', icon: FiPackage },
     { path: '/orders/new', label: 'طلب جديد', icon: FiPlusCircle },
+    { path: '/settings', label: 'الإعدادات', icon: FiSettings },
   ]
 
   return (
     <div className="min-h-screen bg-slate-50" dir="rtl">
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-slate-100">
         <div className="flex items-center justify-between px-4 py-3 max-w-5xl mx-auto">
-          <div className="flex items-center gap-3 min-w-0">
+          <Link
+            to="/settings"
+            className="flex items-center gap-3 min-w-0"
+          >
             <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
               <FiShoppingBag size={22} />
             </div>
@@ -43,7 +47,7 @@ export default function Layout({ children }) {
                 {user?.businessName || 'متجرك'}
               </p>
             </div>
-          </div>
+          </Link>
 
           <button
             onClick={handleLogout}
