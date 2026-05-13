@@ -12,6 +12,7 @@ import {
   FiSearch,
   FiX,
   FiDownload,
+  FiCalendar,
 } from 'react-icons/fi'
 
 const statusLabels = {
@@ -31,11 +32,23 @@ const filters = [
   { key: 'returned', label: 'رجع' },
 ]
 
+const dateFilters = [
+  { key: 'all', label: 'كل التواريخ' },
+  { key: 'today', label: 'اليوم' },
+  { key: 'week', label: 'هذا الأسبوع' },
+  { key: 'month', label: 'هذا الشهر' },
+  { key: 'custom', label: 'تاريخ مخصص' },
+]
+
 export default function Orders() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [wilayaFilter, setWilayaFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState('all')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
 
   useEffect(() => {
     setLoading(true)
@@ -48,19 +61,110 @@ export default function Orders() {
       .finally(() => setLoading(false))
   }, [filter])
 
-  const filteredOrders = orders.filter(order => {
-    if (!search.trim()) return true
+  const uniqueWilayas = Array.from(
+    new Set(
+      orders
+        .map(order => order.wilaya)
+        .filter(Boolean)
+    )
+  ).sort((a, b) => a.localeCompare(b, 'ar'))
 
-    const q = search.toLowerCase()
-
+  const isSameDay = (dateA, dateB) => {
     return (
+      dateA.getFullYear() === dateB.getFullYear() &&
+      dateA.getMonth() === dateB.getMonth() &&
+      dateA.getDate() === dateB.getDate()
+    )
+  }
+
+  const getStartOfWeek = (date) => {
+    const start = new Date(date)
+    const day = start.getDay()
+    const diffToMonday = day === 0 ? 6 : day - 1
+
+    start.setDate(start.getDate() - diffToMonday)
+    start.setHours(0, 0, 0, 0)
+
+    return start
+  }
+
+  const matchesDateFilter = (order) => {
+    if (dateFilter === 'all') return true
+    if (!order.createdAt) return false
+
+    const orderDate = new Date(order.createdAt)
+    const now = new Date()
+
+    if (dateFilter === 'today') {
+      return isSameDay(orderDate, now)
+    }
+
+    if (dateFilter === 'week') {
+      const startOfWeek = getStartOfWeek(now)
+      return orderDate >= startOfWeek
+    }
+
+    if (dateFilter === 'month') {
+      return (
+        orderDate.getFullYear() === now.getFullYear() &&
+        orderDate.getMonth() === now.getMonth()
+      )
+    }
+
+    if (dateFilter === 'custom') {
+      if (dateFrom) {
+        const from = new Date(dateFrom)
+        from.setHours(0, 0, 0, 0)
+
+        if (orderDate < from) return false
+      }
+
+      if (dateTo) {
+        const to = new Date(dateTo)
+        to.setHours(23, 59, 59, 999)
+
+        if (orderDate > to) return false
+      }
+
+      return true
+    }
+
+    return true
+  }
+
+  const filteredOrders = orders.filter(order => {
+    const q = search.trim().toLowerCase()
+
+    const matchesSearch = !q || (
       order.customerName?.toLowerCase().includes(q) ||
       order.phone?.includes(q) ||
       order.product?.toLowerCase().includes(q) ||
       order.wilaya?.toLowerCase().includes(q) ||
       order.city?.toLowerCase().includes(q)
     )
+
+    const matchesWilaya =
+      wilayaFilter === 'all' || order.wilaya === wilayaFilter
+
+    return matchesSearch && matchesWilaya && matchesDateFilter(order)
   })
+
+  const hasActiveFilters =
+    search.trim() ||
+    filter !== 'all' ||
+    wilayaFilter !== 'all' ||
+    dateFilter !== 'all' ||
+    dateFrom ||
+    dateTo
+
+  const resetFilters = () => {
+    setSearch('')
+    setFilter('all')
+    setWilayaFilter('all')
+    setDateFilter('all')
+    setDateFrom('')
+    setDateTo('')
+  }
 
   const escapeCSVValue = (value) => {
     const safeValue = value === undefined || value === null ? '' : String(value)
@@ -212,8 +316,8 @@ export default function Orders() {
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white border border-slate-100 rounded-3xl p-3 mb-5 shadow-sm">
+      {/* Status Filters */}
+      <div className="bg-white border border-slate-100 rounded-3xl p-3 mb-4 shadow-sm">
         <div className="flex items-center gap-2 mb-3 text-slate-500">
           <FiFilter size={16} />
           <span className="text-xs font-bold">تصفية حسب الحالة</span>
@@ -236,6 +340,97 @@ export default function Orders() {
         </div>
       </div>
 
+      {/* Advanced Filters */}
+      <div className="bg-white border border-slate-100 rounded-3xl p-3 mb-5 shadow-sm">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2 text-slate-500">
+            <FiCalendar size={16} />
+            <span className="text-xs font-bold">فلترة متقدمة</span>
+          </div>
+
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-50 px-3 py-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-100"
+            >
+              <FiX size={14} />
+              مسح الفلاتر
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-2">
+              الولاية
+            </label>
+
+            <select
+              value={wilayaFilter}
+              onChange={e => setWilayaFilter(e.target.value)}
+              className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white"
+            >
+              <option value="all">كل الولايات</option>
+
+              {uniqueWilayas.map(wilaya => (
+                <option key={wilaya} value={wilaya}>
+                  {wilaya}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-2">
+              التاريخ
+            </label>
+
+            <select
+              value={dateFilter}
+              onChange={e => setDateFilter(e.target.value)}
+              className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white"
+            >
+              {dateFilters.map(item => (
+                <option key={item.key} value={item.key}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {dateFilter === 'custom' && (
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 mb-2">
+                من
+              </label>
+
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={e => setDateFrom(e.target.value)}
+                className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 mb-2">
+                إلى
+              </label>
+
+              <input
+                type="date"
+                value={dateTo}
+                onChange={e => setDateTo(e.target.value)}
+                className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
       {loading ? (
         <div className="bg-white border border-slate-100 rounded-3xl p-10 text-center text-slate-400 font-medium shadow-sm">
           جاري التحميل...
@@ -247,14 +442,28 @@ export default function Orders() {
           </div>
 
           <p className="text-slate-900 text-lg font-black">
-            {search ? 'لا توجد نتائج' : 'لا يوجد طلبات'}
+            {hasActiveFilters ? 'لا توجد نتائج' : 'لا يوجد طلبات'}
           </p>
 
           <p className="text-slate-500 text-sm font-medium mt-1">
-            {search ? `لا يوجد طلبات تطابق "${search}"` : 'ابدأ بإضافة أول طلب لمتجرك'}
+            {hasActiveFilters
+              ? 'لا يوجد طلبات تطابق الفلاتر الحالية'
+              : 'ابدأ بإضافة أول طلب لمتجرك'
+            }
           </p>
 
-          {!search && (
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-5 py-3 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200 active:scale-[0.99]"
+            >
+              <FiX size={18} />
+              مسح الفلاتر
+            </button>
+          )}
+
+          {!hasActiveFilters && (
             <Link
               to="/orders/new"
               className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
