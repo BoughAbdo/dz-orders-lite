@@ -561,7 +561,7 @@ function FilterDropdown({ label, value, onChange, options }) {
       <button
         type="button"
         onClick={() => setOpen(prev => !prev)}
-        className={`w-full flex items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-sm font-black transition-all duration-200 shadow-sm
+        className={`w-full flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm font-black transition-all duration-200 shadow-sm
           ${open
             ? 'border-blue-300 bg-white ring-4 ring-blue-100/70 text-slate-900'
             : 'border-slate-100 bg-slate-50 text-slate-700 hover:bg-white hover:border-blue-200 hover:shadow-md'
@@ -572,12 +572,12 @@ function FilterDropdown({ label, value, onChange, options }) {
         </span>
 
         <span
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition duration-200
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl transition duration-200
             ${open ? 'bg-blue-50 text-blue-600' : 'bg-white text-slate-400'}
           `}
         >
           <FiChevronDown
-            size={17}
+            size={15}
             className={`transition duration-200 ${
               open ? 'rotate-180' : ''
             }`}
@@ -586,8 +586,8 @@ function FilterDropdown({ label, value, onChange, options }) {
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 z-50 mt-2 rounded-3xl border border-slate-100 bg-white p-2 shadow-2xl shadow-slate-300/60">
-          <div className="max-h-72 overflow-y-auto rounded-2xl">
+        <div className="absolute left-0 right-0 z-50 mt-2 rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl shadow-slate-300/50">
+          <div className="max-h-56 overflow-y-auto rounded-xl">
             {options.map(option => {
               const active = option.key === value
 
@@ -596,9 +596,9 @@ function FilterDropdown({ label, value, onChange, options }) {
                   key={option.key}
                   type="button"
                   onClick={() => handleSelect(option.key)}
-                  className={`w-full flex items-center justify-between gap-3 rounded-2xl px-3.5 py-3 text-right text-sm font-black transition-all duration-150
+                  className={`w-full flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-right text-xs font-black transition-all duration-150
                     ${active
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                      ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/20'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                     }`}
                 >
@@ -607,8 +607,8 @@ function FilterDropdown({ label, value, onChange, options }) {
                   </span>
 
                   {active && (
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/20 text-white">
-                      <FiCheck size={14} />
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/20 text-white">
+                      <FiCheck size={12} />
                     </span>
                   )}
                 </button>
