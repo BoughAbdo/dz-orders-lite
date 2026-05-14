@@ -105,6 +105,11 @@ const algerianWilayas = [
 
 export default function Orders() {
   const [orders, setOrders] = useState([])
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [pages, setPages] = useState(1)
+  const [limit] = useState(20)
+
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -123,9 +128,16 @@ export default function Orders() {
   }, [search])
 
   useEffect(() => {
+    setPage(1)
+  }, [filter, debouncedSearch, wilayaFilter, dateFilter, dateFrom, dateTo])
+
+  useEffect(() => {
     setLoading(true)
 
     const params = new URLSearchParams()
+
+    params.set('page', page)
+    params.set('limit', limit)
 
     if (filter !== 'all') {
       params.set('status', filter)
@@ -152,10 +164,14 @@ export default function Orders() {
     const url = queryString ? `/orders?${queryString}` : '/orders'
 
     api.get(url)
-      .then(res => setOrders(res.data))
+      .then(res => {
+        setOrders(res.data.orders || [])
+        setTotal(res.data.total || 0)
+        setPages(res.data.pages || 1)
+      })
       .catch(err => console.error(err))
       .finally(() => setLoading(false))
-  }, [filter, debouncedSearch, wilayaFilter, dateFilter, dateFrom, dateTo])
+  }, [filter, debouncedSearch, wilayaFilter, dateFilter, dateFrom, dateTo, page, limit])
 
   const hasActiveFilters =
     search.trim() ||
@@ -173,6 +189,7 @@ export default function Orders() {
     setDateFilter('all')
     setDateFrom('')
     setDateTo('')
+    setPage(1)
   }
 
   const escapeCSVValue = (value) => {
@@ -209,7 +226,7 @@ export default function Orders() {
     const rows = orders.map(order => {
       const price = Number(order.price || 0)
       const deliveryPrice = Number(order.deliveryPrice || 0)
-      const total = price + deliveryPrice
+      const totalPrice = price + deliveryPrice
       const createdAt = order.createdAt
         ? new Date(order.createdAt).toLocaleDateString('ar-DZ')
         : ''
@@ -222,7 +239,7 @@ export default function Orders() {
         order.product || '',
         price,
         deliveryPrice,
-        total,
+        totalPrice,
         statusLabels[order.status]?.label || order.status || '',
         order.notes || '',
         createdAt,
@@ -243,7 +260,7 @@ export default function Orders() {
     const today = new Date().toISOString().slice(0, 10)
 
     link.href = url
-    link.download = `orders-${today}.csv`
+    link.download = `orders-page-${page}-${today}.csv`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -260,7 +277,7 @@ export default function Orders() {
           </h2>
 
           <p className="text-slate-500 text-sm font-medium mt-1">
-            {orders.length} طلب
+            {total} طلب
           </p>
         </div>
 
@@ -272,7 +289,7 @@ export default function Orders() {
             className="inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-2.5 text-sm font-extrabold text-emerald-600 border border-emerald-100 transition hover:bg-emerald-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
           >
             <FiDownload size={18} />
-            تحميل القائمة
+            تحميل الصفحة الحالية
           </button>
 
           <Link
@@ -516,6 +533,38 @@ export default function Orders() {
               </div>
             </Link>
           ))}
+
+          {pages > 1 && (
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-3xl border border-slate-100 bg-white p-3 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                disabled={page <= 1 || loading}
+                className="rounded-2xl bg-slate-100 px-4 py-2.5 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                السابق
+              </button>
+
+              <div className="text-center">
+                <p className="text-sm font-black text-slate-700">
+                  الصفحة {page} من {pages}
+                </p>
+
+                <p className="mt-1 text-xs font-bold text-slate-400">
+                  إجمالي النتائج: {total}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPage(prev => Math.min(prev + 1, pages))}
+                disabled={page >= pages || loading}
+                className="rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                التالي
+              </button>
+            </div>
+          )}
         </div>
       )}
 

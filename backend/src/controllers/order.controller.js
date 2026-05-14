@@ -106,7 +106,7 @@ const buildDateFilter = ({ dateFilter, dateFrom, dateTo }) => {
   return null;
 };
 
-// جلب الطلبات مع فلترة من Backend
+// جلب الطلبات مع فلترة + Pagination من Backend
 exports.getOrders = async (req, res) => {
   try {
     const {
@@ -115,7 +115,9 @@ exports.getOrders = async (req, res) => {
       wilaya,
       dateFilter,
       dateFrom,
-      dateTo
+      dateTo,
+      page = 1,
+      limit = 20
     } = req.query;
 
     const filter = {
@@ -153,9 +155,24 @@ exports.getOrders = async (req, res) => {
       filter.createdAt = createdAtFilter;
     }
 
-    const orders = await Order.find(filter).sort({ createdAt: -1 });
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const limitNumber = Math.min(Math.max(Number(limit) || 20, 1), 100);
+    const skip = (pageNumber - 1) * limitNumber;
 
-    res.status(200).json(orders);
+    const total = await Order.countDocuments(filter);
+
+    const orders = await Order.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber);
+
+    res.status(200).json({
+      orders,
+      total,
+      page: pageNumber,
+      pages: Math.ceil(total / limitNumber) || 1,
+      limit: limitNumber
+    });
 
   } catch (error) {
     res.status(500).json({
