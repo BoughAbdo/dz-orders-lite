@@ -56,6 +56,19 @@ const statusLabels = {
 
 const statusFlow = ['new', 'confirmed', 'shipped', 'delivered']
 
+const defaultWhatsappTemplates = {
+  confirmOrder:
+    'السلام عليكم {name}،\nتم تأكيد طلبك: {product}.\nالإجمالي: {total} دج.\nسيتم التواصل معك بخصوص التوصيل قريباً إن شاء الله.',
+  shipped:
+    'السلام عليكم {name}،\nتم إرسال طلبك: {product}.\nيرجى إبقاء الهاتف متاحاً لتسهيل عملية التوصيل.\nشكراً لثقتك بنا.',
+  delivered:
+    'السلام عليكم {name}،\nنتمنى أن يكون طلبك قد وصلك بحالة جيدة.\nشكراً لثقتك بنا.',
+  followUp:
+    'السلام عليكم {name}،\nنود تأكيد طلبك: {product}.\nيرجى الرد علينا لتأكيد معلومات التوصيل.',
+  returned:
+    'السلام عليكم {name}،\nلاحظنا أن طلبك: {product} لم يكتمل تسليمه.\nهل يمكن إخبارنا بسبب الرجوع حتى نساعدك؟',
+}
+
 export default function OrderDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -610,36 +623,64 @@ export default function OrderDetail() {
   const total = Number(order.price || 0) + Number(order.deliveryPrice || 0)
   const isFinalStatus = ['delivered', 'returned'].includes(order.status)
 
+  const storeName = user?.businessName || 'طلبيات'
+
+  const whatsappTemplates = {
+    confirmOrder:
+      user?.whatsappTemplates?.confirmOrder ||
+      defaultWhatsappTemplates.confirmOrder,
+    shipped:
+      user?.whatsappTemplates?.shipped ||
+      defaultWhatsappTemplates.shipped,
+    delivered:
+      user?.whatsappTemplates?.delivered ||
+      defaultWhatsappTemplates.delivered,
+    followUp:
+      user?.whatsappTemplates?.followUp ||
+      defaultWhatsappTemplates.followUp,
+    returned:
+      user?.whatsappTemplates?.returned ||
+      defaultWhatsappTemplates.returned,
+  }
+
+  const fillWhatsappTemplate = (template) => {
+    return String(template || '')
+      .replaceAll('{name}', order.customerName || '')
+      .replaceAll('{product}', order.product || '')
+      .replaceAll('{total}', total.toLocaleString())
+      .replaceAll('{store}', storeName)
+  }
+
   const whatsappMessages = [
     {
       label: 'تأكيد الطلب',
       description: 'إرسال رسالة تأكيد للزبون',
       icon: FiCheckCircle,
-      msg: `السلام عليكم ${order.customerName}،\nتم تأكيد طلبك: ${order.product}.\nالإجمالي: ${total.toLocaleString()} دج.\nسيتم التواصل معك بخصوص التوصيل قريباً إن شاء الله.`,
+      msg: fillWhatsappTemplate(whatsappTemplates.confirmOrder),
     },
     {
       label: 'إشعار بالشحن',
       description: 'إعلام الزبون أن الطلب في الطريق',
       icon: FiTruck,
-      msg: `السلام عليكم ${order.customerName}،\nتم إرسال طلبك: ${order.product}.\nيرجى إبقاء الهاتف متاحاً لتسهيل عملية التوصيل.\nشكراً لثقتك بنا.`,
+      msg: fillWhatsappTemplate(whatsappTemplates.shipped),
     },
     {
       label: 'تأكيد التسليم',
       description: 'رسالة متابعة بعد وصول الطلب',
       icon: FiCheckCircle,
-      msg: `السلام عليكم ${order.customerName}،\nنتمنى أن يكون طلبك قد وصلك بحالة جيدة.\nشكراً لثقتك بنا.`,
+      msg: fillWhatsappTemplate(whatsappTemplates.delivered),
     },
     {
       label: 'متابعة الطلب',
       description: 'طلب تأكيد معلومات التوصيل',
       icon: FiClock,
-      msg: `السلام عليكم ${order.customerName}،\nنود تأكيد طلبك: ${order.product}.\nيرجى الرد علينا لتأكيد معلومات التوصيل.`,
+      msg: fillWhatsappTemplate(whatsappTemplates.followUp),
     },
     {
       label: 'استفسار عن الرجوع',
       description: 'معرفة سبب رجوع الطلب',
       icon: FiRefreshCcw,
-      msg: `السلام عليكم ${order.customerName}،\nلاحظنا أن طلبك: ${order.product} لم يكتمل تسليمه.\nهل يمكن إخبارنا بسبب الرجوع حتى نساعدك؟`,
+      msg: fillWhatsappTemplate(whatsappTemplates.returned),
     },
   ]
 
@@ -799,7 +840,6 @@ export default function OrderDetail() {
       ) : (
         <>
           <div id="order-detail" className="space-y-4">
-            {/* بيانات الزبون */}
             <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
               <div className="flex items-center justify-between gap-3 mb-4">
                 <div className="flex items-center gap-2">
@@ -830,7 +870,6 @@ export default function OrderDetail() {
               </div>
             </div>
 
-            {/* بيانات الطلب */}
             <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -860,7 +899,6 @@ export default function OrderDetail() {
             </div>
           </div>
 
-          {/* تغيير الحالة */}
           <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm mt-4">
             <p className="text-sm font-black text-slate-900 mb-4">
               تغيير الحالة
@@ -914,9 +952,7 @@ export default function OrderDetail() {
             )}
           </div>
 
-          {/* أزرار */}
           <div className="mt-4 space-y-3">
-            {/* زر واتساب مع قائمة */}
             <div className="relative">
               <button
                 onClick={() => setShowWhatsAppMenu(!showWhatsAppMenu)}
