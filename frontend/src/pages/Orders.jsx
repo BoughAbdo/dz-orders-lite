@@ -42,114 +42,120 @@ const dateFilters = [
   { key: 'custom', label: 'تاريخ مخصص' },
 ]
 
+const algerianWilayas = [
+  'أدرار',
+  'الشلف',
+  'الأغواط',
+  'أم البواقي',
+  'باتنة',
+  'بجاية',
+  'بسكرة',
+  'بشار',
+  'البليدة',
+  'البويرة',
+  'تمنراست',
+  'تبسة',
+  'تلمسان',
+  'تيارت',
+  'تيزي وزو',
+  'الجزائر',
+  'الجلفة',
+  'جيجل',
+  'سطيف',
+  'سعيدة',
+  'سكيكدة',
+  'سيدي بلعباس',
+  'عنابة',
+  'قالمة',
+  'قسنطينة',
+  'المدية',
+  'مستغانم',
+  'المسيلة',
+  'معسكر',
+  'ورقلة',
+  'وهران',
+  'البيض',
+  'إليزي',
+  'برج بوعريريج',
+  'بومرداس',
+  'الطارف',
+  'تندوف',
+  'تيسمسيلت',
+  'الوادي',
+  'خنشلة',
+  'سوق أهراس',
+  'تيبازة',
+  'ميلة',
+  'عين الدفلى',
+  'النعامة',
+  'عين تموشنت',
+  'غرداية',
+  'غليزان',
+  'تيميمون',
+  'برج باجي مختار',
+  'أولاد جلال',
+  'بني عباس',
+  'عين صالح',
+  'عين قزام',
+  'تقرت',
+  'جانت',
+  'المغير',
+  'المنيعة',
+]
+
 export default function Orders() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [wilayaFilter, setWilayaFilter] = useState('all')
   const [dateFilter, setDateFilter] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search.trim())
+    }, 400)
+
+    return () => clearTimeout(timer)
+  }, [search])
+
+  useEffect(() => {
     setLoading(true)
 
-    const params = filter !== 'all' ? `?status=${filter}` : ''
+    const params = new URLSearchParams()
 
-    api.get(`/orders${params}`)
-      .then(res => setOrders(res.data))
-      .catch(err => console.error(err))
-      .finally(() => setLoading(false))
-  }, [filter])
-
-  const uniqueWilayas = Array.from(
-    new Set(
-      orders
-        .map(order => order.wilaya)
-        .filter(Boolean)
-    )
-  ).sort((a, b) => a.localeCompare(b, 'ar'))
-
-  const isSameDay = (dateA, dateB) => {
-    return (
-      dateA.getFullYear() === dateB.getFullYear() &&
-      dateA.getMonth() === dateB.getMonth() &&
-      dateA.getDate() === dateB.getDate()
-    )
-  }
-
-  const getStartOfWeek = (date) => {
-    const start = new Date(date)
-    const day = start.getDay()
-    const diffToMonday = day === 0 ? 6 : day - 1
-
-    start.setDate(start.getDate() - diffToMonday)
-    start.setHours(0, 0, 0, 0)
-
-    return start
-  }
-
-  const matchesDateFilter = (order) => {
-    if (dateFilter === 'all') return true
-    if (!order.createdAt) return false
-
-    const orderDate = new Date(order.createdAt)
-    const now = new Date()
-
-    if (dateFilter === 'today') {
-      return isSameDay(orderDate, now)
+    if (filter !== 'all') {
+      params.set('status', filter)
     }
 
-    if (dateFilter === 'week') {
-      const startOfWeek = getStartOfWeek(now)
-      return orderDate >= startOfWeek
+    if (debouncedSearch) {
+      params.set('search', debouncedSearch)
     }
 
-    if (dateFilter === 'month') {
-      return (
-        orderDate.getFullYear() === now.getFullYear() &&
-        orderDate.getMonth() === now.getMonth()
-      )
+    if (wilayaFilter !== 'all') {
+      params.set('wilaya', wilayaFilter)
+    }
+
+    if (dateFilter !== 'all') {
+      params.set('dateFilter', dateFilter)
     }
 
     if (dateFilter === 'custom') {
-      if (dateFrom) {
-        const from = new Date(dateFrom)
-        from.setHours(0, 0, 0, 0)
-
-        if (orderDate < from) return false
-      }
-
-      if (dateTo) {
-        const to = new Date(dateTo)
-        to.setHours(23, 59, 59, 999)
-
-        if (orderDate > to) return false
-      }
-
-      return true
+      if (dateFrom) params.set('dateFrom', dateFrom)
+      if (dateTo) params.set('dateTo', dateTo)
     }
 
-    return true
-  }
+    const queryString = params.toString()
+    const url = queryString ? `/orders?${queryString}` : '/orders'
 
-  const filteredOrders = orders.filter(order => {
-    const q = search.trim().toLowerCase()
-
-    const matchesSearch = !q || (
-      order.customerName?.toLowerCase().includes(q) ||
-      order.phone?.includes(q) ||
-      order.product?.toLowerCase().includes(q) ||
-      order.wilaya?.toLowerCase().includes(q) ||
-      order.city?.toLowerCase().includes(q)
-    )
-
-    const matchesWilaya =
-      wilayaFilter === 'all' || order.wilaya === wilayaFilter
-
-    return matchesSearch && matchesWilaya && matchesDateFilter(order)
-  })
+    api.get(url)
+      .then(res => setOrders(res.data))
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false))
+  }, [filter, debouncedSearch, wilayaFilter, dateFilter, dateFrom, dateTo])
 
   const hasActiveFilters =
     search.trim() ||
@@ -161,6 +167,7 @@ export default function Orders() {
 
   const resetFilters = () => {
     setSearch('')
+    setDebouncedSearch('')
     setFilter('all')
     setWilayaFilter('all')
     setDateFilter('all')
@@ -183,7 +190,7 @@ export default function Orders() {
   }
 
   const exportToCSV = () => {
-    if (filteredOrders.length === 0) return
+    if (orders.length === 0) return
 
     const headers = [
       'اسم الزبون',
@@ -199,7 +206,7 @@ export default function Orders() {
       'تاريخ الطلب',
     ]
 
-    const rows = filteredOrders.map(order => {
+    const rows = orders.map(order => {
       const price = Number(order.price || 0)
       const deliveryPrice = Number(order.deliveryPrice || 0)
       const total = price + deliveryPrice
@@ -253,7 +260,7 @@ export default function Orders() {
           </h2>
 
           <p className="text-slate-500 text-sm font-medium mt-1">
-            {filteredOrders.length} طلب
+            {orders.length} طلب
           </p>
         </div>
 
@@ -261,7 +268,7 @@ export default function Orders() {
           <button
             type="button"
             onClick={exportToCSV}
-            disabled={loading || filteredOrders.length === 0}
+            disabled={loading || orders.length === 0}
             className="inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-2.5 text-sm font-extrabold text-emerald-600 border border-emerald-100 transition hover:bg-emerald-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
           >
             <FiDownload size={18} />
@@ -310,7 +317,7 @@ export default function Orders() {
         <button
           type="button"
           onClick={exportToCSV}
-          disabled={loading || filteredOrders.length === 0}
+          disabled={loading || orders.length === 0}
           className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-extrabold text-emerald-600 border border-emerald-100 transition hover:bg-emerald-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
         >
           <FiDownload size={18} />
@@ -369,7 +376,7 @@ export default function Orders() {
             onChange={setWilayaFilter}
             options={[
               { key: 'all', label: 'كل الولايات' },
-              ...uniqueWilayas.map(wilaya => ({
+              ...algerianWilayas.map(wilaya => ({
                 key: wilaya,
                 label: wilaya,
               })),
@@ -419,7 +426,7 @@ export default function Orders() {
         <div className="bg-white border border-slate-100 rounded-3xl p-10 text-center text-slate-400 font-medium shadow-sm">
           جاري التحميل...
         </div>
-      ) : filteredOrders.length === 0 ? (
+      ) : orders.length === 0 ? (
         <div className="bg-white border border-slate-100 rounded-3xl p-10 text-center shadow-sm">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-50 text-slate-400">
             <FiPackage size={30} />
@@ -459,7 +466,7 @@ export default function Orders() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {filteredOrders.map(order => (
+          {orders.map(order => (
             <Link
               key={order._id}
               to={`/orders/${order._id}`}
