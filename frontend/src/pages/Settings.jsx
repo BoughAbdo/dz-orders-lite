@@ -11,7 +11,22 @@ import {
   FiCheckCircle,
   FiAlertTriangle,
   FiSettings,
+  FiMessageCircle,
+  FiInfo,
 } from 'react-icons/fi'
+
+const defaultWhatsappTemplates = {
+  confirmOrder:
+    'السلام عليكم {name}،\nتم تأكيد طلبك: {product}.\nالإجمالي: {total} دج.\nسيتم التواصل معك بخصوص التوصيل قريباً إن شاء الله.',
+  shipped:
+    'السلام عليكم {name}،\nتم إرسال طلبك: {product}.\nيرجى إبقاء الهاتف متاحاً لتسهيل عملية التوصيل.\nشكراً لثقتك بنا.',
+  delivered:
+    'السلام عليكم {name}،\nنتمنى أن يكون طلبك قد وصلك بحالة جيدة.\nشكراً لثقتك بنا.',
+  followUp:
+    'السلام عليكم {name}،\nنود تأكيد طلبك: {product}.\nيرجى الرد علينا لتأكيد معلومات التوصيل.',
+  returned:
+    'السلام عليكم {name}،\nلاحظنا أن طلبك: {product} لم يكتمل تسليمه.\nهل يمكن إخبارنا بسبب الرجوع حتى نساعدك؟',
+}
 
 export default function Settings() {
   const { user, updateUser } = useAuth()
@@ -22,7 +37,11 @@ export default function Settings() {
     phone: '',
   })
 
+  const [templates, setTemplates] = useState(defaultWhatsappTemplates)
+
   const [loading, setLoading] = useState(false)
+  const [templatesLoading, setTemplatesLoading] = useState(false)
+
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
@@ -35,6 +54,24 @@ export default function Settings() {
         businessName: user.businessName || '',
         phone: user.phone || '',
       })
+
+      setTemplates({
+        confirmOrder:
+          user.whatsappTemplates?.confirmOrder ||
+          defaultWhatsappTemplates.confirmOrder,
+        shipped:
+          user.whatsappTemplates?.shipped ||
+          defaultWhatsappTemplates.shipped,
+        delivered:
+          user.whatsappTemplates?.delivered ||
+          defaultWhatsappTemplates.delivered,
+        followUp:
+          user.whatsappTemplates?.followUp ||
+          defaultWhatsappTemplates.followUp,
+        returned:
+          user.whatsappTemplates?.returned ||
+          defaultWhatsappTemplates.returned,
+      })
     }
   }, [user])
 
@@ -45,6 +82,18 @@ export default function Settings() {
         block: 'center',
       })
     }, 0)
+  }
+
+  const showSuccess = (message) => {
+    setError('')
+    setSuccess(message)
+    scrollToMessage()
+  }
+
+  const showError = (message) => {
+    setSuccess('')
+    setError(message)
+    scrollToMessage()
   }
 
   const handleChange = (e) => {
@@ -69,13 +118,21 @@ export default function Settings() {
     setSuccess('')
   }
 
+  const handleTemplateChange = (e) => {
+    setTemplates({
+      ...templates,
+      [e.target.name]: e.target.value,
+    })
+
+    setError('')
+    setSuccess('')
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
 
     if (!form.name.trim() || !form.businessName.trim()) {
-      setError('يرجى إدخال اسم المستخدم واسم المتجر')
-      setSuccess('')
-      scrollToMessage()
+      showError('يرجى إدخال اسم المستخدم واسم المتجر')
       return
     }
 
@@ -91,16 +148,43 @@ export default function Settings() {
       })
 
       updateUser(res.data.user)
-      setSuccess('تم حفظ الإعدادات بنجاح')
-      scrollToMessage()
-
+      showSuccess('تم حفظ الإعدادات بنجاح')
     } catch (err) {
-      setError(err.response?.data?.message || 'تعذر حفظ الإعدادات')
-      scrollToMessage()
-
+      showError(err.response?.data?.message || 'تعذر حفظ الإعدادات')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSaveTemplates = async (e) => {
+    e.preventDefault()
+
+    setTemplatesLoading(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      const res = await api.put('/auth/whatsapp-templates', {
+        confirmOrder: templates.confirmOrder,
+        shipped: templates.shipped,
+        delivered: templates.delivered,
+        followUp: templates.followUp,
+        returned: templates.returned,
+      })
+
+      updateUser(res.data.user)
+      showSuccess('تم حفظ قوالب WhatsApp بنجاح')
+    } catch (err) {
+      showError(err.response?.data?.message || 'تعذر حفظ قوالب WhatsApp')
+    } finally {
+      setTemplatesLoading(false)
+    }
+  }
+
+  const resetTemplates = () => {
+    setTemplates(defaultWhatsappTemplates)
+    setError('')
+    setSuccess('')
   }
 
   return (
@@ -156,7 +240,7 @@ export default function Settings() {
           </p>
 
           <p className="text-xs font-semibold text-slate-400 mt-1">
-            هذه البيانات ستُستخدم لاحقاً في PDF ورسائل WhatsApp.
+            هذه البيانات تُستخدم في PDF ورسائل WhatsApp.
           </p>
         </div>
 
@@ -213,6 +297,102 @@ export default function Settings() {
           <PreviewRow label="هاتف المتجر" value={form.phone || '—'} />
         </div>
       </div>
+
+      <form
+        onSubmit={handleSaveTemplates}
+        className="mt-5 bg-white rounded-3xl p-5 border border-slate-100 shadow-sm"
+      >
+        <div className="mb-5">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <FiMessageCircle size={20} />
+            </div>
+
+            <div>
+              <p className="text-sm font-black text-slate-900">
+                قوالب رسائل WhatsApp
+              </p>
+
+              <p className="text-xs font-semibold text-slate-400 mt-1">
+                عدّل الرسائل التي تظهر في صفحة تفاصيل الطلب.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-4 rounded-3xl bg-slate-50 border border-slate-100 p-4">
+          <div className="flex items-start gap-2">
+            <FiInfo className="text-slate-400 mt-0.5 shrink-0" size={18} />
+
+            <div>
+              <p className="text-xs font-black text-slate-700">
+                المتغيرات المتاحة داخل الرسائل
+              </p>
+
+              <p className="text-xs font-semibold text-slate-500 mt-1 leading-6">
+                استخدم {'{name}'} لاسم الزبون، {'{product}'} للمنتج، {'{total}'} للإجمالي، و {'{store}'} لاسم المتجر.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <TemplateField
+            label="رسالة تأكيد الطلب"
+            name="confirmOrder"
+            value={templates.confirmOrder}
+            onChange={handleTemplateChange}
+          />
+
+          <TemplateField
+            label="رسالة الشحن"
+            name="shipped"
+            value={templates.shipped}
+            onChange={handleTemplateChange}
+          />
+
+          <TemplateField
+            label="رسالة تأكيد التسليم"
+            name="delivered"
+            value={templates.delivered}
+            onChange={handleTemplateChange}
+          />
+
+          <TemplateField
+            label="رسالة متابعة الطلب"
+            name="followUp"
+            value={templates.followUp}
+            onChange={handleTemplateChange}
+          />
+
+          <TemplateField
+            label="رسالة استفسار عن الرجوع"
+            name="returned"
+            value={templates.returned}
+            onChange={handleTemplateChange}
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={resetTemplates}
+              disabled={templatesLoading}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-50 hover:bg-slate-100 active:scale-[0.99] text-slate-600 font-extrabold py-3.5 transition duration-200 text-sm border border-slate-100 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              استرجاع القوالب الافتراضية
+            </button>
+
+            <button
+              type="submit"
+              disabled={templatesLoading}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 active:scale-[0.99] text-white font-extrabold py-3.5 transition duration-200 text-sm shadow-lg shadow-emerald-600/20 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
+            >
+              <FiSave size={18} />
+              {templatesLoading ? 'جاري الحفظ...' : 'حفظ قوالب WhatsApp'}
+            </button>
+          </div>
+        </div>
+      </form>
     </Layout>
   )
 }
@@ -252,6 +432,24 @@ function SettingsField({
           size={18}
         />
       </div>
+    </div>
+  )
+}
+
+function TemplateField({ label, name, value, onChange }) {
+  return (
+    <div>
+      <label className="block text-sm font-bold text-slate-700 mb-2">
+        {label}
+      </label>
+
+      <textarea
+        name={name}
+        value={value}
+        onChange={onChange}
+        rows={4}
+        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-right text-[14px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100/70 resize-none leading-7"
+      />
     </div>
   )
 }
