@@ -1,3 +1,4 @@
+// backend/src/routes/auth.routes.js
 const express = require('express');
 const router = express.Router();
 
@@ -5,7 +6,8 @@ const {
   register,
   login,
   getMe,
-  updateSettings
+  updateSettings,
+  updateWhatsappTemplates
 } = require('../controllers/auth.controller');
 
 const auth = require('../middleware/auth.middleware');
@@ -14,5 +16,6 @@ router.post('/register', register);
 router.post('/login', login);
 router.get('/me', auth, getMe);
 router.put('/settings', auth, updateSettings);
+router.put('/whatsapp-templates', auth, updateWhatsappTemplates);
 
 module.exports = router;
