@@ -111,6 +111,7 @@ export default function Orders() {
   const [limit] = useState(20)
 
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -133,6 +134,7 @@ export default function Orders() {
 
   useEffect(() => {
     setLoading(true)
+    setError('')
 
     const params = new URLSearchParams()
 
@@ -169,7 +171,13 @@ export default function Orders() {
         setTotal(res.data.total || 0)
         setPages(res.data.pages || 1)
       })
-      .catch(err => console.error(err))
+      .catch(err => {
+        console.error(err)
+        setError('تعذر تحميل الطلبات، حاول مرة أخرى')
+        setOrders([])
+        setTotal(0)
+        setPages(1)
+      })
       .finally(() => setLoading(false))
   }, [filter, debouncedSearch, wilayaFilter, dateFilter, dateFrom, dateTo, page, limit])
 
@@ -190,6 +198,7 @@ export default function Orders() {
     setDateFrom('')
     setDateTo('')
     setPage(1)
+    setError('')
   }
 
   const escapeCSVValue = (value) => {
@@ -439,6 +448,12 @@ export default function Orders() {
         )}
       </div>
 
+      {error && (
+        <div className="mb-4 rounded-3xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-600">
+          {error}
+        </div>
+      )}
+
       {loading ? (
         <div className="bg-white border border-slate-100 rounded-3xl p-10 text-center text-slate-400 font-medium shadow-sm">
           جاري التحميل...
@@ -450,17 +465,19 @@ export default function Orders() {
           </div>
 
           <p className="text-slate-900 text-lg font-black">
-            {hasActiveFilters ? 'لا توجد نتائج' : 'لا يوجد طلبات'}
+            {error ? 'تعذر تحميل الطلبات' : hasActiveFilters ? 'لا توجد نتائج' : 'لا يوجد طلبات'}
           </p>
 
           <p className="text-slate-500 text-sm font-medium mt-1">
-            {hasActiveFilters
-              ? 'لا يوجد طلبات تطابق الفلاتر الحالية'
-              : 'ابدأ بإضافة أول طلب لمتجرك'
+            {error
+              ? 'تحقق من الاتصال أو حاول لاحقًا'
+              : hasActiveFilters
+                ? 'لا يوجد طلبات تطابق الفلاتر الحالية'
+                : 'ابدأ بإضافة أول طلب لمتجرك'
             }
           </p>
 
-          {hasActiveFilters && (
+          {hasActiveFilters && !error && (
             <button
               type="button"
               onClick={resetFilters}
@@ -471,7 +488,7 @@ export default function Orders() {
             </button>
           )}
 
-          {!hasActiveFilters && (
+          {!hasActiveFilters && !error && (
             <Link
               to="/orders/new"
               className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
