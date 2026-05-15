@@ -9,6 +9,8 @@ import {
   FiMail,
   FiLock,
   FiArrowLeft,
+  FiEye,
+  FiEyeOff,
 } from 'react-icons/fi'
 
 export default function Register() {
@@ -22,6 +24,8 @@ export default function Register() {
 
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+
   const { login } = useAuth()
   const navigate = useNavigate()
 
@@ -37,7 +41,7 @@ export default function Register() {
     try {
       const res = await api.post('/auth/register', form)
       login(res.data.token, res.data.user)
-      navigate('/')
+      navigate('/dashboard')
     } catch (err) {
       setError(err.response?.data?.message || 'حدث خطأ')
     } finally {
@@ -170,16 +174,25 @@ export default function Register() {
 
               <div className="relative">
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={form.password}
                   onChange={handleChange}
                   required
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 pl-11 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
                   placeholder="••••••••"
                 />
 
                 <FiLock className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(prev => !prev)}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-700"
+                  aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+                >
+                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </button>
               </div>
             </div>
 
@@ -212,7 +225,7 @@ export default function Register() {
 
         <p className="text-center text-xs font-medium text-slate-400 mt-6">
           © 2025 طلبيات — جميع الحقوق محفوظة
-        </p>  
+        </p>
       </div>
     </div>
   )
