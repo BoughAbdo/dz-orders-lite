@@ -1,6 +1,8 @@
+// src/App.jsx
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 
+import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
@@ -26,17 +28,19 @@ function PrivateRoute({ children }) {
     )
   }
 
-  return token ? children : <Navigate to="/login" />
+  return token ? children : <Navigate to="/login" replace />
 }
 
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<Landing />} />
+
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
       <Route
-        path="/"
+        path="/dashboard"
         element={
           <PrivateRoute>
             <Dashboard />
@@ -79,6 +83,8 @@ export default function App() {
           </PrivateRoute>
         }
       />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

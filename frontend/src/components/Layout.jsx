@@ -1,3 +1,4 @@
+// src/components/Layout.jsx
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -20,7 +21,7 @@ export default function Layout({ children }) {
   }
 
   const navItems = [
-    { path: '/', label: 'الرئيسية', icon: FiBarChart2 },
+    { path: '/dashboard', label: 'الرئيسية', icon: FiBarChart2 },
     { path: '/orders', label: 'الطلبات', icon: FiPackage },
     { path: '/orders/new', label: 'طلب جديد', icon: FiPlusCircle },
     { path: '/settings', label: 'الإعدادات', icon: FiSettings },
