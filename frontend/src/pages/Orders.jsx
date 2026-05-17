@@ -15,6 +15,8 @@ import {
   FiCalendar,
   FiChevronDown,
   FiCheck,
+  FiRefreshCw,
+  FiAlertCircle,
 } from 'react-icons/fi'
 
 const statusLabels = {
@@ -103,6 +105,50 @@ const algerianWilayas = [
   'المنيعة',
 ]
 
+const getOrdersErrorMessage = (err) => {
+  if (!err.response) {
+    return {
+      title: 'تعذر الاتصال بالخادم',
+      description: 'تحقق من اتصال الإنترنت أو حاول مرة أخرى بعد لحظات.',
+    }
+  }
+
+  if (err.response.status === 401) {
+    return {
+      title: 'انتهت جلسة الدخول',
+      description: 'يرجى تسجيل الدخول مرة أخرى لمتابعة استخدام التطبيق.',
+    }
+  }
+
+  if (err.response.status === 403) {
+    return {
+      title: 'لا تملك صلاحية الوصول',
+      description: 'لا يمكنك عرض هذه الطلبات بهذا الحساب.',
+    }
+  }
+
+  if (err.response.status === 404) {
+    return {
+      title: 'لم يتم العثور على الطلبات',
+      description: 'تأكد من أن الرابط صحيح ثم حاول مرة أخرى.',
+    }
+  }
+
+  if (err.response.status >= 500) {
+    return {
+      title: 'حدث خطأ في الخادم',
+      description: 'الخدمة غير متاحة مؤقتًا، حاول مرة أخرى بعد قليل.',
+    }
+  }
+
+  return {
+    title: 'تعذر تحميل الطلبات',
+    description:
+      err.response?.data?.message ||
+      'لم نتمكن من تحميل الطلبات، حاول مرة أخرى بعد لحظات.',
+  }
+}
+
 export default function Orders() {
   const [orders, setOrders] = useState([])
   const [page, setPage] = useState(1)
@@ -111,7 +157,9 @@ export default function Orders() {
   const [limit] = useState(20)
 
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
+  const [retryKey, setRetryKey] = useState(0)
+
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -134,7 +182,7 @@ export default function Orders() {
 
   useEffect(() => {
     setLoading(true)
-    setError('')
+    setError(null)
 
     const params = new URLSearchParams()
 
@@ -173,13 +221,24 @@ export default function Orders() {
       })
       .catch(err => {
         console.error(err)
-        setError('تعذر تحميل الطلبات، حاول مرة أخرى')
+
+        setError(getOrdersErrorMessage(err))
         setOrders([])
         setTotal(0)
         setPages(1)
       })
       .finally(() => setLoading(false))
-  }, [filter, debouncedSearch, wilayaFilter, dateFilter, dateFrom, dateTo, page, limit])
+  }, [
+    filter,
+    debouncedSearch,
+    wilayaFilter,
+    dateFilter,
+    dateFrom,
+    dateTo,
+    page,
+    limit,
+    retryKey,
+  ])
 
   const hasActiveFilters =
     search.trim() ||
@@ -198,7 +257,11 @@ export default function Orders() {
     setDateFrom('')
     setDateTo('')
     setPage(1)
-    setError('')
+    setError(null)
+  }
+
+  const retryLoadingOrders = () => {
+    setRetryKey(prev => prev + 1)
   }
 
   const escapeCSVValue = (value) => {
@@ -449,8 +512,32 @@ export default function Orders() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-3xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-600">
-          {error}
+        <div className="mb-4 rounded-3xl border border-red-100 bg-red-50 p-4 text-right">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-red-500">
+              <FiAlertCircle size={20} />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-black text-red-700">
+                {error.title}
+              </p>
+
+              <p className="mt-1 text-xs font-bold leading-6 text-red-500">
+                {error.description}
+              </p>
+
+              <button
+                type="button"
+                onClick={retryLoadingOrders}
+                disabled={loading}
+                className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-red-100 bg-white px-4 py-2 text-xs font-extrabold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <FiRefreshCw size={14} />
+                إعادة المحاولة
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -465,17 +552,28 @@ export default function Orders() {
           </div>
 
           <p className="text-slate-900 text-lg font-black">
-            {error ? 'تعذر تحميل الطلبات' : hasActiveFilters ? 'لا توجد نتائج' : 'لا يوجد طلبات'}
+            {error ? error.title : hasActiveFilters ? 'لا توجد نتائج' : 'لا يوجد طلبات'}
           </p>
 
           <p className="text-slate-500 text-sm font-medium mt-1">
             {error
-              ? 'تحقق من الاتصال أو حاول لاحقًا'
+              ? error.description
               : hasActiveFilters
                 ? 'لا يوجد طلبات تطابق الفلاتر الحالية'
                 : 'ابدأ بإضافة أول طلب لمتجرك'
             }
           </p>
+
+          {error && (
+            <button
+              type="button"
+              onClick={retryLoadingOrders}
+              className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-red-50 px-5 py-3 text-sm font-extrabold text-red-600 border border-red-100 transition hover:bg-red-100 active:scale-[0.99]"
+            >
+              <FiRefreshCw size={18} />
+              إعادة المحاولة
+            </button>
+          )}
 
           {hasActiveFilters && !error && (
             <button
