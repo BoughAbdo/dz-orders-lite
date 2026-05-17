@@ -89,6 +89,45 @@ const wilayas = [
   { code: '69', name: 'الأبيض سيدي الشيخ' },
 ]
 
+const getNewOrderErrorMessage = (err) => {
+  if (!err.response) {
+    return {
+      title: 'تعذر الاتصال بالخادم',
+      description: 'تحقق من اتصال الإنترنت أو حاول مرة أخرى بعد لحظات.',
+    }
+  }
+
+  if (err.response.status === 401) {
+    return {
+      title: 'انتهت جلسة الدخول',
+      description: 'يرجى تسجيل الدخول مرة أخرى قبل حفظ الطلب.',
+    }
+  }
+
+  if (err.response.status === 400) {
+    return {
+      title: 'بيانات الطلب غير مكتملة',
+      description:
+        err.response?.data?.message ||
+        'راجع الحقول المطلوبة ثم حاول مرة أخرى.',
+    }
+  }
+
+  if (err.response.status >= 500) {
+    return {
+      title: 'تعذر حفظ الطلب',
+      description: 'حدث خطأ مؤقت في الخادم، حاول مرة أخرى بعد قليل.',
+    }
+  }
+
+  return {
+    title: 'تعذر حفظ الطلب',
+    description:
+      err.response?.data?.message ||
+      'لم نتمكن من حفظ الطلب، حاول مرة أخرى بعد لحظات.',
+  }
+}
+
 export default function NewOrder() {
   const [form, setForm] = useState({
     customerName: '',
@@ -102,7 +141,8 @@ export default function NewOrder() {
   })
 
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
+
   const navigate = useNavigate()
   const errorRef = useRef(null)
 
@@ -117,6 +157,10 @@ export default function NewOrder() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
+
+    if (error) {
+      setError(null)
+    }
   }
 
   const handleNumericChange = (e) => {
@@ -124,36 +168,115 @@ export default function NewOrder() {
     const onlyNumbers = value.replace(/\D/g, '')
 
     setForm({ ...form, [name]: onlyNumbers })
+
+    if (error) {
+      setError(null)
+    }
+  }
+
+  const validateForm = () => {
+    if (!form.customerName.trim()) {
+      return {
+        title: 'اسم الزبون مطلوب',
+        description: 'يرجى إدخال اسم الزبون قبل حفظ الطلب.',
+      }
+    }
+
+    if (!form.phone.trim()) {
+      return {
+        title: 'رقم الهاتف مطلوب',
+        description: 'يرجى إدخال رقم هاتف الزبون حتى يمكنك التواصل معه.',
+      }
+    }
+
+    if (form.phone.trim().length < 9) {
+      return {
+        title: 'رقم الهاتف غير صحيح',
+        description: 'يرجى إدخال رقم هاتف صحيح، مثال: 0550000000.',
+      }
+    }
+
+    if (!form.wilaya.trim()) {
+      return {
+        title: 'الولاية مطلوبة',
+        description: 'يرجى اختيار ولاية التوصيل من القائمة.',
+      }
+    }
+
+    if (!form.city.trim()) {
+      return {
+        title: 'البلدية مطلوبة',
+        description: 'يرجى إدخال البلدية أو منطقة التوصيل.',
+      }
+    }
+
+    if (!form.product.trim()) {
+      return {
+        title: 'اسم المنتج مطلوب',
+        description: 'يرجى إدخال اسم المنتج أو وصف قصير للطلب.',
+      }
+    }
+
+    if (!form.price) {
+      return {
+        title: 'سعر المنتج مطلوب',
+        description: 'يرجى إدخال سعر المنتج بالأرقام فقط.',
+      }
+    }
+
+    if (Number(form.price) <= 0) {
+      return {
+        title: 'سعر المنتج غير صحيح',
+        description: 'يجب أن يكون سعر المنتج أكبر من 0 دج.',
+      }
+    }
+
+    if (!form.deliveryPrice) {
+      return {
+        title: 'سعر التوصيل مطلوب',
+        description: 'يرجى إدخال سعر التوصيل بالأرقام فقط.',
+      }
+    }
+
+    if (Number(form.deliveryPrice) < 0) {
+      return {
+        title: 'سعر التوصيل غير صحيح',
+        description: 'لا يمكن أن يكون سعر التوصيل أقل من 0 دج.',
+      }
+    }
+
+    return null
   }
 
   const handleSubmit = async () => {
-    if (
-      !form.customerName.trim() ||
-      !form.phone.trim() ||
-      !form.wilaya.trim() ||
-      !form.city.trim() ||
-      !form.product.trim() ||
-      !form.price ||
-      !form.deliveryPrice
-    ) {
-      setError('يرجى ملء جميع الحقول الإجبارية')
+    const validationError = validateForm()
+
+    if (validationError) {
+      setError(validationError)
       scrollToError()
       return
     }
 
     setLoading(true)
-    setError('')
+    setError(null)
 
     try {
       await api.post('/orders', {
         ...form,
+        customerName: form.customerName.trim(),
+        phone: form.phone.trim(),
+        wilaya: form.wilaya.trim(),
+        city: form.city.trim(),
+        product: form.product.trim(),
+        notes: form.notes.trim(),
         price: Number(form.price),
         deliveryPrice: Number(form.deliveryPrice),
       })
 
       navigate('/orders')
     } catch (err) {
-      setError(err.response?.data?.message || 'حدث خطأ')
+      console.error(err)
+      setError(getNewOrderErrorMessage(err))
       scrollToError()
     } finally {
       setLoading(false)
@@ -175,9 +298,15 @@ export default function NewOrder() {
       {error && (
         <div
           ref={errorRef}
-          className="bg-red-50 border border-red-100 text-red-600 text-sm font-semibold p-3 rounded-2xl mb-5 text-right"
+          className="bg-red-50 border border-red-100 p-4 rounded-3xl mb-5 text-right"
         >
-          {error}
+          <p className="text-sm font-black text-red-700">
+            {error.title}
+          </p>
+
+          <p className="mt-1 text-xs font-bold text-red-500 leading-6">
+            {error.description}
+          </p>
         </div>
       )}
 
@@ -229,6 +358,10 @@ export default function NewOrder() {
               wilayas={wilayas}
               onChange={(wilayaName) => {
                 setForm({ ...form, wilaya: wilayaName })
+
+                if (error) {
+                  setError(null)
+                }
               }}
             />
 
