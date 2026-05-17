@@ -16,6 +16,8 @@ import {
   FiCalendar,
   FiDollarSign,
   FiPercent,
+  FiRefreshCw,
+  FiAlertCircle,
 } from 'react-icons/fi'
 
 const statusLabels = {
@@ -26,17 +28,70 @@ const statusLabels = {
   returned: 'رجع',
 }
 
+const getDashboardErrorMessage = (err) => {
+  if (!err.response) {
+    return {
+      title: 'تعذر الاتصال بالخادم',
+      description: 'تحقق من اتصال الإنترنت أو حاول مرة أخرى بعد لحظات.',
+    }
+  }
+
+  if (err.response.status === 401) {
+    return {
+      title: 'انتهت جلسة الدخول',
+      description: 'يرجى تسجيل الدخول مرة أخرى لعرض لوحة التحكم.',
+    }
+  }
+
+  if (err.response.status === 403) {
+    return {
+      title: 'لا تملك صلاحية الوصول',
+      description: 'لا يمكنك عرض هذه البيانات بهذا الحساب.',
+    }
+  }
+
+  if (err.response.status >= 500) {
+    return {
+      title: 'حدث خطأ في الخادم',
+      description: 'الخدمة غير متاحة مؤقتًا، حاول مرة أخرى بعد قليل.',
+    }
+  }
+
+  return {
+    title: 'تعذر تحميل لوحة التحكم',
+    description:
+      err.response?.data?.message ||
+      'لم نتمكن من تحميل الإحصائيات، حاول مرة أخرى بعد لحظات.',
+  }
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [retryKey, setRetryKey] = useState(0)
+
   const { user } = useAuth()
 
   useEffect(() => {
+    setLoading(true)
+    setError(null)
+
     api.get('/dashboard')
-      .then(res => setStats(res.data))
-      .catch(err => console.error(err))
+      .then(res => {
+        setStats(res.data)
+      })
+      .catch(err => {
+        console.error(err)
+        setStats(null)
+        setError(getDashboardErrorMessage(err))
+      })
       .finally(() => setLoading(false))
-  }, [])
+  }, [retryKey])
+
+  const retryLoadingDashboard = () => {
+    setRetryKey(prev => prev + 1)
+  }
 
   const getOrderAge = (createdAt) => {
     const createdDate = new Date(createdAt)
@@ -132,7 +187,7 @@ export default function Dashboard() {
     <Layout>
       <div className="mb-7">
         <h2 className="text-2xl font-black tracking-tight text-slate-900">
-          أهلاً {user?.name} 👋
+          أهلاً {user?.name || ''} 👋
         </h2>
 
         <p className="text-slate-500 text-sm font-medium mt-1">
@@ -143,6 +198,39 @@ export default function Dashboard() {
       {loading ? (
         <div className="bg-white border border-slate-100 rounded-3xl p-10 text-center text-slate-400 font-medium shadow-sm">
           جاري التحميل...
+        </div>
+      ) : error ? (
+        <div className="bg-white border border-slate-100 rounded-3xl p-8 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-red-50 text-red-500">
+            <FiAlertCircle size={30} />
+          </div>
+
+          <p className="text-lg font-black text-slate-900">
+            {error.title}
+          </p>
+
+          <p className="mt-2 text-sm font-bold leading-7 text-slate-500">
+            {error.description}
+          </p>
+
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <button
+              type="button"
+              onClick={retryLoadingDashboard}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-50 px-5 py-3 text-sm font-extrabold text-red-600 border border-red-100 transition hover:bg-red-100 active:scale-[0.99]"
+            >
+              <FiRefreshCw size={18} />
+              إعادة المحاولة
+            </button>
+
+            <Link
+              to="/orders"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-100 px-5 py-3 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200 active:scale-[0.99]"
+            >
+              الذهاب إلى الطلبات
+              <FiArrowLeft size={18} />
+            </Link>
+          </div>
         </div>
       ) : (
         <>
