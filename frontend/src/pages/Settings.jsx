@@ -28,6 +28,94 @@ const defaultWhatsappTemplates = {
     'السلام عليكم {name}،\nلاحظنا أن طلبك: {product} لم يكتمل تسليمه.\nهل يمكن إخبارنا بسبب الرجوع حتى نساعدك؟',
 }
 
+const getSettingsErrorMessage = (err) => {
+  if (!err.response) {
+    return {
+      type: 'error',
+      title: 'تعذر الاتصال بالخادم',
+      description: 'تحقق من اتصال الإنترنت أو حاول مرة أخرى بعد لحظات.',
+    }
+  }
+
+  if (err.response.status === 401) {
+    return {
+      type: 'error',
+      title: 'انتهت جلسة الدخول',
+      description: 'يرجى تسجيل الدخول مرة أخرى قبل حفظ الإعدادات.',
+    }
+  }
+
+  if (err.response.status === 400) {
+    return {
+      type: 'error',
+      title: 'بيانات غير صحيحة',
+      description:
+        err.response?.data?.message ||
+        'راجع بيانات المتجر ثم حاول مرة أخرى.',
+    }
+  }
+
+  if (err.response.status >= 500) {
+    return {
+      type: 'error',
+      title: 'تعذر حفظ الإعدادات',
+      description: 'حدث خطأ مؤقت في الخادم، حاول مرة أخرى بعد قليل.',
+    }
+  }
+
+  return {
+    type: 'error',
+    title: 'تعذر حفظ الإعدادات',
+    description:
+      err.response?.data?.message ||
+      'لم نتمكن من حفظ الإعدادات، حاول مرة أخرى بعد لحظات.',
+  }
+}
+
+const getTemplatesErrorMessage = (err) => {
+  if (!err.response) {
+    return {
+      type: 'error',
+      title: 'تعذر الاتصال بالخادم',
+      description: 'تحقق من اتصال الإنترنت أو حاول حفظ القوالب مرة أخرى.',
+    }
+  }
+
+  if (err.response.status === 401) {
+    return {
+      type: 'error',
+      title: 'انتهت جلسة الدخول',
+      description: 'يرجى تسجيل الدخول مرة أخرى قبل حفظ قوالب WhatsApp.',
+    }
+  }
+
+  if (err.response.status === 400) {
+    return {
+      type: 'error',
+      title: 'قوالب WhatsApp غير صحيحة',
+      description:
+        err.response?.data?.message ||
+        'راجع الرسائل ثم حاول حفظها مرة أخرى.',
+    }
+  }
+
+  if (err.response.status >= 500) {
+    return {
+      type: 'error',
+      title: 'تعذر حفظ قوالب WhatsApp',
+      description: 'حدث خطأ مؤقت في الخادم، حاول مرة أخرى بعد قليل.',
+    }
+  }
+
+  return {
+    type: 'error',
+    title: 'تعذر حفظ قوالب WhatsApp',
+    description:
+      err.response?.data?.message ||
+      'لم نتمكن من حفظ الرسائل الآن، حاول مرة أخرى بعد لحظات.',
+  }
+}
+
 export default function Settings() {
   const { user, updateUser } = useAuth()
 
@@ -42,8 +130,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(false)
   const [templatesLoading, setTemplatesLoading] = useState(false)
 
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [message, setMessage] = useState(null)
 
   const messageRef = useRef(null)
 
@@ -84,16 +171,15 @@ export default function Settings() {
     }, 0)
   }
 
-  const showSuccess = (message) => {
-    setError('')
-    setSuccess(message)
+  const showMessage = (nextMessage) => {
+    setMessage(nextMessage)
     scrollToMessage()
   }
 
-  const showError = (message) => {
-    setSuccess('')
-    setError(message)
-    scrollToMessage()
+  const clearMessage = () => {
+    if (message) {
+      setMessage(null)
+    }
   }
 
   const handleChange = (e) => {
@@ -102,8 +188,7 @@ export default function Settings() {
       [e.target.name]: e.target.value,
     })
 
-    setError('')
-    setSuccess('')
+    clearMessage()
   }
 
   const handlePhoneChange = (e) => {
@@ -114,8 +199,7 @@ export default function Settings() {
       phone: onlyNumbers,
     })
 
-    setError('')
-    setSuccess('')
+    clearMessage()
   }
 
   const handleTemplateChange = (e) => {
@@ -124,21 +208,93 @@ export default function Settings() {
       [e.target.name]: e.target.value,
     })
 
-    setError('')
-    setSuccess('')
+    clearMessage()
+  }
+
+  const validateSettingsForm = () => {
+    if (!form.name.trim()) {
+      return {
+        type: 'error',
+        title: 'اسم المستخدم مطلوب',
+        description: 'يرجى إدخال اسم المستخدم قبل حفظ الإعدادات.',
+      }
+    }
+
+    if (!form.businessName.trim()) {
+      return {
+        type: 'error',
+        title: 'اسم المتجر مطلوب',
+        description: 'يرجى إدخال اسم المتجر لأنه يظهر في PDF ورسائل WhatsApp.',
+      }
+    }
+
+    if (form.phone.trim() && form.phone.trim().length < 9) {
+      return {
+        type: 'error',
+        title: 'رقم الهاتف غير صحيح',
+        description: 'يرجى إدخال رقم هاتف صحيح، مثال: 0550000000.',
+      }
+    }
+
+    return null
+  }
+
+  const validateTemplates = () => {
+    if (!templates.confirmOrder.trim()) {
+      return {
+        type: 'error',
+        title: 'رسالة تأكيد الطلب مطلوبة',
+        description: 'يرجى كتابة رسالة تأكيد الطلب قبل حفظ القوالب.',
+      }
+    }
+
+    if (!templates.shipped.trim()) {
+      return {
+        type: 'error',
+        title: 'رسالة الشحن مطلوبة',
+        description: 'يرجى كتابة رسالة الشحن قبل حفظ القوالب.',
+      }
+    }
+
+    if (!templates.delivered.trim()) {
+      return {
+        type: 'error',
+        title: 'رسالة تأكيد التسليم مطلوبة',
+        description: 'يرجى كتابة رسالة تأكيد التسليم قبل حفظ القوالب.',
+      }
+    }
+
+    if (!templates.followUp.trim()) {
+      return {
+        type: 'error',
+        title: 'رسالة متابعة الطلب مطلوبة',
+        description: 'يرجى كتابة رسالة متابعة الطلب قبل حفظ القوالب.',
+      }
+    }
+
+    if (!templates.returned.trim()) {
+      return {
+        type: 'error',
+        title: 'رسالة الرجوع مطلوبة',
+        description: 'يرجى كتابة رسالة الاستفسار عن الرجوع قبل حفظ القوالب.',
+      }
+    }
+
+    return null
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (!form.name.trim() || !form.businessName.trim()) {
-      showError('يرجى إدخال اسم المستخدم واسم المتجر')
+    const validationError = validateSettingsForm()
+
+    if (validationError) {
+      showMessage(validationError)
       return
     }
 
     setLoading(true)
-    setError('')
-    setSuccess('')
+    setMessage(null)
 
     try {
       const res = await api.put('/auth/settings', {
@@ -148,9 +304,15 @@ export default function Settings() {
       })
 
       updateUser(res.data.user)
-      showSuccess('تم حفظ الإعدادات بنجاح')
+
+      showMessage({
+        type: 'success',
+        title: 'تم حفظ الإعدادات',
+        description: 'تم تحديث بيانات المتجر بنجاح.',
+      })
     } catch (err) {
-      showError(err.response?.data?.message || 'تعذر حفظ الإعدادات')
+      console.error(err)
+      showMessage(getSettingsErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -159,23 +321,35 @@ export default function Settings() {
   const handleSaveTemplates = async (e) => {
     e.preventDefault()
 
+    const validationError = validateTemplates()
+
+    if (validationError) {
+      showMessage(validationError)
+      return
+    }
+
     setTemplatesLoading(true)
-    setError('')
-    setSuccess('')
+    setMessage(null)
 
     try {
       const res = await api.put('/auth/whatsapp-templates', {
-        confirmOrder: templates.confirmOrder,
-        shipped: templates.shipped,
-        delivered: templates.delivered,
-        followUp: templates.followUp,
-        returned: templates.returned,
+        confirmOrder: templates.confirmOrder.trim(),
+        shipped: templates.shipped.trim(),
+        delivered: templates.delivered.trim(),
+        followUp: templates.followUp.trim(),
+        returned: templates.returned.trim(),
       })
 
       updateUser(res.data.user)
-      showSuccess('تم حفظ قوالب WhatsApp بنجاح')
+
+      showMessage({
+        type: 'success',
+        title: 'تم حفظ قوالب WhatsApp',
+        description: 'سيتم استعمال الرسائل الجديدة في صفحة تفاصيل الطلب.',
+      })
     } catch (err) {
-      showError(err.response?.data?.message || 'تعذر حفظ قوالب WhatsApp')
+      console.error(err)
+      showMessage(getTemplatesErrorMessage(err))
     } finally {
       setTemplatesLoading(false)
     }
@@ -183,8 +357,12 @@ export default function Settings() {
 
   const resetTemplates = () => {
     setTemplates(defaultWhatsappTemplates)
-    setError('')
-    setSuccess('')
+
+    showMessage({
+      type: 'success',
+      title: 'تم استرجاع القوالب الافتراضية',
+      description: 'اضغط على حفظ قوالب WhatsApp لتثبيت هذه الرسائل في حسابك.',
+    })
   }
 
   return (
@@ -207,27 +385,13 @@ export default function Settings() {
         </div>
       </div>
 
-      {(error || success) && (
-        <div
-          ref={messageRef}
-          className={`mb-4 rounded-3xl border p-4 shadow-sm ${
-            error
-              ? 'bg-red-50 border-red-100 text-red-600'
-              : 'bg-emerald-50 border-emerald-100 text-emerald-600'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {error ? (
-              <FiAlertTriangle size={20} />
-            ) : (
-              <FiCheckCircle size={20} />
-            )}
-
-            <p className="text-sm font-extrabold">
-              {error || success}
-            </p>
-          </div>
-        </div>
+      {message && (
+        <MessageBox
+          refProp={messageRef}
+          type={message.type}
+          title={message.title}
+          description={message.description}
+        />
       )}
 
       <form
@@ -394,6 +558,50 @@ export default function Settings() {
         </div>
       </form>
     </Layout>
+  )
+}
+
+function MessageBox({ type, title, description, refProp }) {
+  const isError = type === 'error'
+  const Icon = isError ? FiAlertTriangle : FiCheckCircle
+
+  return (
+    <div
+      ref={refProp}
+      className={`mb-4 rounded-3xl border p-4 shadow-sm ${
+        isError
+          ? 'bg-red-50 border-red-100'
+          : 'bg-emerald-50 border-emerald-100'
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white ${
+            isError ? 'text-red-500' : 'text-emerald-600'
+          }`}
+        >
+          <Icon size={20} />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p
+            className={`text-sm font-black ${
+              isError ? 'text-red-700' : 'text-emerald-700'
+            }`}
+          >
+            {title}
+          </p>
+
+          <p
+            className={`mt-1 text-xs font-bold leading-6 ${
+              isError ? 'text-red-500' : 'text-emerald-600'
+            }`}
+          >
+            {description}
+          </p>
+        </div>
+      </div>
+    </div>
   )
 }
 
