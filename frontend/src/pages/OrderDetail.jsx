@@ -24,6 +24,9 @@ import {
   FiX,
   FiChevronDown,
   FiChevronUp,
+  FiAlertCircle,
+  FiRefreshCw,
+  FiArrowRight,
 } from 'react-icons/fi'
 
 const statusLabels = {
@@ -69,6 +72,179 @@ const defaultWhatsappTemplates = {
     'السلام عليكم {name}،\nلاحظنا أن طلبك: {product} لم يكتمل تسليمه.\nهل يمكن إخبارنا بسبب الرجوع حتى نساعدك؟',
 }
 
+const getLoadOrderErrorMessage = (err) => {
+  if (!err.response) {
+    return {
+      title: 'تعذر الاتصال بالخادم',
+      description: 'تحقق من اتصال الإنترنت أو حاول مرة أخرى بعد لحظات.',
+    }
+  }
+
+  if (err.response.status === 401) {
+    return {
+      title: 'انتهت جلسة الدخول',
+      description: 'يرجى تسجيل الدخول مرة أخرى لعرض تفاصيل الطلب.',
+    }
+  }
+
+  if (err.response.status === 403) {
+    return {
+      title: 'لا تملك صلاحية الوصول',
+      description: 'لا يمكنك عرض هذا الطلب بهذا الحساب.',
+    }
+  }
+
+  if (err.response.status === 404) {
+    return {
+      title: 'الطلب غير موجود',
+      description: 'ربما تم حذف هذا الطلب أو أن الرابط غير صحيح.',
+    }
+  }
+
+  if (err.response.status >= 500) {
+    return {
+      title: 'حدث خطأ في الخادم',
+      description: 'الخدمة غير متاحة مؤقتًا، حاول مرة أخرى بعد قليل.',
+    }
+  }
+
+  return {
+    title: 'تعذر تحميل الطلب',
+    description:
+      err.response?.data?.message ||
+      'لم نتمكن من تحميل تفاصيل الطلب، حاول مرة أخرى بعد لحظات.',
+  }
+}
+
+const getStatusErrorMessage = (err) => {
+  if (!err.response) {
+    return {
+      title: 'تعذر الاتصال بالخادم',
+      description: 'تحقق من اتصال الإنترنت ثم حاول تغيير الحالة مرة أخرى.',
+    }
+  }
+
+  if (err.response.status === 401) {
+    return {
+      title: 'انتهت جلسة الدخول',
+      description: 'يرجى تسجيل الدخول مرة أخرى قبل تغيير حالة الطلب.',
+    }
+  }
+
+  if (err.response.status === 400) {
+    return {
+      title: 'لا يمكن تغيير الحالة',
+      description:
+        err.response?.data?.message ||
+        'قد تكون هذه الحالة غير مسموحة لهذا الطلب.',
+    }
+  }
+
+  if (err.response.status === 404) {
+    return {
+      title: 'الطلب غير موجود',
+      description: 'ربما تم حذف الطلب، ارجع إلى قائمة الطلبات وتحقق منه.',
+    }
+  }
+
+  if (err.response.status >= 500) {
+    return {
+      title: 'تعذر تغيير حالة الطلب',
+      description: 'حدث خطأ مؤقت في الخادم، حاول مرة أخرى بعد قليل.',
+    }
+  }
+
+  return {
+    title: 'تعذر تغيير حالة الطلب',
+    description:
+      err.response?.data?.message ||
+      'لم نتمكن من تحديث الحالة، حاول مرة أخرى.',
+  }
+}
+
+const getEditErrorMessage = (err) => {
+  if (!err.response) {
+    return {
+      title: 'تعذر الاتصال بالخادم',
+      description: 'تحقق من اتصال الإنترنت ثم حاول حفظ التعديلات مرة أخرى.',
+    }
+  }
+
+  if (err.response.status === 401) {
+    return {
+      title: 'انتهت جلسة الدخول',
+      description: 'يرجى تسجيل الدخول مرة أخرى قبل حفظ التعديلات.',
+    }
+  }
+
+  if (err.response.status === 400) {
+    return {
+      title: 'بيانات الطلب غير صحيحة',
+      description:
+        err.response?.data?.message ||
+        'راجع الحقول المطلوبة ثم حاول مرة أخرى.',
+    }
+  }
+
+  if (err.response.status === 404) {
+    return {
+      title: 'الطلب غير موجود',
+      description: 'ربما تم حذف هذا الطلب، ارجع إلى قائمة الطلبات وتحقق منه.',
+    }
+  }
+
+  if (err.response.status >= 500) {
+    return {
+      title: 'تعذر حفظ التعديلات',
+      description: 'حدث خطأ مؤقت في الخادم، حاول مرة أخرى بعد قليل.',
+    }
+  }
+
+  return {
+    title: 'تعذر حفظ التعديلات',
+    description:
+      err.response?.data?.message ||
+      'لم نتمكن من تعديل الطلب، حاول مرة أخرى بعد لحظات.',
+  }
+}
+
+const getDeleteErrorMessage = (err) => {
+  if (!err.response) {
+    return {
+      title: 'تعذر الاتصال بالخادم',
+      description: 'تحقق من اتصال الإنترنت ثم حاول حذف الطلب مرة أخرى.',
+    }
+  }
+
+  if (err.response.status === 401) {
+    return {
+      title: 'انتهت جلسة الدخول',
+      description: 'يرجى تسجيل الدخول مرة أخرى قبل حذف الطلب.',
+    }
+  }
+
+  if (err.response.status === 404) {
+    return {
+      title: 'الطلب غير موجود',
+      description: 'ربما تم حذف هذا الطلب بالفعل.',
+    }
+  }
+
+  if (err.response.status >= 500) {
+    return {
+      title: 'تعذر حذف الطلب',
+      description: 'حدث خطأ مؤقت في الخادم، حاول مرة أخرى بعد قليل.',
+    }
+  }
+
+  return {
+    title: 'تعذر حذف الطلب',
+    description:
+      err.response?.data?.message ||
+      'لم نتمكن من حذف الطلب الآن، حاول مرة أخرى بعد لحظات.',
+  }
+}
+
 export default function OrderDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -76,12 +252,16 @@ export default function OrderDetail() {
 
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [statusError, setStatusError] = useState('')
+  const [loadError, setLoadError] = useState(null)
+  const [retryKey, setRetryKey] = useState(0)
+
+  const [statusError, setStatusError] = useState(null)
+  const [deleteError, setDeleteError] = useState(null)
   const [showWhatsAppMenu, setShowWhatsAppMenu] = useState(false)
 
   const [isEditing, setIsEditing] = useState(false)
   const [editLoading, setEditLoading] = useState(false)
-  const [editError, setEditError] = useState('')
+  const [editError, setEditError] = useState(null)
   const editErrorRef = useRef(null)
 
   const [editForm, setEditForm] = useState({
@@ -96,6 +276,11 @@ export default function OrderDetail() {
   })
 
   useEffect(() => {
+    setLoading(true)
+    setLoadError(null)
+    setStatusError(null)
+    setDeleteError(null)
+
     api.get(`/orders/${id}`)
       .then(res => {
         setOrder(res.data)
@@ -111,9 +296,17 @@ export default function OrderDetail() {
           notes: res.data.notes || '',
         })
       })
-      .catch(err => console.error(err))
+      .catch(err => {
+        console.error(err)
+        setOrder(null)
+        setLoadError(getLoadOrderErrorMessage(err))
+      })
       .finally(() => setLoading(false))
-  }, [id])
+  }, [id, retryKey])
+
+  const retryLoadingOrder = () => {
+    setRetryKey(prev => prev + 1)
+  }
 
   const scrollToEditError = () => {
     setTimeout(() => {
@@ -124,14 +317,90 @@ export default function OrderDetail() {
     }, 0)
   }
 
+  const validateEditForm = () => {
+    if (!editForm.customerName.trim()) {
+      return {
+        title: 'اسم الزبون مطلوب',
+        description: 'يرجى إدخال اسم الزبون قبل حفظ التعديلات.',
+      }
+    }
+
+    if (!editForm.phone.trim()) {
+      return {
+        title: 'رقم الهاتف مطلوب',
+        description: 'يرجى إدخال رقم هاتف الزبون حتى يمكنك التواصل معه.',
+      }
+    }
+
+    if (editForm.phone.trim().length < 9) {
+      return {
+        title: 'رقم الهاتف غير صحيح',
+        description: 'يرجى إدخال رقم هاتف صحيح، مثال: 0550000000.',
+      }
+    }
+
+    if (!editForm.wilaya.trim()) {
+      return {
+        title: 'الولاية مطلوبة',
+        description: 'يرجى إدخال ولاية التوصيل قبل حفظ التعديلات.',
+      }
+    }
+
+    if (!editForm.city.trim()) {
+      return {
+        title: 'البلدية مطلوبة',
+        description: 'يرجى إدخال البلدية أو منطقة التوصيل.',
+      }
+    }
+
+    if (!editForm.product.trim()) {
+      return {
+        title: 'اسم المنتج مطلوب',
+        description: 'يرجى إدخال اسم المنتج أو وصف قصير للطلب.',
+      }
+    }
+
+    if (!editForm.price) {
+      return {
+        title: 'سعر المنتج مطلوب',
+        description: 'يرجى إدخال سعر المنتج بالأرقام فقط.',
+      }
+    }
+
+    if (Number(editForm.price) <= 0) {
+      return {
+        title: 'سعر المنتج غير صحيح',
+        description: 'يجب أن يكون سعر المنتج أكبر من 0 دج.',
+      }
+    }
+
+    if (!editForm.deliveryPrice) {
+      return {
+        title: 'سعر التوصيل مطلوب',
+        description: 'يرجى إدخال سعر التوصيل بالأرقام فقط.',
+      }
+    }
+
+    if (Number(editForm.deliveryPrice) < 0) {
+      return {
+        title: 'سعر التوصيل غير صحيح',
+        description: 'لا يمكن أن يكون سعر التوصيل أقل من 0 دج.',
+      }
+    }
+
+    return null
+  }
+
   const updateStatus = async (status) => {
-    setStatusError('')
+    setStatusError(null)
+    setDeleteError(null)
 
     try {
       const res = await api.patch(`/orders/${id}/status`, { status })
       setOrder(res.data)
     } catch (err) {
-      setStatusError(err.response?.data?.message || 'تعذر تغيير حالة الطلب')
+      console.error(err)
+      setStatusError(getStatusErrorMessage(err))
     }
   }
 
@@ -140,6 +409,10 @@ export default function OrderDetail() {
       ...editForm,
       [e.target.name]: e.target.value,
     })
+
+    if (editError) {
+      setEditError(null)
+    }
   }
 
   const handleEditNumericChange = (e) => {
@@ -150,15 +423,21 @@ export default function OrderDetail() {
       ...editForm,
       [name]: onlyNumbers,
     })
+
+    if (editError) {
+      setEditError(null)
+    }
   }
 
   const startEditing = () => {
-    setEditError('')
+    setEditError(null)
+    setStatusError(null)
+    setDeleteError(null)
     setIsEditing(true)
   }
 
   const cancelEditing = () => {
-    setEditError('')
+    setEditError(null)
     setIsEditing(false)
 
     setEditForm({
@@ -174,26 +453,26 @@ export default function OrderDetail() {
   }
 
   const saveOrder = async () => {
-    if (
-      !editForm.customerName.trim() ||
-      !editForm.phone.trim() ||
-      !editForm.wilaya.trim() ||
-      !editForm.city.trim() ||
-      !editForm.product.trim() ||
-      !editForm.price ||
-      !editForm.deliveryPrice
-    ) {
-      setEditError('يرجى ملء جميع الحقول الإجبارية')
+    const validationError = validateEditForm()
+
+    if (validationError) {
+      setEditError(validationError)
       scrollToEditError()
       return
     }
 
     setEditLoading(true)
-    setEditError('')
+    setEditError(null)
 
     try {
       const res = await api.put(`/orders/${id}`, {
         ...editForm,
+        customerName: editForm.customerName.trim(),
+        phone: editForm.phone.trim(),
+        wilaya: editForm.wilaya.trim(),
+        city: editForm.city.trim(),
+        product: editForm.product.trim(),
+        notes: editForm.notes.trim(),
         price: Number(editForm.price),
         deliveryPrice: Number(editForm.deliveryPrice),
       })
@@ -201,7 +480,8 @@ export default function OrderDetail() {
       setOrder(res.data)
       setIsEditing(false)
     } catch (err) {
-      setEditError(err.response?.data?.message || 'تعذر تعديل الطلب')
+      console.error(err)
+      setEditError(getEditErrorMessage(err))
       scrollToEditError()
     } finally {
       setEditLoading(false)
@@ -209,6 +489,9 @@ export default function OrderDetail() {
   }
 
   const deleteOrder = async () => {
+    setDeleteError(null)
+    setStatusError(null)
+
     if (!confirm('هل تريد حذف هذا الطلب؟')) return
 
     try {
@@ -216,6 +499,7 @@ export default function OrderDetail() {
       navigate('/orders')
     } catch (err) {
       console.error(err)
+      setDeleteError(getDeleteErrorMessage(err))
     }
   }
 
@@ -255,7 +539,10 @@ export default function OrderDetail() {
     const printWindow = window.open('', '_blank')
 
     if (!printWindow) {
-      alert('يرجى السماح بفتح النوافذ المنبثقة لطباعة الطلب')
+      setDeleteError({
+        title: 'تعذر فتح نافذة الطباعة',
+        description: 'يرجى السماح بفتح النوافذ المنبثقة من المتصفح ثم حاول مرة أخرى.',
+      })
       return
     }
 
@@ -611,8 +898,38 @@ export default function OrderDetail() {
   if (!order) {
     return (
       <Layout>
-        <div className="bg-white border border-slate-100 rounded-3xl p-10 text-center text-slate-400 font-medium shadow-sm">
-          الطلب غير موجود
+        <div className="bg-white border border-slate-100 rounded-3xl p-8 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-red-50 text-red-500">
+            <FiAlertCircle size={30} />
+          </div>
+
+          <p className="text-lg font-black text-slate-900">
+            {loadError?.title || 'الطلب غير موجود'}
+          </p>
+
+          <p className="mt-2 text-sm font-bold leading-7 text-slate-500">
+            {loadError?.description || 'ربما تم حذف هذا الطلب أو أن الرابط غير صحيح.'}
+          </p>
+
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <button
+              type="button"
+              onClick={retryLoadingOrder}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-50 px-5 py-3 text-sm font-extrabold text-red-600 border border-red-100 transition hover:bg-red-100 active:scale-[0.99]"
+            >
+              <FiRefreshCw size={18} />
+              إعادة المحاولة
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/orders')}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-100 px-5 py-3 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200 active:scale-[0.99]"
+            >
+              <FiArrowRight size={18} />
+              الرجوع إلى الطلبات
+            </button>
+          </div>
         </div>
       </Layout>
     )
@@ -723,12 +1040,11 @@ export default function OrderDetail() {
           </div>
 
           {editError && (
-            <div
-              ref={editErrorRef}
-              className="mb-4 rounded-2xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-600"
-            >
-              {editError}
-            </div>
+            <ErrorBox
+              refProp={editErrorRef}
+              title={editError.title}
+              description={editError.description}
+            />
           )}
 
           <div className="flex flex-col gap-4">
@@ -946,11 +1262,23 @@ export default function OrderDetail() {
             )}
 
             {statusError && (
-              <div className="mt-3 rounded-2xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-600">
-                {statusError}
+              <div className="mt-3">
+                <ErrorBox
+                  title={statusError.title}
+                  description={statusError.description}
+                />
               </div>
             )}
           </div>
+
+          {deleteError && (
+            <div className="mt-4">
+              <ErrorBox
+                title={deleteError.title}
+                description={deleteError.description}
+              />
+            </div>
+          )}
 
           <div className="mt-4 space-y-3">
             <div className="relative">
@@ -1022,6 +1350,31 @@ export default function OrderDetail() {
         </>
       )}
     </Layout>
+  )
+}
+
+function ErrorBox({ title, description, refProp }) {
+  return (
+    <div
+      ref={refProp}
+      className="rounded-3xl border border-red-100 bg-red-50 p-4 text-right"
+    >
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-red-500">
+          <FiAlertCircle size={20} />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-black text-red-700">
+            {title}
+          </p>
+
+          <p className="mt-1 text-xs font-bold leading-6 text-red-500">
+            {description}
+          </p>
+        </div>
+      </div>
+    </div>
   )
 }
 
