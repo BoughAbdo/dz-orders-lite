@@ -65,6 +65,18 @@ const getDashboardErrorMessage = (err) => {
   }
 }
 
+const getAttentionCountText = (count) => {
+  if (count === 1) {
+    return 'لديك طلب واحد يحتاج إلى متابعة.'
+  }
+
+  if (count === 2) {
+    return 'لديك طلبان يحتاجان إلى متابعة.'
+  }
+
+  return `لديك ${count} طلب تحتاج إلى متابعة.`
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -99,8 +111,36 @@ export default function Dashboard() {
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
     const diffDays = Math.floor(diffHours / 24)
 
-    if (diffDays >= 1) {
+    if (diffDays === 1) {
+      return 'منذ يوم'
+    }
+
+    if (diffDays === 2) {
+      return 'منذ يومين'
+    }
+
+    if (diffDays >= 3 && diffDays <= 10) {
+      return `منذ ${diffDays} أيام`
+    }
+
+    if (diffDays > 10) {
       return `منذ ${diffDays} يوم`
+    }
+
+    if (diffHours <= 0) {
+      return 'منذ قليل'
+    }
+
+    if (diffHours === 1) {
+      return 'منذ ساعة'
+    }
+
+    if (diffHours === 2) {
+      return 'منذ ساعتين'
+    }
+
+    if (diffHours >= 3 && diffHours <= 10) {
+      return `منذ ${diffHours} ساعات`
     }
 
     return `منذ ${diffHours} ساعة`
@@ -295,49 +335,47 @@ export default function Dashboard() {
 
           {/* Attention Orders */}
           {stats?.attentionCount > 0 && (
-            <div className="bg-amber-50 border border-amber-100 rounded-3xl p-5 mb-6 shadow-sm">
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-                    <FiAlertTriangle size={22} />
-                  </div>
+            <div className="bg-amber-50 border border-amber-100 rounded-3xl p-4 mb-6 shadow-sm">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-11 h-11 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                  <FiAlertTriangle size={22} />
+                </div>
 
-                  <div>
-                    <h3 className="text-base font-black text-slate-900">
-                      طلبات تحتاج متابعة
-                    </h3>
+                <div className="min-w-0">
+                  <h3 className="text-base font-black text-slate-900">
+                    طلبات تحتاج متابعة
+                  </h3>
 
-                    <p className="text-sm font-semibold text-amber-700 mt-1">
-                      لديك {stats.attentionCount} طلب قديم يحتاج إلى إجراء.
-                    </p>
-                  </div>
+                  <p className="text-sm font-semibold text-amber-700 mt-1 leading-6">
+                    {getAttentionCountText(stats.attentionCount)}
+                  </p>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1.5">
                 {stats.attentionOrders?.map(order => (
                   <Link
                     key={order._id}
                     to={`/orders/${order._id}`}
-                    className="group bg-white/80 hover:bg-white border border-amber-100 rounded-2xl p-3 transition"
+                    className="group bg-white/85 hover:bg-white border border-amber-100 rounded-2xl p-3 transition active:scale-[0.99]"
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-black text-slate-900 truncate">
                           {order.customerName}
                         </p>
 
                         <p className="text-xs font-semibold text-slate-500 mt-0.5 truncate">
-                          {order.product} — {statusLabels[order.status]}
+                          {order.product} — {statusLabels[order.status] || order.status}
                         </p>
 
-                        <p className="text-xs font-medium text-amber-700 mt-1">
+                        <p className="text-xs font-bold text-amber-700 mt-1 leading-5 line-clamp-2">
                           {order.reason}
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0 text-slate-400 group-hover:text-amber-600 transition">
-                        <span className="text-xs font-bold">
+                      <div className="flex shrink-0 items-center gap-2 text-slate-400 group-hover:text-amber-600 transition">
+                        <span className="text-xs font-black whitespace-nowrap">
                           {getOrderAge(order.createdAt)}
                         </span>
 
@@ -349,8 +387,8 @@ export default function Dashboard() {
               </div>
 
               {stats.attentionCount > 5 && (
-                <p className="text-xs font-semibold text-amber-700 mt-3">
-                  يتم عرض أول 5 طلبات فقط. ادخل إلى صفحة الطلبات لمراجعة البقية.
+                <p className="text-xs font-bold text-amber-700 mt-3 leading-6">
+                  يتم عرض أول 5 طلبات فقط. راجع صفحة الطلبات لمتابعة البقية.
                 </p>
               )}
             </div>
@@ -370,7 +408,7 @@ export default function Dashboard() {
                   </p>
 
                   <p className="text-xs font-semibold text-emerald-700 mt-0.5">
-                    لا توجد طلبات قديمة تحتاج متابعة حالياً.
+                    لا توجد طلبات تحتاج متابعة حالياً.
                   </p>
                 </div>
               </div>
