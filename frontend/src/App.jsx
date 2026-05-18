@@ -18,19 +18,15 @@ function AppLoadingScreen() {
       dir="rtl"
     >
       <div className="w-full max-w-sm text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-600 text-2xl font-black text-white shadow-lg shadow-blue-600/20">
-          ط
+        <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-3xl bg-white shadow-sm ring-1 ring-slate-100">
+          <img
+            src="/logo.png"
+            alt="طلبيات"
+            className="h-16 w-16 object-contain"
+          />
         </div>
 
-        <h1 className="text-xl font-black text-slate-900">
-          طلبيات
-        </h1>
-
-        <p className="mt-2 text-sm font-bold text-slate-500">
-          جاري تجهيز التطبيق...
-        </p>
-
-        <div className="mx-auto mt-5 h-2 w-36 overflow-hidden rounded-full bg-slate-200">
+        <div className="mx-auto h-2 w-36 overflow-hidden rounded-full bg-slate-200">
           <div className="h-full w-1/2 animate-pulse rounded-full bg-blue-600" />
         </div>
       </div>
