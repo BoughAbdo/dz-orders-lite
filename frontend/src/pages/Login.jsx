@@ -8,16 +8,56 @@ import {
   FiPackage,
   FiMessageCircle,
   FiBarChart2,
+  FiAlertTriangle,
 } from 'react-icons/fi'
+
+const getLoginErrorMessage = (err) => {
+  if (!err.response) {
+    return {
+      title: 'تعذر الاتصال بالخادم',
+      description: 'تحقق من اتصال الإنترنت أو حاول مرة أخرى بعد لحظات.',
+    }
+  }
+
+  if (err.response.status === 400 || err.response.status === 401) {
+    return {
+      title: 'بيانات الدخول غير صحيحة',
+      description: 'تأكد من البريد الإلكتروني وكلمة المرور ثم حاول مرة أخرى.',
+    }
+  }
+
+  if (err.response.status >= 500) {
+    return {
+      title: 'تعذر تسجيل الدخول',
+      description: 'الخدمة غير متاحة مؤقتًا، حاول مرة أخرى بعد قليل.',
+    }
+  }
+
+  return {
+    title: 'تعذر تسجيل الدخول',
+    description:
+      err.response?.data?.message ||
+      'لم نتمكن من تسجيل الدخول، حاول مرة أخرى بعد لحظات.',
+  }
+}
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+
   const { login } = useAuth()
+
+  const clearError = () => {
+    if (error) {
+      setError(null)
+    }
+  }
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
+    clearError()
   }
 
   const fillDemoAccount = () => {
@@ -26,18 +66,65 @@ export default function Login() {
       password: '12345678',
     })
 
-    setError('')
+    setError(null)
+  }
+
+  const validateForm = () => {
+    if (!form.email.trim()) {
+      return {
+        title: 'البريد الإلكتروني مطلوب',
+        description: 'يرجى إدخال البريد الإلكتروني قبل تسجيل الدخول.',
+      }
+    }
+
+    if (!form.email.includes('@')) {
+      return {
+        title: 'البريد الإلكتروني غير صحيح',
+        description: 'يرجى إدخال بريد إلكتروني صحيح مثل example@email.com.',
+      }
+    }
+
+    if (!form.password.trim()) {
+      return {
+        title: 'كلمة المرور مطلوبة',
+        description: 'يرجى إدخال كلمة المرور الخاصة بحسابك.',
+      }
+    }
+
+    if (form.password.length < 6) {
+      return {
+        title: 'كلمة المرور قصيرة',
+        description: 'كلمة المرور يجب أن تحتوي على 6 أحرف على الأقل.',
+      }
+    }
+
+    return null
   }
 
   const handleSubmit = async () => {
-    setError('')
+    const validationError = validateForm()
+
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
+    setLoading(true)
+    setError(null)
 
     try {
-      const res = await api.post('/auth/login', form)
+      const res = await api.post('/auth/login', {
+        email: form.email.trim(),
+        password: form.password,
+      })
+
       login(res.data.token, res.data.user)
       window.location.href = '/dashboard'
     } catch (err) {
-      setError(err.response?.data?.message || 'حدث خطأ')
+      console.error(err)
+      setError(getLoginErrorMessage(err))
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -117,9 +204,10 @@ export default function Login() {
             </p>
 
             {error && (
-              <div className="bg-red-50 border border-red-100 text-red-600 text-sm font-semibold p-3 rounded-2xl mb-4">
-                {error}
-              </div>
+              <ErrorBox
+                title={error.title}
+                description={error.description}
+              />
             )}
 
             {/* Demo Account */}
@@ -186,9 +274,10 @@ export default function Login() {
 
               <button
                 onClick={handleSubmit}
-                className="w-full rounded-2xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-[0.99] text-white font-extrabold py-3.5 transition duration-200 text-sm shadow-lg shadow-blue-600/20"
+                disabled={loading}
+                className="w-full rounded-2xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-[0.99] text-white font-extrabold py-3.5 transition duration-200 text-sm shadow-lg shadow-blue-600/20 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
               >
-                تسجيل الدخول
+                {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
               </button>
             </div>
 
@@ -214,6 +303,28 @@ export default function Login() {
           </p>
         </div>
       </div>
-    </div>  
+    </div>
+  )
+}
+
+function ErrorBox({ title, description }) {
+  return (
+    <div className="mb-4 rounded-3xl border border-red-100 bg-red-50 p-4 text-right">
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-red-500">
+          <FiAlertTriangle size={20} />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-black text-red-700">
+            {title}
+          </p>
+
+          <p className="mt-1 text-xs font-bold leading-6 text-red-500">
+            {description}
+          </p>
+        </div>
+      </div>
+    </div>
   )
 }
