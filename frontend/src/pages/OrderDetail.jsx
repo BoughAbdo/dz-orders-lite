@@ -5,6 +5,9 @@ import Layout from '../components/Layout'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import {
+  PageHeaderSkeleton,
+} from '../components/SkeletonCards'
+import {
   FiUser,
   FiPhone,
   FiMapPin,
@@ -243,6 +246,79 @@ const getDeleteErrorMessage = (err) => {
       err.response?.data?.message ||
       'لم نتمكن من حذف الطلب الآن، حاول مرة أخرى بعد لحظات.',
   }
+}
+
+function OrderDetailSkeleton() {
+  return (
+    <>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <PageHeaderSkeleton />
+
+        <div className="h-8 w-24 animate-pulse rounded-full bg-slate-100" />
+      </div>
+
+      <div className="space-y-4">
+        <DetailCardSkeleton />
+        <DetailCardSkeleton />
+      </div>
+
+      <div className="mt-4 animate-pulse rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+        <div className="mb-4 h-4 w-28 rounded-full bg-slate-200" />
+
+        <div className="flex flex-wrap gap-2">
+          <div className="h-9 w-20 rounded-2xl bg-slate-100" />
+          <div className="h-9 w-20 rounded-2xl bg-slate-100" />
+          <div className="h-9 w-24 rounded-2xl bg-slate-100" />
+          <div className="h-9 w-20 rounded-2xl bg-slate-100" />
+          <div className="h-9 w-16 rounded-2xl bg-slate-100" />
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        <div className="h-12 animate-pulse rounded-2xl bg-slate-200" />
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-12 animate-pulse rounded-2xl bg-slate-100" />
+          <div className="h-12 animate-pulse rounded-2xl bg-slate-100" />
+        </div>
+      </div>
+    </>
+  )
+}
+
+function DetailCardSkeleton() {
+  return (
+    <div className="animate-pulse rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <div className="h-10 w-10 rounded-2xl bg-slate-100" />
+          <div className="h-4 w-28 rounded-full bg-slate-200" />
+        </div>
+
+        <div className="h-8 w-16 rounded-2xl bg-slate-100" />
+      </div>
+
+      <div className="flex flex-col divide-y divide-slate-100">
+        <SkeletonDetailRow />
+        <SkeletonDetailRow />
+        <SkeletonDetailRow />
+        <SkeletonDetailRow />
+      </div>
+    </div>
+  )
+}
+
+function SkeletonDetailRow() {
+  return (
+    <div className="flex items-center justify-between gap-4 py-3">
+      <div className="flex items-center gap-2">
+        <div className="h-4 w-4 rounded-full bg-slate-100" />
+        <div className="h-3 w-20 rounded-full bg-slate-100" />
+      </div>
+
+      <div className="h-3 w-28 rounded-full bg-slate-200" />
+    </div>
+  )
 }
 
 export default function OrderDetail() {
@@ -888,9 +964,7 @@ export default function OrderDetail() {
   if (loading) {
     return (
       <Layout>
-        <div className="bg-white border border-slate-100 rounded-3xl p-10 text-center text-slate-400 font-medium shadow-sm">
-          جاري التحميل...
-        </div>
+        <OrderDetailSkeleton />
       </Layout>
     )
   }
@@ -898,7 +972,7 @@ export default function OrderDetail() {
   if (!order) {
     return (
       <Layout>
-        <div className="bg-white border border-slate-100 rounded-3xl p-8 text-center shadow-sm">
+        <div className="rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-sm">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-red-50 text-red-500">
             <FiAlertCircle size={30} />
           </div>
@@ -915,7 +989,7 @@ export default function OrderDetail() {
             <button
               type="button"
               onClick={retryLoadingOrder}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-50 px-5 py-3 text-sm font-extrabold text-red-600 border border-red-100 transition hover:bg-red-100 active:scale-[0.99]"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-100 bg-red-50 px-5 py-3 text-sm font-extrabold text-red-600 transition hover:bg-red-100 active:scale-[0.99]"
             >
               <FiRefreshCw size={18} />
               إعادة المحاولة
@@ -1009,13 +1083,13 @@ export default function OrderDetail() {
             تفاصيل الطلب
           </h2>
 
-          <p className="text-slate-500 text-sm font-medium mt-1">
+          <p className="mt-1 text-sm font-medium text-slate-500">
             مراجعة بيانات الطلب وتحديث حالته
           </p>
         </div>
 
         <span
-          className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-extrabold border ${currentStatus?.color}`}
+          className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold ${currentStatus?.color}`}
         >
           <CurrentStatusIcon size={14} />
           {currentStatus?.label}
@@ -1023,8 +1097,8 @@ export default function OrderDetail() {
       </div>
 
       {isEditing ? (
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between gap-3 mb-5">
+        <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+          <div className="mb-5 flex items-center justify-between gap-3">
             <p className="text-sm font-black text-slate-900">
               تعديل بيانات الطلب
             </p>
@@ -1121,7 +1195,7 @@ export default function OrderDetail() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
+              <label className="mb-2 block text-sm font-bold text-slate-700">
                 ملاحظات
               </label>
 
@@ -1130,13 +1204,13 @@ export default function OrderDetail() {
                   name="notes"
                   value={editForm.notes}
                   onChange={handleEditChange}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70 resize-none"
+                  className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 outline-none transition duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
                   placeholder="أي ملاحظات إضافية..."
                   rows={3}
                 />
 
                 <FiFileText
-                  className="absolute right-4 top-4 text-slate-400 pointer-events-none"
+                  className="pointer-events-none absolute right-4 top-4 text-slate-400"
                   size={18}
                 />
               </div>
@@ -1146,7 +1220,7 @@ export default function OrderDetail() {
               type="button"
               onClick={saveOrder}
               disabled={editLoading}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-[0.99] text-white font-extrabold py-3.5 transition duration-200 text-sm shadow-lg shadow-blue-600/20 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition duration-200 hover:bg-blue-700 active:scale-[0.99] active:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
             >
               <FiSave size={18} />
               {editLoading ? 'جاري الحفظ...' : 'حفظ التعديلات'}
@@ -1156,10 +1230,10 @@ export default function OrderDetail() {
       ) : (
         <>
           <div id="order-detail" className="space-y-4">
-            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
-              <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+              <div className="mb-4 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                     <FiUser size={20} />
                   </div>
 
@@ -1186,9 +1260,9 @@ export default function OrderDetail() {
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+              <div className="mb-4 flex items-center gap-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                   <FiPackage size={20} />
                 </div>
 
@@ -1215,24 +1289,25 @@ export default function OrderDetail() {
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm mt-4">
-            <p className="text-sm font-black text-slate-900 mb-4">
+          <div className="mt-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+            <p className="mb-4 text-sm font-black text-slate-900">
               تغيير الحالة
             </p>
 
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex flex-wrap gap-2">
               {statusFlow.map(s => {
                 const StatusIcon = statusLabels[s].icon
 
                 return (
                   <button
                     key={s}
+                    type="button"
                     onClick={() => updateStatus(s)}
                     disabled={isFinalStatus || order.status === s}
-                    className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-extrabold border transition duration-200 disabled:cursor-not-allowed disabled:opacity-60
+                    className={`inline-flex items-center gap-1.5 rounded-2xl border px-4 py-2 text-xs font-extrabold transition duration-200 disabled:cursor-not-allowed disabled:opacity-60
                       ${order.status === s
                         ? statusLabels[s].color
-                        : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100 hover:text-slate-700'
+                        : 'border-slate-100 bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                       }`}
                   >
                     <StatusIcon size={14} />
@@ -1242,12 +1317,13 @@ export default function OrderDetail() {
               })}
 
               <button
+                type="button"
                 onClick={() => updateStatus('returned')}
                 disabled={isFinalStatus || order.status === 'returned'}
-                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-extrabold border transition duration-200 disabled:cursor-not-allowed disabled:opacity-60
+                className={`inline-flex items-center gap-1.5 rounded-2xl border px-4 py-2 text-xs font-extrabold transition duration-200 disabled:cursor-not-allowed disabled:opacity-60
                   ${order.status === 'returned'
                     ? statusLabels.returned.color
-                    : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100 hover:text-slate-700'
+                    : 'border-slate-100 bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                   }`}
               >
                 <FiRefreshCcw size={14} />
@@ -1283,8 +1359,9 @@ export default function OrderDetail() {
           <div className="mt-4 space-y-3">
             <div className="relative">
               <button
+                type="button"
                 onClick={() => setShowWhatsAppMenu(!showWhatsAppMenu)}
-                className="w-full flex items-center justify-between gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-3.5 px-5 rounded-2xl text-sm font-extrabold transition active:scale-[0.99] shadow-lg shadow-emerald-500/20"
+                className="flex w-full items-center justify-between gap-2 rounded-2xl bg-emerald-500 px-5 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-600 active:scale-[0.99]"
               >
                 <div className="flex items-center gap-2">
                   <FiMessageCircle size={18} />
@@ -1299,15 +1376,16 @@ export default function OrderDetail() {
               </button>
 
               {showWhatsAppMenu && (
-                <div className="mt-2 bg-white border border-slate-100 rounded-3xl shadow-lg overflow-hidden">
+                <div className="mt-2 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-lg">
                   {whatsappMessages.map((item, i) => {
                     const Icon = item.icon
 
                     return (
                       <button
                         key={i}
+                        type="button"
                         onClick={() => openWhatsApp(item.msg)}
-                        className="w-full flex items-center gap-3 px-4 py-3.5 text-right transition border-b border-slate-50 last:border-0 hover:bg-slate-50"
+                        className="flex w-full items-center gap-3 border-b border-slate-50 px-4 py-3.5 text-right transition last:border-0 hover:bg-slate-50"
                       >
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                           <Icon size={18} />
@@ -1318,7 +1396,7 @@ export default function OrderDetail() {
                             {item.label}
                           </span>
 
-                          <span className="text-xs font-medium text-slate-400 mt-0.5">
+                          <span className="mt-0.5 text-xs font-medium text-slate-400">
                             {item.description}
                           </span>
                         </span>
@@ -1331,16 +1409,18 @@ export default function OrderDetail() {
 
             <div className="grid grid-cols-2 gap-3">
               <button
+                type="button"
                 onClick={generatePDF}
-                className="flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 py-3 rounded-2xl text-sm font-extrabold transition active:scale-[0.99]"
+                className="flex items-center justify-center gap-2 rounded-2xl bg-blue-50 py-3 text-sm font-extrabold text-blue-600 transition hover:bg-blue-100 active:scale-[0.99]"
               >
                 <FiPrinter size={18} />
                 PDF
               </button>
 
               <button
+                type="button"
                 onClick={deleteOrder}
-                className="flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 py-3 rounded-2xl text-sm font-extrabold transition active:scale-[0.99]"
+                className="flex items-center justify-center gap-2 rounded-2xl bg-red-50 py-3 text-sm font-extrabold text-red-600 transition hover:bg-red-100 active:scale-[0.99]"
               >
                 <FiTrash2 size={18} />
                 حذف
@@ -1388,7 +1468,7 @@ function DetailRow({ icon: Icon, label, value, valueClassName = 'text-slate-900 
         </span>
       </div>
 
-      <span className={`text-sm text-left ${valueClassName}`}>
+      <span className={`text-left text-sm ${valueClassName}`}>
         {value}
       </span>
     </div>
@@ -1408,7 +1488,7 @@ function EditField({
 }) {
   return (
     <div>
-      <label className="block text-sm font-bold text-slate-700 mb-2">
+      <label className="mb-2 block text-sm font-bold text-slate-700">
         {label}
       </label>
 
@@ -1421,12 +1501,12 @@ function EditField({
           inputMode={inputMode}
           pattern={pattern}
           maxLength={maxLength}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 outline-none transition duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
           placeholder={placeholder}
         />
 
         <Icon
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+          className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
           size={18}
         />
       </div>
