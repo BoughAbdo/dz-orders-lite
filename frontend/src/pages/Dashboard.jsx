@@ -329,7 +329,7 @@ export default function Dashboard() {
         <>
           <div className="mb-7">
             <h2 className="text-2xl font-black tracking-tight text-slate-900">
-              مرحباً {user?.name || ''}
+              مرحبا {user?.name || ''}
             </h2>
 
             <p className="mt-1 text-sm font-medium text-slate-500">
