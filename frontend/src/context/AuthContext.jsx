@@ -9,24 +9,59 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
+    let isMounted = true
 
-    if (!token) {
-      setLoading(false)
-      return
+    const loadUser = async () => {
+      const token = localStorage.getItem('token')
+
+      if (!token) {
+        if (isMounted) {
+          setUser(null)
+          setLoading(false)
+        }
+
+        return
+      }
+
+      try {
+        const res = await api.get('/auth/me')
+
+        if (isMounted) {
+          setUser(res.data)
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err)
+
+        const status = err.response?.status
+
+        // نحذف التوكن فقط إذا كان غير صالح فعلاً
+        if (status === 401 || status === 403) {
+          localStorage.removeItem('token')
+
+          if (isMounted) {
+            setUser(null)
+          }
+
+          return
+        }
+
+        // أخطاء مؤقتة: لا نحذف التوكن
+        // مثل: reload سريع، انقطاع اتصال، backend تأخر، request canceled
+        if (isMounted) {
+          setUser(null)
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
     }
 
-    api.get('/auth/me')
-      .then(res => {
-        setUser(res.data)
-      })
-      .catch(() => {
-        localStorage.removeItem('token')
-        setUser(null)
-      })
-      .finally(() => {
-        setLoading(false)
-      })
+    loadUser()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const login = (token, userData) => {
@@ -44,13 +79,15 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      loading,
-      login,
-      logout,
-      updateUser,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        logout,
+        updateUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )
