@@ -27,13 +27,28 @@ export default function Layout({ children }) {
     { path: '/settings', label: 'الإعدادات', icon: FiSettings },
   ]
 
+  const isNavItemActive = (path) => {
+    if (path === '/orders') {
+      return (
+        location.pathname === '/orders' ||
+        (
+          location.pathname.startsWith('/orders/') &&
+          location.pathname !== '/orders/new'
+        )
+      )
+    }
+
+    return location.pathname === path
+  }
+
   return (
     <div className="min-h-screen bg-slate-50" dir="rtl">
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-slate-100">
         <div className="flex items-center justify-between px-4 py-3 max-w-5xl mx-auto">
           <Link
-            to="/settings"
+            to="/dashboard"
             className="flex items-center gap-3 min-w-0"
+            aria-label="الذهاب إلى لوحة التحكم"
           >
             <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
               <FiShoppingBag size={22} />
@@ -51,8 +66,10 @@ export default function Layout({ children }) {
           </Link>
 
           <button
+            type="button"
             onClick={handleLogout}
             className="inline-flex items-center gap-1.5 rounded-2xl bg-red-50 px-3 py-2 text-sm font-extrabold text-red-600 transition hover:bg-red-100 active:scale-[0.98]"
+            aria-label="تسجيل الخروج"
           >
             <FiLogOut size={16} />
             خروج
@@ -68,12 +85,13 @@ export default function Layout({ children }) {
         <div className="mx-auto flex max-w-5xl px-2 py-2">
           {navItems.map((item) => {
             const Icon = item.icon
-            const isActive = location.pathname === item.path
+            const isActive = isNavItemActive(item.path)
 
             return (
               <Link
                 key={item.path}
                 to={item.path}
+                aria-label={item.label}
                 className={`group flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2.5 text-xs font-extrabold transition duration-200
                   ${isActive
                     ? 'bg-blue-50 text-blue-600'
