@@ -5,6 +5,11 @@ import Layout from '../components/Layout'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import {
+  StatCardSkeleton,
+  OrderCardSkeleton,
+  PageHeaderSkeleton,
+} from '../components/SkeletonCards'
+import {
   FiPackage,
   FiClock,
   FiCheckCircle,
@@ -75,6 +80,66 @@ const getAttentionCountText = (count) => {
   }
 
   return `لديك ${count} طلب تحتاج إلى متابعة.`
+}
+
+function DashboardSkeleton() {
+  return (
+    <>
+      <div className="mb-7">
+        <PageHeaderSkeleton />
+      </div>
+
+      {/* Revenue Skeleton */}
+      <div className="mb-6 animate-pulse rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <div className="mb-4 h-4 w-28 rounded-full bg-slate-100" />
+            <div className="mb-4 h-10 w-44 rounded-full bg-slate-200" />
+            <div className="h-3 w-32 rounded-full bg-slate-100" />
+          </div>
+
+          <div className="h-12 w-12 rounded-2xl bg-slate-100" />
+        </div>
+      </div>
+
+      {/* Quick Stats Skeleton */}
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+      </div>
+
+      {/* Attention Orders Skeleton */}
+      <div className="mb-6 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
+        <div className="mb-4 flex animate-pulse items-start gap-3">
+          <div className="h-11 w-11 shrink-0 rounded-2xl bg-slate-100" />
+
+          <div className="min-w-0 flex-1">
+            <div className="mb-3 h-4 w-36 rounded-full bg-slate-200" />
+            <div className="h-3 w-56 rounded-full bg-slate-100" />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <OrderCardSkeleton />
+          <OrderCardSkeleton />
+          <OrderCardSkeleton />
+        </div>
+      </div>
+
+      {/* Stats Grid Skeleton */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+      </div>
+    </>
+  )
 }
 
 export default function Dashboard() {
@@ -225,22 +290,10 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="mb-7">
-        <h2 className="text-2xl font-black tracking-tight text-slate-900">
-          أهلاً {user?.name || ''} 👋
-        </h2>
-
-        <p className="text-slate-500 text-sm font-medium mt-1">
-          نظرة عامة على متجرك
-        </p>
-      </div>
-
       {loading ? (
-        <div className="bg-white border border-slate-100 rounded-3xl p-10 text-center text-slate-400 font-medium shadow-sm">
-          جاري التحميل...
-        </div>
+        <DashboardSkeleton />
       ) : error ? (
-        <div className="bg-white border border-slate-100 rounded-3xl p-8 text-center shadow-sm">
+        <div className="rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-sm">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-red-50 text-red-500">
             <FiAlertCircle size={30} />
           </div>
@@ -257,7 +310,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={retryLoadingDashboard}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-50 px-5 py-3 text-sm font-extrabold text-red-600 border border-red-100 transition hover:bg-red-100 active:scale-[0.99]"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-100 bg-red-50 px-5 py-3 text-sm font-extrabold text-red-600 transition hover:bg-red-100 active:scale-[0.99]"
             >
               <FiRefreshCw size={18} />
               إعادة المحاولة
@@ -274,57 +327,67 @@ export default function Dashboard() {
         </div>
       ) : (
         <>
+          <div className="mb-7">
+            <h2 className="text-2xl font-black tracking-tight text-slate-900">
+              أهلاً {user?.name || ''} 👋
+            </h2>
+
+            <p className="mt-1 text-sm font-medium text-slate-500">
+              نظرة عامة على متجرك
+            </p>
+          </div>
+
           {/* Revenue Card */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-600 to-blue-800 text-white rounded-3xl p-6 mb-6 shadow-lg shadow-blue-600/20">
-            <div className="absolute -top-10 -left-10 w-32 h-32 rounded-full bg-white/10"></div>
-            <div className="absolute -bottom-12 -right-12 w-40 h-40 rounded-full bg-white/10"></div>
+          <div className="relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-600 to-blue-800 p-6 text-white shadow-lg shadow-blue-600/20">
+            <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-white/10"></div>
+            <div className="absolute -bottom-12 -right-12 h-40 w-40 rounded-full bg-white/10"></div>
 
             <div className="relative flex items-start justify-between gap-4">
               <div>
-                <p className="text-blue-100 text-sm font-semibold">
+                <p className="text-sm font-semibold text-blue-100">
                   إجمالي المبيعات
                 </p>
 
-                <p className="text-4xl font-black tracking-tight mt-2">
+                <p className="mt-2 text-4xl font-black tracking-tight">
                   {(stats?.revenue || 0).toLocaleString()} دج
                 </p>
 
-                <p className="text-blue-100 text-xs font-medium mt-3">
+                <p className="mt-3 text-xs font-medium text-blue-100">
                   من الطلبات المسلّمة فقط
                 </p>
               </div>
 
-              <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15">
                 <FiTrendingUp className="text-2xl text-white" />
               </div>
             </div>
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+          <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
             {quickStats.map((card, i) => {
               const Icon = card.icon
 
               return (
                 <div
                   key={i}
-                  className={`group rounded-3xl p-4 border ${card.color} transition-all duration-300 hover:-translate-y-1 hover:shadow-lg`}
+                  className={`group rounded-3xl border p-4 ${card.color} transition-all duration-300 hover:-translate-y-1 hover:shadow-lg`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-2xl font-black tracking-tight">
                         {card.value}
-                        <span className="text-xs font-extrabold mr-1 opacity-80">
+                        <span className="mr-1 text-xs font-extrabold opacity-80">
                           {card.suffix}
                         </span>
                       </p>
 
-                      <p className="text-xs font-bold mt-1 opacity-80">
+                      <p className="mt-1 text-xs font-bold opacity-80">
                         {card.label}
                       </p>
                     </div>
 
-                    <div className="w-10 h-10 rounded-2xl bg-white/70 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/70 transition-transform duration-300 group-hover:scale-110">
                       <Icon className="text-xl" />
                     </div>
                   </div>
@@ -335,9 +398,9 @@ export default function Dashboard() {
 
           {/* Attention Orders */}
           {stats?.attentionCount > 0 && (
-            <div className="bg-amber-50 border border-amber-100 rounded-3xl p-4 mb-6 shadow-sm">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="w-11 h-11 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+            <div className="mb-6 rounded-3xl border border-amber-100 bg-amber-50 p-4 shadow-sm">
+              <div className="mb-4 flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
                   <FiAlertTriangle size={22} />
                 </div>
 
@@ -346,7 +409,7 @@ export default function Dashboard() {
                     طلبات تحتاج متابعة
                   </h3>
 
-                  <p className="text-sm font-semibold text-amber-700 mt-1 leading-6">
+                  <p className="mt-1 text-sm font-semibold leading-6 text-amber-700">
                     {getAttentionCountText(stats.attentionCount)}
                   </p>
                 </div>
@@ -357,25 +420,25 @@ export default function Dashboard() {
                   <Link
                     key={order._id}
                     to={`/orders/${order._id}`}
-                    className="group bg-white/85 hover:bg-white border border-amber-100 rounded-2xl p-3 transition active:scale-[0.99]"
+                    className="group rounded-2xl border border-amber-100 bg-white/85 p-3 transition hover:bg-white active:scale-[0.99]"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-black text-slate-900 truncate">
+                        <p className="truncate text-sm font-black text-slate-900">
                           {order.customerName}
                         </p>
 
-                        <p className="text-xs font-semibold text-slate-500 mt-0.5 truncate">
+                        <p className="mt-0.5 truncate text-xs font-semibold text-slate-500">
                           {order.product} — {statusLabels[order.status] || order.status}
                         </p>
 
-                        <p className="text-xs font-bold text-amber-700 mt-1 leading-5 line-clamp-2">
+                        <p className="mt-1 line-clamp-2 text-xs font-bold leading-5 text-amber-700">
                           {order.reason}
                         </p>
                       </div>
 
-                      <div className="flex shrink-0 items-center gap-2 text-slate-400 group-hover:text-amber-600 transition">
-                        <span className="text-xs font-black whitespace-nowrap">
+                      <div className="flex shrink-0 items-center gap-2 text-slate-400 transition group-hover:text-amber-600">
+                        <span className="whitespace-nowrap text-xs font-black">
                           {getOrderAge(order.createdAt)}
                         </span>
 
@@ -387,7 +450,7 @@ export default function Dashboard() {
               </div>
 
               {stats.attentionCount > 5 && (
-                <p className="text-xs font-bold text-amber-700 mt-3 leading-6">
+                <p className="mt-3 text-xs font-bold leading-6 text-amber-700">
                   يتم عرض أول 5 طلبات فقط. راجع صفحة الطلبات لمتابعة البقية.
                 </p>
               )}
@@ -396,9 +459,9 @@ export default function Dashboard() {
 
           {/* No Attention Orders */}
           {stats?.attentionCount === 0 && (
-            <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-4 mb-6 shadow-sm">
+            <div className="mb-6 rounded-3xl border border-emerald-100 bg-emerald-50 p-4 shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
                   <FiCheckCircle size={20} />
                 </div>
 
@@ -407,7 +470,7 @@ export default function Dashboard() {
                     كل الطلبات تحت السيطرة
                   </p>
 
-                  <p className="text-xs font-semibold text-emerald-700 mt-0.5">
+                  <p className="mt-0.5 text-xs font-semibold text-emerald-700">
                     لا توجد طلبات تحتاج متابعة حالياً.
                   </p>
                 </div>
@@ -416,14 +479,14 @@ export default function Dashboard() {
           )}
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
             {statCards.map((card, i) => {
               const Icon = card.icon
 
               return (
                 <div
                   key={i}
-                  className={`group rounded-3xl p-4 border ${card.color} transition-all duration-300 hover:-translate-y-1 hover:shadow-lg`}
+                  className={`group rounded-3xl border p-4 ${card.color} transition-all duration-300 hover:-translate-y-1 hover:shadow-lg`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -431,12 +494,12 @@ export default function Dashboard() {
                         {card.value || 0}
                       </p>
 
-                      <p className="text-sm font-bold mt-1 opacity-80">
+                      <p className="mt-1 text-sm font-bold opacity-80">
                         {card.label}
                       </p>
                     </div>
 
-                    <div className="w-10 h-10 rounded-2xl bg-white/70 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/70 transition-transform duration-300 group-hover:scale-110">
                       <Icon className="text-xl" />
                     </div>
                   </div>
