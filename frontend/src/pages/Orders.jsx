@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import api from '../services/api'
+import { OrderCardSkeleton } from '../components/SkeletonCards'
 import {
   FiPlus,
   FiPackage,
@@ -147,6 +148,18 @@ const getOrdersErrorMessage = (err) => {
       err.response?.data?.message ||
       'لم نتمكن من تحميل الطلبات، حاول مرة أخرى بعد لحظات.',
   }
+}
+
+function OrdersListSkeleton() {
+  return (
+    <div className="flex flex-col gap-3">
+      <OrderCardSkeleton />
+      <OrderCardSkeleton />
+      <OrderCardSkeleton />
+      <OrderCardSkeleton />
+      <OrderCardSkeleton />
+    </div>
+  )
 }
 
 export default function Orders() {
@@ -348,17 +361,17 @@ export default function Orders() {
             الطلبات
           </h2>
 
-          <p className="text-slate-500 text-sm font-medium mt-1">
+          <p className="mt-1 text-sm font-medium text-slate-500">
             {total} طلب
           </p>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2">
+        <div className="hidden items-center gap-2 sm:flex">
           <button
             type="button"
             onClick={exportToCSV}
             disabled={loading || orders.length === 0}
-            className="inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-2.5 text-sm font-extrabold text-emerald-600 border border-emerald-100 transition hover:bg-emerald-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+            className="inline-flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-2.5 text-sm font-extrabold text-emerald-600 transition hover:bg-emerald-100 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
           >
             <FiDownload size={18} />
             تحميل الصفحة الحالية
@@ -386,7 +399,7 @@ export default function Orders() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="ابحث بالاسم، الهاتف، المنتج، الولاية، البلدية..."
-          className="w-full bg-white border border-slate-100 rounded-2xl py-3 pr-10 pl-10 text-sm font-medium text-slate-700 placeholder:text-slate-400 shadow-sm focus:outline-none focus:border-blue-300 transition"
+          className="w-full rounded-2xl border border-slate-100 bg-white py-3 pl-10 pr-10 text-sm font-medium text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-300 focus:outline-none"
           dir="rtl"
         />
 
@@ -394,7 +407,7 @@ export default function Orders() {
           <button
             type="button"
             onClick={() => setSearch('')}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-600"
           >
             <FiX size={16} />
           </button>
@@ -402,12 +415,12 @@ export default function Orders() {
       </div>
 
       {/* Download button on mobile */}
-      <div className="sm:hidden mb-4">
+      <div className="mb-4 sm:hidden">
         <button
           type="button"
           onClick={exportToCSV}
           disabled={loading || orders.length === 0}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-extrabold text-emerald-600 border border-emerald-100 transition hover:bg-emerald-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-extrabold text-emerald-600 transition hover:bg-emerald-100 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
         >
           <FiDownload size={18} />
           تحميل القائمة الظاهرة
@@ -415,8 +428,8 @@ export default function Orders() {
       </div>
 
       {/* Status Filters */}
-      <div className="bg-white border border-slate-100 rounded-3xl p-3 mb-4 shadow-sm">
-        <div className="flex items-center gap-2 mb-3 text-slate-500">
+      <div className="mb-4 rounded-3xl border border-slate-100 bg-white p-3 shadow-sm">
+        <div className="mb-3 flex items-center gap-2 text-slate-500">
           <FiFilter size={16} />
           <span className="text-xs font-bold">تصفية حسب الحالة</span>
         </div>
@@ -425,11 +438,12 @@ export default function Orders() {
           {filters.map(f => (
             <button
               key={f.key}
+              type="button"
               onClick={() => setFilter(f.key)}
-              className={`px-4 py-2 rounded-2xl text-sm font-bold whitespace-nowrap transition duration-200
+              className={`whitespace-nowrap rounded-2xl px-4 py-2 text-sm font-bold transition duration-200
                 ${filter === f.key
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                  : 'bg-slate-50 text-slate-500 border border-slate-100 hover:bg-slate-100 hover:text-slate-700'
+                  : 'border border-slate-100 bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                 }`}
             >
               {f.label}
@@ -439,8 +453,8 @@ export default function Orders() {
       </div>
 
       {/* Advanced Filters */}
-      <div className="bg-white border border-slate-100 rounded-3xl p-3 mb-5 shadow-sm">
-        <div className="flex items-center justify-between gap-3 mb-3">
+      <div className="mb-5 rounded-3xl border border-slate-100 bg-white p-3 shadow-sm">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-slate-500">
             <FiCalendar size={16} />
             <span className="text-xs font-bold">فلترة متقدمة</span>
@@ -458,7 +472,7 @@ export default function Orders() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <FilterDropdown
             label="الولاية"
             value={wilayaFilter}
@@ -481,9 +495,9 @@ export default function Orders() {
         </div>
 
         {dateFilter === 'custom' && (
-          <div className="grid grid-cols-2 gap-3 mt-3">
+          <div className="mt-3 grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-2">
+              <label className="mb-2 block text-xs font-bold text-slate-500">
                 من
               </label>
 
@@ -496,7 +510,7 @@ export default function Orders() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-2">
+              <label className="mb-2 block text-xs font-bold text-slate-500">
                 إلى
               </label>
 
@@ -542,20 +556,18 @@ export default function Orders() {
       )}
 
       {loading ? (
-        <div className="bg-white border border-slate-100 rounded-3xl p-10 text-center text-slate-400 font-medium shadow-sm">
-          جاري التحميل...
-        </div>
+        <OrdersListSkeleton />
       ) : orders.length === 0 ? (
-        <div className="bg-white border border-slate-100 rounded-3xl p-10 text-center shadow-sm">
+        <div className="rounded-3xl border border-slate-100 bg-white p-10 text-center shadow-sm">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-50 text-slate-400">
             <FiPackage size={30} />
           </div>
 
-          <p className="text-slate-900 text-lg font-black">
+          <p className="text-lg font-black text-slate-900">
             {error ? error.title : hasActiveFilters ? 'لا توجد نتائج' : 'لا يوجد طلبات'}
           </p>
 
-          <p className="text-slate-500 text-sm font-medium mt-1">
+          <p className="mt-1 text-sm font-medium text-slate-500">
             {error
               ? error.description
               : hasActiveFilters
@@ -568,7 +580,7 @@ export default function Orders() {
             <button
               type="button"
               onClick={retryLoadingOrders}
-              className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-red-50 px-5 py-3 text-sm font-extrabold text-red-600 border border-red-100 transition hover:bg-red-100 active:scale-[0.99]"
+              className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-red-100 bg-red-50 px-5 py-3 text-sm font-extrabold text-red-600 transition hover:bg-red-100 active:scale-[0.99]"
             >
               <FiRefreshCw size={18} />
               إعادة المحاولة
@@ -602,15 +614,15 @@ export default function Orders() {
             <Link
               key={order._id}
               to={`/orders/${order._id}`}
-              className="group bg-white rounded-3xl p-4 border border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/70"
+              className="group rounded-3xl border border-slate-100 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/70"
             >
-              <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
-                  <h3 className="font-black text-slate-900 leading-6">
+                  <h3 className="font-black leading-6 text-slate-900">
                     {order.customerName}
                   </h3>
 
-                  <div className="flex items-center gap-1.5 mt-1 text-slate-400">
+                  <div className="mt-1 flex items-center gap-1.5 text-slate-400">
                     <FiMapPin size={14} />
 
                     <span className="text-xs font-bold">
@@ -620,23 +632,23 @@ export default function Orders() {
                 </div>
 
                 <span
-                  className={`text-xs px-3 py-1.5 rounded-full font-extrabold border ${statusLabels[order.status]?.color}`}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-extrabold ${statusLabels[order.status]?.color}`}
                 >
                   {statusLabels[order.status]?.label}
                 </span>
               </div>
 
-              <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-3">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-3">
                 <div className="flex items-center gap-2 text-slate-600">
                   <FiPackage size={16} className="text-slate-400" />
 
-                  <p className="text-sm font-bold line-clamp-1">
+                  <p className="line-clamp-1 text-sm font-bold">
                     {order.product}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mt-3">
+              <div className="mt-3 flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-slate-400">
                   <FiTag size={14} />
                   <span className="text-xs font-bold">السعر</span>
@@ -685,7 +697,7 @@ export default function Orders() {
 
       <Link
         to="/orders/new"
-        className="sm:hidden fixed bottom-20 left-4 bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-xl shadow-blue-600/30 transition active:scale-95"
+        className="fixed bottom-20 left-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-2xl text-white shadow-xl shadow-blue-600/30 transition hover:bg-blue-700 active:scale-95 sm:hidden"
         aria-label="إضافة طلب جديد"
       >
         <FiPlus size={26} />
@@ -725,17 +737,17 @@ function FilterDropdown({ label, value, onChange, options }) {
 
   return (
     <div ref={dropdownRef} className="relative">
-      <label className="block text-xs font-black text-slate-500 mb-2">
+      <label className="mb-2 block text-xs font-black text-slate-500">
         {label}
       </label>
 
       <button
         type="button"
         onClick={() => setOpen(prev => !prev)}
-        className={`w-full flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm font-black transition-all duration-200 shadow-sm
+        className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm font-black shadow-sm transition-all duration-200
           ${open
-            ? 'border-blue-300 bg-white ring-4 ring-blue-100/70 text-slate-900'
-            : 'border-slate-100 bg-slate-50 text-slate-700 hover:bg-white hover:border-blue-200 hover:shadow-md'
+            ? 'border-blue-300 bg-white text-slate-900 ring-4 ring-blue-100/70'
+            : 'border-slate-100 bg-slate-50 text-slate-700 hover:border-blue-200 hover:bg-white hover:shadow-md'
           }`}
       >
         <span className="truncate">
@@ -767,7 +779,7 @@ function FilterDropdown({ label, value, onChange, options }) {
                   key={option.key}
                   type="button"
                   onClick={() => handleSelect(option.key)}
-                  className={`w-full flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-right text-xs font-black transition-all duration-150
+                  className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-right text-xs font-black transition-all duration-150
                     ${active
                       ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/20'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
