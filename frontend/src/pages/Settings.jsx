@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import Layout from '../components/Layout'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
+import ChangePasswordCard from '../components/ChangePasswordCard'
+
 import {
   FiUser,
   FiShoppingBag,
@@ -461,6 +463,11 @@ export default function Settings() {
           <PreviewRow label="هاتف المتجر" value={form.phone || '—'} />
         </div>
       </div>
+
+      <ChangePasswordCard
+        showMessage={showMessage}
+        clearMessage={clearMessage}
+      />
 
       <form
         onSubmit={handleSaveTemplates}
