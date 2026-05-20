@@ -27,6 +27,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  emailVerificationCode: {
+    type: String
+  },
+  emailVerificationCodeExpires: {
+    type: Date
+  },
   whatsappTemplates: {
     confirmOrder: {
       type: String,

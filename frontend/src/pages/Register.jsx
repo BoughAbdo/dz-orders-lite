@@ -1,6 +1,6 @@
+// frontend/src/pages/Register.jsx
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
 import {
   FiUser,
@@ -66,7 +66,6 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
-  const { login } = useAuth()
   const navigate = useNavigate()
 
   const clearError = () => {
@@ -166,8 +165,11 @@ export default function Register() {
         phone: form.phone.trim(),
       })
 
-      login(res.data.token, res.data.user)
-      navigate('/dashboard')
+      navigate('/verify-email', {
+        state: {
+          email: res.data.email || form.email.trim(),
+        },
+      })
     } catch (err) {
       console.error(err)
       setError(getRegisterErrorMessage(err))
@@ -216,84 +218,45 @@ export default function Register() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                الاسم الكامل
-              </label>
+            <RegisterField
+              label="الاسم الكامل"
+              icon={FiUser}
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="محمد أمين"
+            />
 
-              <div className="relative">
-                <input
-                  type="text"
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
-                  placeholder="محمد أمين"
-                />
+            <RegisterField
+              label="اسم المتجر"
+              icon={FiShoppingBag}
+              name="businessName"
+              value={form.businessName}
+              onChange={handleChange}
+              placeholder="متجر الأناقة"
+            />
 
-                <FiUser className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              </div>
-            </div>
+            <RegisterField
+              label="رقم الهاتف"
+              icon={FiPhone}
+              name="phone"
+              value={form.phone}
+              onChange={handlePhoneChange}
+              placeholder="0550000000"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={15}
+            />
 
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                اسم المتجر
-              </label>
-
-              <div className="relative">
-                <input
-                  type="text"
-                  name="businessName"
-                  value={form.businessName}
-                  onChange={handleChange}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
-                  placeholder="متجر الأناقة"
-                />
-
-                <FiShoppingBag className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                رقم الهاتف
-              </label>
-
-              <div className="relative">
-                <input
-                  type="text"
-                  name="phone"
-                  value={form.phone}
-                  onChange={handlePhoneChange}
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={15}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
-                  placeholder="0550000000"
-                />
-
-                <FiPhone className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                البريد الإلكتروني
-              </label>
-
-              <div className="relative">
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
-                  placeholder="example@email.com"
-                />
-
-                <FiMail className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              </div>
-            </div>
+            <RegisterField
+              label="البريد الإلكتروني"
+              icon={FiMail}
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="example@email.com"
+            />
 
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2">
@@ -353,6 +316,43 @@ export default function Register() {
         <p className="text-center text-xs font-medium text-slate-400 mt-6">
           © 2025 طلبيات — جميع الحقوق محفوظة
         </p>
+      </div>
+    </div>
+  )
+}
+
+function RegisterField({
+  label,
+  icon: Icon,
+  name,
+  type = 'text',
+  value,
+  onChange,
+  placeholder,
+  inputMode,
+  pattern,
+  maxLength,
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-bold text-slate-700 mb-2">
+        {label}
+      </label>
+
+      <div className="relative">
+        <input
+          type={type}
+          name={name}
+          value={value}
+          onChange={onChange}
+          inputMode={inputMode}
+          pattern={pattern}
+          maxLength={maxLength}
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
+          placeholder={placeholder}
+        />
+
+        <Icon className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
       </div>
     </div>
   )
