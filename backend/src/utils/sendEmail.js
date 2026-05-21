@@ -1,23 +1,44 @@
 // backend/src/utils/sendEmail.js
-const dns = require('dns');
+const dns = require('dns').promises;
 const nodemailer = require('nodemailer');
 
-dns.setDefaultResultOrder('ipv4first');
+const getSmtpHost = async () => {
+  const hostname = process.env.EMAIL_HOST || 'smtp.gmail.com';
+
+  try {
+    const addresses = await dns.resolve4(hostname);
+
+    if (addresses && addresses.length > 0) {
+      return {
+        host: addresses[0],
+        servername: hostname
+      };
+    }
+  } catch (error) {
+    console.error('SMTP IPv4 resolve failed:', error.message);
+  }
+
+  return {
+    host: hostname,
+    servername: hostname
+  };
+};
 
 const sendEmail = async ({ to, subject, html }) => {
   const port = Number(process.env.EMAIL_PORT) || 587;
+  const { host, servername } = await getSmtpHost();
 
   const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    host,
     port,
     secure: port === 465,
-    family: 4,
+    requireTLS: port === 587,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
     },
     tls: {
-      servername: process.env.EMAIL_HOST || 'smtp.gmail.com'
+      servername
     },
     connectionTimeout: 20000,
     greetingTimeout: 20000,
