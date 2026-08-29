@@ -1,56 +1,30 @@
 // backend/src/utils/sendEmail.js
-const dns = require('dns').promises;
-const nodemailer = require('nodemailer');
-
-const getSmtpHost = async () => {
-  const hostname = process.env.EMAIL_HOST || 'smtp.gmail.com';
-
-  try {
-    const addresses = await dns.resolve4(hostname);
-
-    if (addresses && addresses.length > 0) {
-      return {
-        host: addresses[0],
-        servername: hostname
-      };
-    }
-  } catch (error) {
-    console.error('SMTP IPv4 resolve failed:', error.message);
-  }
-
-  return {
-    host: hostname,
-    servername: hostname
-  };
-};
+const SibApiV3Sdk = require('@getbrevo/brevo');
 
 const sendEmail = async ({ to, subject, html }) => {
-  const port = Number(process.env.EMAIL_PORT) || 587;
-  const { host, servername } = await getSmtpHost();
+  try {
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    const apiKey = apiInstance.authentications['apiKey'];
+    
+    // استخدام مفتاح API
+    apiKey.apiKey = process.env.BREVO_API_KEY;
 
-  const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    requireTLS: port === 587,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    },
-    tls: {
-      servername
-    },
-    connectionTimeout: 20000,
-    greetingTimeout: 20000,
-    socketTimeout: 30000
-  });
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+    sendSmtpEmail.subject = subject;
+    sendSmtpEmail.htmlContent = html;
+    sendSmtpEmail.sender = {
+      name: 'طلبيات',
+      email: process.env.EMAIL_FROM || 'talabiyat.app@gmail.com',
+    };
+    sendSmtpEmail.to = [{ email: to }];
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-    to,
-    subject,
-    html
-  });
+    const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    console.log('Email sent successfully via Brevo API:', response);
+    return response;
+  } catch (error) {
+    console.error('Brevo API Error:', error.response ? error.response.body : error.message);
+    throw new Error('تعذر إرسال البريد الإلكتروني عبر API');
+  }
 };
 
 module.exports = sendEmail;
