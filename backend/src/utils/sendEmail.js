@@ -1,29 +1,36 @@
 // backend/src/utils/sendEmail.js
-const SibApiV3Sdk = require('@getbrevo/brevo');
-
 const sendEmail = async ({ to, subject, html }) => {
   try {
-    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-    const apiKey = apiInstance.authentications['apiKey'];
-    
-    // استخدام مفتاح API
-    apiKey.apiKey = process.env.BREVO_API_KEY;
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        sender: {
+          name: 'طلبيات',
+          email: process.env.EMAIL_FROM || 'talabiyat.app@gmail.com',
+        },
+        to: [{ email: to }],
+        subject: subject,
+        htmlContent: html,
+      }),
+    });
 
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-    sendSmtpEmail.subject = subject;
-    sendSmtpEmail.htmlContent = html;
-    sendSmtpEmail.sender = {
-      name: 'طلبيات',
-      email: process.env.EMAIL_FROM || 'talabiyat.app@gmail.com',
-    };
-    sendSmtpEmail.to = [{ email: to }];
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Brevo API Error:', errorData);
+      throw new Error(errorData.message || 'فشل إرسال البريد');
+    }
 
-    const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    console.log('Email sent successfully via Brevo API:', response);
-    return response;
+    const data = await response.json();
+    console.log('Email sent successfully via Brevo API:', data);
+    return data;
   } catch (error) {
-    console.error('Brevo API Error:', error.response ? error.response.body : error.message);
-    throw new Error('تعذر إرسال البريد الإلكتروني عبر API');
+    console.error('SendEmail Error:', error.message);
+    throw new Error('تعذر إرسال البريد الإلكتروني');
   }
 };
 
