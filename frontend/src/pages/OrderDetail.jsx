@@ -4,9 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
-import {
-  PageHeaderSkeleton,
-} from '../components/SkeletonCards'
+import { PageHeaderSkeleton } from '../components/SkeletonCards'
 import {
   FiUser,
   FiPhone,
@@ -82,35 +80,24 @@ const getLoadOrderErrorMessage = (err) => {
       description: 'تحقق من اتصال الإنترنت أو حاول مرة أخرى بعد لحظات.',
     }
   }
-
   if (err.response.status === 401) {
     return {
       title: 'انتهت جلسة الدخول',
       description: 'يرجى تسجيل الدخول مرة أخرى لعرض تفاصيل الطلب.',
     }
   }
-
   if (err.response.status === 403) {
     return {
       title: 'لا تملك صلاحية الوصول',
       description: 'لا يمكنك عرض هذا الطلب بهذا الحساب.',
     }
   }
-
   if (err.response.status === 404) {
     return {
       title: 'الطلب غير موجود',
       description: 'ربما تم حذف هذا الطلب أو أن الرابط غير صحيح.',
     }
   }
-
-  if (err.response.status >= 500) {
-    return {
-      title: 'حدث خطأ في الخادم',
-      description: 'الخدمة غير متاحة مؤقتًا، حاول مرة أخرى بعد قليل.',
-    }
-  }
-
   return {
     title: 'تعذر تحميل الطلب',
     description:
@@ -126,42 +113,15 @@ const getStatusErrorMessage = (err) => {
       description: 'تحقق من اتصال الإنترنت ثم حاول تغيير الحالة مرة أخرى.',
     }
   }
-
   if (err.response.status === 401) {
     return {
       title: 'انتهت جلسة الدخول',
       description: 'يرجى تسجيل الدخول مرة أخرى قبل تغيير حالة الطلب.',
     }
   }
-
-  if (err.response.status === 400) {
-    return {
-      title: 'لا يمكن تغيير الحالة',
-      description:
-        err.response?.data?.message ||
-        'قد تكون هذه الحالة غير مسموحة لهذا الطلب.',
-    }
-  }
-
-  if (err.response.status === 404) {
-    return {
-      title: 'الطلب غير موجود',
-      description: 'ربما تم حذف الطلب، ارجع إلى قائمة الطلبات وتحقق منه.',
-    }
-  }
-
-  if (err.response.status >= 500) {
-    return {
-      title: 'تعذر تغيير حالة الطلب',
-      description: 'حدث خطأ مؤقت في الخادم، حاول مرة أخرى بعد قليل.',
-    }
-  }
-
   return {
     title: 'تعذر تغيير حالة الطلب',
-    description:
-      err.response?.data?.message ||
-      'لم نتمكن من تحديث الحالة، حاول مرة أخرى.',
+    description: err.response?.data?.message || 'لم نتمكن من تحديث الحالة، حاول مرة أخرى.',
   }
 }
 
@@ -172,42 +132,15 @@ const getEditErrorMessage = (err) => {
       description: 'تحقق من اتصال الإنترنت ثم حاول حفظ التعديلات مرة أخرى.',
     }
   }
-
   if (err.response.status === 401) {
     return {
       title: 'انتهت جلسة الدخول',
       description: 'يرجى تسجيل الدخول مرة أخرى قبل حفظ التعديلات.',
     }
   }
-
-  if (err.response.status === 400) {
-    return {
-      title: 'بيانات الطلب غير صحيحة',
-      description:
-        err.response?.data?.message ||
-        'راجع الحقول المطلوبة ثم حاول مرة أخرى.',
-    }
-  }
-
-  if (err.response.status === 404) {
-    return {
-      title: 'الطلب غير موجود',
-      description: 'ربما تم حذف هذا الطلب، ارجع إلى قائمة الطلبات وتحقق منه.',
-    }
-  }
-
-  if (err.response.status >= 500) {
-    return {
-      title: 'تعذر حفظ التعديلات',
-      description: 'حدث خطأ مؤقت في الخادم، حاول مرة أخرى بعد قليل.',
-    }
-  }
-
   return {
     title: 'تعذر حفظ التعديلات',
-    description:
-      err.response?.data?.message ||
-      'لم نتمكن من تعديل الطلب، حاول مرة أخرى بعد لحظات.',
+    description: err.response?.data?.message || 'لم نتمكن من تعديل الطلب، حاول مرة أخرى.',
   }
 }
 
@@ -218,33 +151,9 @@ const getDeleteErrorMessage = (err) => {
       description: 'تحقق من اتصال الإنترنت ثم حاول حذف الطلب مرة أخرى.',
     }
   }
-
-  if (err.response.status === 401) {
-    return {
-      title: 'انتهت جلسة الدخول',
-      description: 'يرجى تسجيل الدخول مرة أخرى قبل حذف الطلب.',
-    }
-  }
-
-  if (err.response.status === 404) {
-    return {
-      title: 'الطلب غير موجود',
-      description: 'ربما تم حذف هذا الطلب بالفعل.',
-    }
-  }
-
-  if (err.response.status >= 500) {
-    return {
-      title: 'تعذر حذف الطلب',
-      description: 'حدث خطأ مؤقت في الخادم، حاول مرة أخرى بعد قليل.',
-    }
-  }
-
   return {
     title: 'تعذر حذف الطلب',
-    description:
-      err.response?.data?.message ||
-      'لم نتمكن من حذف الطلب الآن، حاول مرة أخرى بعد لحظات.',
+    description: err.response?.data?.message || 'لم نتمكن من حذف الطلب الآن، حاول مرة أخرى.',
   }
 }
 
@@ -253,34 +162,11 @@ function OrderDetailSkeleton() {
     <>
       <div className="mb-6 flex items-start justify-between gap-4">
         <PageHeaderSkeleton />
-
         <div className="h-8 w-24 animate-pulse rounded-full bg-slate-100" />
       </div>
-
       <div className="space-y-4">
         <DetailCardSkeleton />
         <DetailCardSkeleton />
-      </div>
-
-      <div className="mt-4 animate-pulse rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
-        <div className="mb-4 h-4 w-28 rounded-full bg-slate-200" />
-
-        <div className="flex flex-wrap gap-2">
-          <div className="h-9 w-20 rounded-2xl bg-slate-100" />
-          <div className="h-9 w-20 rounded-2xl bg-slate-100" />
-          <div className="h-9 w-24 rounded-2xl bg-slate-100" />
-          <div className="h-9 w-20 rounded-2xl bg-slate-100" />
-          <div className="h-9 w-16 rounded-2xl bg-slate-100" />
-        </div>
-      </div>
-
-      <div className="mt-4 space-y-3">
-        <div className="h-12 animate-pulse rounded-2xl bg-slate-200" />
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="h-12 animate-pulse rounded-2xl bg-slate-100" />
-          <div className="h-12 animate-pulse rounded-2xl bg-slate-100" />
-        </div>
       </div>
     </>
   )
@@ -294,29 +180,12 @@ function DetailCardSkeleton() {
           <div className="h-10 w-10 rounded-2xl bg-slate-100" />
           <div className="h-4 w-28 rounded-full bg-slate-200" />
         </div>
-
         <div className="h-8 w-16 rounded-2xl bg-slate-100" />
       </div>
-
       <div className="flex flex-col divide-y divide-slate-100">
-        <SkeletonDetailRow />
-        <SkeletonDetailRow />
-        <SkeletonDetailRow />
-        <SkeletonDetailRow />
+        <div className="h-6 bg-slate-50 my-2 rounded" />
+        <div className="h-6 bg-slate-50 my-2 rounded" />
       </div>
-    </div>
-  )
-}
-
-function SkeletonDetailRow() {
-  return (
-    <div className="flex items-center justify-between gap-4 py-3">
-      <div className="flex items-center gap-2">
-        <div className="h-4 w-4 rounded-full bg-slate-100" />
-        <div className="h-3 w-20 rounded-full bg-slate-100" />
-      </div>
-
-      <div className="h-3 w-28 rounded-full bg-slate-200" />
     </div>
   )
 }
@@ -345,6 +214,7 @@ export default function OrderDetail() {
     phone: '',
     wilaya: '',
     city: '',
+    deliveryType: 'home',
     product: '',
     price: '',
     deliveryPrice: '',
@@ -360,12 +230,12 @@ export default function OrderDetail() {
     api.get(`/orders/${id}`)
       .then(res => {
         setOrder(res.data)
-
         setEditForm({
           customerName: res.data.customerName || '',
           phone: res.data.phone || '',
           wilaya: res.data.wilaya || '',
           city: res.data.city || '',
+          deliveryType: res.data.deliveryType || 'home',
           product: res.data.product || '',
           price: String(res.data.price || ''),
           deliveryPrice: String(res.data.deliveryPrice || ''),
@@ -380,97 +250,42 @@ export default function OrderDetail() {
       .finally(() => setLoading(false))
   }, [id, retryKey])
 
-  const retryLoadingOrder = () => {
-    setRetryKey(prev => prev + 1)
-  }
+  const retryLoadingOrder = () => setRetryKey(prev => prev + 1)
 
   const scrollToEditError = () => {
     setTimeout(() => {
-      editErrorRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      })
+      editErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }, 0)
   }
 
   const validateEditForm = () => {
     if (!editForm.customerName.trim()) {
-      return {
-        title: 'اسم الزبون مطلوب',
-        description: 'يرجى إدخال اسم الزبون قبل حفظ التعديلات.',
-      }
+      return { title: 'اسم الزبون مطلوب', description: 'يرجى إدخال اسم الزبون قبل حفظ التعديلات.' }
     }
-
     if (!editForm.phone.trim()) {
-      return {
-        title: 'رقم الهاتف مطلوب',
-        description: 'يرجى إدخال رقم هاتف الزبون حتى يمكنك التواصل معه.',
-      }
+      return { title: 'رقم الهاتف مطلوب', description: 'يرجى إدخال رقم هاتف الزبون.' }
     }
-
-    if (editForm.phone.trim().length < 9) {
-      return {
-        title: 'رقم الهاتف غير صحيح',
-        description: 'يرجى إدخال رقم هاتف صحيح، مثال: 0550000000.',
-      }
-    }
-
     if (!editForm.wilaya.trim()) {
-      return {
-        title: 'الولاية مطلوبة',
-        description: 'يرجى إدخال ولاية التوصيل قبل حفظ التعديلات.',
-      }
+      return { title: 'الولاية مطلوبة', description: 'يرجى إدخال ولاية التوصيل.' }
     }
-
     if (!editForm.city.trim()) {
-      return {
-        title: 'البلدية مطلوبة',
-        description: 'يرجى إدخال البلدية أو منطقة التوصيل.',
-      }
+      return { title: 'البلدية مطلوبة', description: 'يرجى إدخال البلدية أو منطقة التوصيل.' }
     }
-
     if (!editForm.product.trim()) {
-      return {
-        title: 'اسم المنتج مطلوب',
-        description: 'يرجى إدخال اسم المنتج أو وصف قصير للطلب.',
-      }
+      return { title: 'اسم المنتج مطلوب', description: 'يرجى إدخال اسم المنتج.' }
     }
-
-    if (!editForm.price) {
-      return {
-        title: 'سعر المنتج مطلوب',
-        description: 'يرجى إدخال سعر المنتج بالأرقام فقط.',
-      }
+    if (!editForm.price || Number(editForm.price) <= 0) {
+      return { title: 'سعر المنتج غير صحيح', description: 'يجب أن يكون سعر المنتج أكبر من 0 دج.' }
     }
-
-    if (Number(editForm.price) <= 0) {
-      return {
-        title: 'سعر المنتج غير صحيح',
-        description: 'يجب أن يكون سعر المنتج أكبر من 0 دج.',
-      }
+    if (editForm.deliveryPrice === undefined || Number(editForm.deliveryPrice) < 0) {
+      return { title: 'سعر التوصيل غير صحيح', description: 'لا يمكن أن يكون سعر التوصيل أقل من 0 دج.' }
     }
-
-    if (!editForm.deliveryPrice) {
-      return {
-        title: 'سعر التوصيل مطلوب',
-        description: 'يرجى إدخال سعر التوصيل بالأرقام فقط.',
-      }
-    }
-
-    if (Number(editForm.deliveryPrice) < 0) {
-      return {
-        title: 'سعر التوصيل غير صحيح',
-        description: 'لا يمكن أن يكون سعر التوصيل أقل من 0 دج.',
-      }
-    }
-
     return null
   }
 
   const updateStatus = async (status) => {
     setStatusError(null)
     setDeleteError(null)
-
     try {
       const res = await api.patch(`/orders/${id}/status`, { status })
       setOrder(res.data)
@@ -481,28 +296,14 @@ export default function OrderDetail() {
   }
 
   const handleEditChange = (e) => {
-    setEditForm({
-      ...editForm,
-      [e.target.name]: e.target.value,
-    })
-
-    if (editError) {
-      setEditError(null)
-    }
+    setEditForm({ ...editForm, [e.target.name]: e.target.value })
+    if (editError) setEditError(null)
   }
 
   const handleEditNumericChange = (e) => {
     const { name, value } = e.target
-    const onlyNumbers = value.replace(/\D/g, '')
-
-    setEditForm({
-      ...editForm,
-      [name]: onlyNumbers,
-    })
-
-    if (editError) {
-      setEditError(null)
-    }
+    setEditForm({ ...editForm, [name]: value.replace(/\D/g, '') })
+    if (editError) setEditError(null)
   }
 
   const startEditing = () => {
@@ -515,12 +316,12 @@ export default function OrderDetail() {
   const cancelEditing = () => {
     setEditError(null)
     setIsEditing(false)
-
     setEditForm({
       customerName: order.customerName || '',
       phone: order.phone || '',
       wilaya: order.wilaya || '',
       city: order.city || '',
+      deliveryType: order.deliveryType || 'home',
       product: order.product || '',
       price: String(order.price || ''),
       deliveryPrice: String(order.deliveryPrice || ''),
@@ -530,7 +331,6 @@ export default function OrderDetail() {
 
   const saveOrder = async () => {
     const validationError = validateEditForm()
-
     if (validationError) {
       setEditError(validationError)
       scrollToEditError()
@@ -547,6 +347,7 @@ export default function OrderDetail() {
         phone: editForm.phone.trim(),
         wilaya: editForm.wilaya.trim(),
         city: editForm.city.trim(),
+        deliveryType: editForm.deliveryType || 'home',
         product: editForm.product.trim(),
         notes: editForm.notes.trim(),
         price: Number(editForm.price),
@@ -567,7 +368,6 @@ export default function OrderDetail() {
   const deleteOrder = async () => {
     setDeleteError(null)
     setStatusError(null)
-
     if (!confirm('هل تريد حذف هذا الطلب؟')) return
 
     try {
@@ -581,12 +381,7 @@ export default function OrderDetail() {
 
   const openWhatsApp = (msg) => {
     if (!order?.phone) return
-
-    window.open(
-      `https://wa.me/${order.phone}?text=${encodeURIComponent(msg)}`,
-      '_blank'
-    )
-
+    window.open(`https://wa.me/${order.phone}?text=${encodeURIComponent(msg)}`, '_blank')
     setShowWhatsAppMenu(false)
   }
 
@@ -601,7 +396,6 @@ export default function OrderDetail() {
 
   const formatDate = (date) => {
     if (!date) return '-'
-
     return new Date(date).toLocaleDateString('ar-DZ', {
       year: 'numeric',
       month: '2-digit',
@@ -611,20 +405,14 @@ export default function OrderDetail() {
 
   const generatePDF = () => {
     if (!order) return
-
     const printWindow = window.open('', '_blank')
-
     if (!printWindow) {
-      setDeleteError({
-        title: 'تعذر فتح نافذة الطباعة',
-        description: 'يرجى السماح بفتح النوافذ المنبثقة من المتصفح ثم حاول مرة أخرى.',
-      })
+      alert('يرجى السماح بفتح النوافذ المنبثقة من المتصفح.')
       return
     }
 
     const storeName = user?.businessName || 'طلبيات'
     const storePhone = user?.phone || ''
-
     const orderTotal = Number(order.price || 0) + Number(order.deliveryPrice || 0)
     const printedAt = new Date().toLocaleString('ar-DZ')
     const shortOrderId = order._id ? String(order._id).slice(-8) : '-'
@@ -633,331 +421,40 @@ export default function OrderDetail() {
       <html lang="ar" dir="rtl">
         <head>
           <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>طلب - ${escapeHTML(order.customerName)}</title>
-
           <style>
-            * {
-              box-sizing: border-box;
-            }
-
-            body {
-              font-family: Arial, Tahoma, sans-serif;
-              direction: rtl;
-              margin: 0;
-              padding: 24px;
-              color: #0f172a;
-              background: #f8fafc;
-            }
-
-            .page {
-              max-width: 820px;
-              margin: 0 auto;
-              background: #ffffff;
-              border: 1px solid #e2e8f0;
-              border-radius: 18px;
-              overflow: hidden;
-            }
-
-            .header {
-              background: linear-gradient(135deg, #2563eb, #1d4ed8);
-              color: #ffffff;
-              padding: 22px 24px;
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              gap: 16px;
-            }
-
-            .store-name {
-              font-size: 26px;
-              font-weight: 900;
-              margin: 0 0 6px;
-            }
-
-            .store-phone {
-              font-size: 13px;
-              font-weight: 700;
-              color: #dbeafe;
-              margin: 0;
-            }
-
-            .badge {
-              background: rgba(255, 255, 255, 0.14);
-              border: 1px solid rgba(255, 255, 255, 0.22);
-              color: #ffffff;
-              padding: 10px 14px;
-              border-radius: 999px;
-              font-size: 13px;
-              font-weight: 800;
-              white-space: nowrap;
-            }
-
-            .content {
-              padding: 22px;
-            }
-
-            .meta {
-              display: grid;
-              grid-template-columns: repeat(3, 1fr);
-              gap: 10px;
-              margin-bottom: 16px;
-            }
-
-            .meta-card {
-              background: #f8fafc;
-              border: 1px solid #e2e8f0;
-              border-radius: 14px;
-              padding: 12px;
-            }
-
-            .meta-label {
-              display: block;
-              color: #64748b;
-              font-size: 11px;
-              font-weight: 700;
-              margin-bottom: 5px;
-            }
-
-            .meta-value {
-              display: block;
-              color: #0f172a;
-              font-size: 13px;
-              font-weight: 900;
-            }
-
-            .section {
-              margin-bottom: 16px;
-              border: 1px solid #e2e8f0;
-              border-radius: 16px;
-              overflow: hidden;
-              background: #ffffff;
-            }
-
-            .section-title {
-              margin: 0;
-              padding: 13px 16px;
-              color: #0f172a;
-              background: #f8fafc;
-              border-bottom: 1px solid #e2e8f0;
-              font-size: 15px;
-              font-weight: 900;
-            }
-
-            .rows {
-              padding: 4px 16px;
-            }
-
-            .row {
-              display: flex;
-              justify-content: space-between;
-              gap: 16px;
-              padding: 12px 0;
-              border-bottom: 1px solid #f1f5f9;
-            }
-
-            .row:last-child {
-              border-bottom: 0;
-            }
-
-            .label {
-              color: #64748b;
-              font-size: 13px;
-              font-weight: 700;
-              white-space: nowrap;
-            }
-
-            .value {
-              color: #0f172a;
-              font-size: 13px;
-              font-weight: 900;
-              text-align: left;
-              word-break: break-word;
-            }
-
-            .total-row {
-              margin-top: 10px;
-              background: #eff6ff;
-              border: 1px solid #bfdbfe;
-              border-radius: 16px;
-              padding: 16px;
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              gap: 16px;
-            }
-
-            .total-label {
-              color: #1e40af;
-              font-size: 14px;
-              font-weight: 900;
-            }
-
-            .total-value {
-              color: #2563eb;
-              font-size: 22px;
-              font-weight: 900;
-            }
-
-            .footer {
-              padding: 16px 22px 22px;
-              color: #64748b;
-              text-align: center;
-              font-size: 12px;
-              font-weight: 700;
-            }
-
-            @media print {
-              body {
-                padding: 0;
-                background: #ffffff;
-              }
-
-              .page {
-                max-width: none;
-                border: 0;
-                border-radius: 0;
-              }
-
-              .header {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-              }
-
-              .meta-card,
-              .section,
-              .total-row {
-                break-inside: avoid;
-              }
-            }
-
-            @media (max-width: 640px) {
-              body {
-                padding: 12px;
-              }
-
-              .header {
-                align-items: flex-start;
-                flex-direction: column;
-              }
-
-              .meta {
-                grid-template-columns: 1fr;
-              }
-            }
+            body { font-family: Arial, sans-serif; direction: rtl; padding: 24px; color: #0f172a; }
+            .page { max-width: 800px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; }
+            .header { background: #2563eb; color: #fff; padding: 20px; display: flex; justify-content: space-between; }
+            .content { padding: 20px; }
+            .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+            .total { background: #eff6ff; padding: 15px; border-radius: 12px; margin-top: 15px; display: flex; justify-content: space-between; font-weight: bold; font-size: 18px; color: #1e40af; }
           </style>
         </head>
-
         <body>
           <div class="page">
             <div class="header">
               <div>
-                <h1 class="store-name">${escapeHTML(storeName)}</h1>
-                ${storePhone ? `<p class="store-phone">هاتف المتجر: ${escapeHTML(storePhone)}</p>` : ''}
+                <h2>${escapeHTML(storeName)}</h2>
+                ${storePhone ? `<p>هاتف: ${escapeHTML(storePhone)}</p>` : ''}
               </div>
-
-              <div class="badge">
-                تفاصيل الطلب
-              </div>
+              <div>#${escapeHTML(shortOrderId)}</div>
             </div>
-
             <div class="content">
-              <div class="meta">
-                <div class="meta-card">
-                  <span class="meta-label">رقم الطلب</span>
-                  <span class="meta-value">#${escapeHTML(shortOrderId)}</span>
-                </div>
-
-                <div class="meta-card">
-                  <span class="meta-label">تاريخ الطلب</span>
-                  <span class="meta-value">${escapeHTML(formatDate(order.createdAt))}</span>
-                </div>
-
-                <div class="meta-card">
-                  <span class="meta-label">تاريخ الطباعة</span>
-                  <span class="meta-value">${escapeHTML(printedAt)}</span>
-                </div>
-              </div>
-
-              <div class="section">
-                <h2 class="section-title">بيانات الزبون</h2>
-
-                <div class="rows">
-                  <div class="row">
-                    <span class="label">الاسم</span>
-                    <span class="value">${escapeHTML(order.customerName)}</span>
-                  </div>
-
-                  <div class="row">
-                    <span class="label">الهاتف</span>
-                    <span class="value">${escapeHTML(order.phone || '-')}</span>
-                  </div>
-
-                  <div class="row">
-                    <span class="label">الولاية</span>
-                    <span class="value">${escapeHTML(order.wilaya)}</span>
-                  </div>
-
-                  <div class="row">
-                    <span class="label">البلدية</span>
-                    <span class="value">${escapeHTML(order.city || '-')}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="section">
-                <h2 class="section-title">بيانات الطلب</h2>
-
-                <div class="rows">
-                  <div class="row">
-                    <span class="label">المنتج</span>
-                    <span class="value">${escapeHTML(order.product)}</span>
-                  </div>
-
-                  <div class="row">
-                    <span class="label">السعر</span>
-                    <span class="value">${Number(order.price || 0).toLocaleString()} دج</span>
-                  </div>
-
-                  <div class="row">
-                    <span class="label">التوصيل</span>
-                    <span class="value">${Number(order.deliveryPrice || 0).toLocaleString()} دج</span>
-                  </div>
-
-                  <div class="row">
-                    <span class="label">الحالة</span>
-                    <span class="value">${escapeHTML(statusLabels[order.status]?.label || '-')}</span>
-                  </div>
-
-                  ${order.notes ? `
-                    <div class="row">
-                      <span class="label">ملاحظات</span>
-                      <span class="value">${escapeHTML(order.notes)}</span>
-                    </div>
-                  ` : ''}
-                </div>
-              </div>
-
-              <div class="total-row">
-                <span class="total-label">الإجمالي</span>
-                <span class="total-value">${orderTotal.toLocaleString()} دج</span>
-              </div>
-            </div>
-
-            <div class="footer">
-              شكراً لثقتكم بنا
+              <div class="row"><span>الزبون</span><span>${escapeHTML(order.customerName)}</span></div>
+              <div class="row"><span>الهاتف</span><span>${escapeHTML(order.phone || '-')}</span></div>
+              <div class="row"><span>العنوان</span><span>${escapeHTML(order.wilaya)} - ${escapeHTML(order.city || '-')}</span></div>
+              <div class="row"><span>نوع التوصيل</span><span>${order.deliveryType === 'desk' ? 'استلام من المكتب' : 'توصيل للمنزل'}</span></div>
+              <div class="row"><span>المنتج</span><span>${escapeHTML(order.product)}</span></div>
+              <div class="row"><span>السعر</span><span>${Number(order.price || 0).toLocaleString()} دج</span></div>
+              <div class="row"><span>سعر التوصيل</span><span>${Number(order.deliveryPrice || 0).toLocaleString()} دج</span></div>
+              <div class="total"><span>الإجمالي الواجب تحصيله</span><span>${orderTotal.toLocaleString()} دج</span></div>
             </div>
           </div>
-
-          <script>
-            window.onload = function () {
-              window.print()
-            }
-          </script>
+          <script>window.onload = function () { window.print() }</script>
         </body>
       </html>
     `)
-
     printWindow.document.close()
   }
 
@@ -976,32 +473,21 @@ export default function OrderDetail() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-red-50 text-red-500">
             <FiAlertCircle size={30} />
           </div>
-
-          <p className="text-lg font-black text-slate-900">
-            {loadError?.title || 'الطلب غير موجود'}
-          </p>
-
-          <p className="mt-2 text-sm font-bold leading-7 text-slate-500">
-            {loadError?.description || 'ربما تم حذف هذا الطلب أو أن الرابط غير صحيح.'}
-          </p>
-
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <p className="text-lg font-black text-slate-900">{loadError?.title || 'الطلب غير موجود'}</p>
+          <div className="mt-5 flex justify-center gap-3">
             <button
               type="button"
               onClick={retryLoadingOrder}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-100 bg-red-50 px-5 py-3 text-sm font-extrabold text-red-600 transition hover:bg-red-100 active:scale-[0.99]"
+              className="rounded-2xl border border-red-100 bg-red-50 px-5 py-3 text-sm font-extrabold text-red-600"
             >
-              <FiRefreshCw size={18} />
               إعادة المحاولة
             </button>
-
             <button
               type="button"
               onClick={() => navigate('/orders')}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-100 px-5 py-3 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200 active:scale-[0.99]"
+              className="rounded-2xl bg-slate-100 px-5 py-3 text-sm font-extrabold text-slate-600"
             >
-              <FiArrowRight size={18} />
-              الرجوع إلى الطلبات
+              الرجوع للطلبات
             </button>
           </div>
         </div>
@@ -1013,25 +499,14 @@ export default function OrderDetail() {
   const CurrentStatusIcon = currentStatus?.icon || FiPackage
   const total = Number(order.price || 0) + Number(order.deliveryPrice || 0)
   const isFinalStatus = ['delivered', 'returned'].includes(order.status)
-
   const storeName = user?.businessName || 'طلبيات'
 
   const whatsappTemplates = {
-    confirmOrder:
-      user?.whatsappTemplates?.confirmOrder ||
-      defaultWhatsappTemplates.confirmOrder,
-    shipped:
-      user?.whatsappTemplates?.shipped ||
-      defaultWhatsappTemplates.shipped,
-    delivered:
-      user?.whatsappTemplates?.delivered ||
-      defaultWhatsappTemplates.delivered,
-    followUp:
-      user?.whatsappTemplates?.followUp ||
-      defaultWhatsappTemplates.followUp,
-    returned:
-      user?.whatsappTemplates?.returned ||
-      defaultWhatsappTemplates.returned,
+    confirmOrder: user?.whatsappTemplates?.confirmOrder || defaultWhatsappTemplates.confirmOrder,
+    shipped: user?.whatsappTemplates?.shipped || defaultWhatsappTemplates.shipped,
+    delivered: user?.whatsappTemplates?.delivered || defaultWhatsappTemplates.delivered,
+    followUp: user?.whatsappTemplates?.followUp || defaultWhatsappTemplates.followUp,
+    returned: user?.whatsappTemplates?.returned || defaultWhatsappTemplates.returned,
   }
 
   const fillWhatsappTemplate = (template) => {
@@ -1043,36 +518,11 @@ export default function OrderDetail() {
   }
 
   const whatsappMessages = [
-    {
-      label: 'تأكيد الطلب',
-      description: 'إرسال رسالة تأكيد للزبون',
-      icon: FiCheckCircle,
-      msg: fillWhatsappTemplate(whatsappTemplates.confirmOrder),
-    },
-    {
-      label: 'إشعار بالشحن',
-      description: 'إعلام الزبون أن الطلب في الطريق',
-      icon: FiTruck,
-      msg: fillWhatsappTemplate(whatsappTemplates.shipped),
-    },
-    {
-      label: 'تأكيد التسليم',
-      description: 'رسالة متابعة بعد وصول الطلب',
-      icon: FiCheckCircle,
-      msg: fillWhatsappTemplate(whatsappTemplates.delivered),
-    },
-    {
-      label: 'متابعة الطلب',
-      description: 'طلب تأكيد معلومات التوصيل',
-      icon: FiClock,
-      msg: fillWhatsappTemplate(whatsappTemplates.followUp),
-    },
-    {
-      label: 'استفسار عن الرجوع',
-      description: 'معرفة سبب رجوع الطلب',
-      icon: FiRefreshCcw,
-      msg: fillWhatsappTemplate(whatsappTemplates.returned),
-    },
+    { label: 'تأكيد الطلب', description: 'إرسال رسالة تأكيد للزبون', icon: FiCheckCircle, msg: fillWhatsappTemplate(whatsappTemplates.confirmOrder) },
+    { label: 'إشعار بالشحن', description: 'إعلام الزبون أن الطلب في الطريق', icon: FiTruck, msg: fillWhatsappTemplate(whatsappTemplates.shipped) },
+    { label: 'تأكيد التسليم', description: 'رسالة متابعة بعد وصول الطلب', icon: FiCheckCircle, msg: fillWhatsappTemplate(whatsappTemplates.delivered) },
+    { label: 'متابعة الطلب', description: 'طلب تأكيد معلومات التوصيل', icon: FiClock, msg: fillWhatsappTemplate(whatsappTemplates.followUp) },
+    { label: 'استفسار عن الرجوع', description: 'معرفة سبب رجوع الطلب', icon: FiRefreshCcw, msg: fillWhatsappTemplate(whatsappTemplates.returned) },
   ]
 
   return (
@@ -1082,15 +532,12 @@ export default function OrderDetail() {
           <h2 className="text-2xl font-black tracking-tight text-slate-900">
             تفاصيل الطلب
           </h2>
-
           <p className="mt-1 text-sm font-medium text-slate-500">
             مراجعة بيانات الطلب وتحديث حالته
           </p>
         </div>
 
-        <span
-          className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold ${currentStatus?.color}`}
-        >
+        <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold ${currentStatus?.color}`}>
           <CurrentStatusIcon size={14} />
           {currentStatus?.label}
         </span>
@@ -1099,14 +546,11 @@ export default function OrderDetail() {
       {isEditing ? (
         <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
           <div className="mb-5 flex items-center justify-between gap-3">
-            <p className="text-sm font-black text-slate-900">
-              تعديل بيانات الطلب
-            </p>
-
+            <p className="text-sm font-black text-slate-900">تعديل بيانات الطلب</p>
             <button
               type="button"
               onClick={cancelEditing}
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-50 px-3 py-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-100"
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-50 px-3 py-2 text-xs font-extrabold text-slate-500 hover:bg-slate-100"
             >
               <FiX size={15} />
               إلغاء
@@ -1114,11 +558,7 @@ export default function OrderDetail() {
           </div>
 
           {editError && (
-            <ErrorBox
-              refProp={editErrorRef}
-              title={editError.title}
-              description={editError.description}
-            />
+            <ErrorBox refProp={editErrorRef} title={editError.title} description={editError.description} />
           )}
 
           <div className="flex flex-col gap-4">
@@ -1161,6 +601,35 @@ export default function OrderDetail() {
               placeholder="باب الزوار"
             />
 
+            {/* تعديل نوع التوصيل */}
+            <div>
+              <label className="mb-2 block text-sm font-bold text-slate-700">نوع التوصيل</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditForm({ ...editForm, deliveryType: 'home' })}
+                  className={`rounded-2xl border py-3 px-4 text-sm font-extrabold transition duration-200 ${
+                    editForm.deliveryType === 'home'
+                      ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
+                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  توصيل للمنزل
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditForm({ ...editForm, deliveryType: 'desk' })}
+                  className={`rounded-2xl border py-3 px-4 text-sm font-extrabold transition duration-200 ${
+                    editForm.deliveryType === 'desk'
+                      ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
+                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  استلام من المكتب (StopDesk)
+                </button>
+              </div>
+            </div>
+
             <EditField
               label="المنتج *"
               icon={FiPackage}
@@ -1195,10 +664,7 @@ export default function OrderDetail() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-bold text-slate-700">
-                ملاحظات
-              </label>
-
+              <label className="mb-2 block text-sm font-bold text-slate-700">ملاحظات</label>
               <div className="relative">
                 <textarea
                   name="notes"
@@ -1208,11 +674,7 @@ export default function OrderDetail() {
                   placeholder="أي ملاحظات إضافية..."
                   rows={3}
                 />
-
-                <FiFileText
-                  className="pointer-events-none absolute right-4 top-4 text-slate-400"
-                  size={18}
-                />
+                <FiFileText className="pointer-events-none absolute right-4 top-4 text-slate-400" size={18} />
               </div>
             </div>
 
@@ -1220,7 +682,7 @@ export default function OrderDetail() {
               type="button"
               onClick={saveOrder}
               disabled={editLoading}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition duration-200 hover:bg-blue-700 active:scale-[0.99] active:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition duration-200 hover:bg-blue-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <FiSave size={18} />
               {editLoading ? 'جاري الحفظ...' : 'حفظ التعديلات'}
@@ -1230,16 +692,14 @@ export default function OrderDetail() {
       ) : (
         <>
           <div id="order-detail" className="space-y-4">
+            {/* بيانات الزبون */}
             <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                     <FiUser size={20} />
                   </div>
-
-                  <p className="text-sm font-black text-slate-900">
-                    بيانات الزبون
-                  </p>
+                  <p className="text-sm font-black text-slate-900">بيانات الزبون</p>
                 </div>
 
                 <button
@@ -1257,18 +717,22 @@ export default function OrderDetail() {
                 <DetailRow icon={FiPhone} label="الهاتف" value={order.phone || '—'} />
                 <DetailRow icon={FiMapPin} label="الولاية" value={order.wilaya} />
                 <DetailRow icon={FiHome} label="البلدية" value={order.city || '—'} />
+                <DetailRow
+                  icon={FiTruck}
+                  label="نوع التوصيل"
+                  value={order.deliveryType === 'desk' ? 'استلام من المكتب (StopDesk)' : 'توصيل للمنزل (Domicile)'}
+                  valueClassName={order.deliveryType === 'desk' ? 'text-blue-600 font-extrabold' : 'text-slate-900 font-bold'}
+                />
               </div>
             </div>
 
+            {/* بيانات الطلب */}
             <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                   <FiPackage size={20} />
                 </div>
-
-                <p className="text-sm font-black text-slate-900">
-                  بيانات الطلب
-                </p>
+                <p className="text-sm font-black text-slate-900">بيانات الطلب</p>
               </div>
 
               <div className="flex flex-col divide-y divide-slate-100">
@@ -1281,23 +745,17 @@ export default function OrderDetail() {
                   value={`${total.toLocaleString()} دج`}
                   valueClassName="text-blue-600 font-black"
                 />
-
-                {order.notes && (
-                  <DetailRow icon={FiFileText} label="ملاحظات" value={order.notes} />
-                )}
+                {order.notes && <DetailRow icon={FiFileText} label="ملاحظات" value={order.notes} />}
               </div>
             </div>
           </div>
 
+          {/* تغيير الحالة */}
           <div className="mt-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
-            <p className="mb-4 text-sm font-black text-slate-900">
-              تغيير الحالة
-            </p>
-
+            <p className="mb-4 text-sm font-black text-slate-900">تغيير الحالة</p>
             <div className="flex flex-wrap gap-2">
               {statusFlow.map(s => {
                 const StatusIcon = statusLabels[s].icon
-
                 return (
                   <button
                     key={s}
@@ -1339,23 +797,12 @@ export default function OrderDetail() {
 
             {statusError && (
               <div className="mt-3">
-                <ErrorBox
-                  title={statusError.title}
-                  description={statusError.description}
-                />
+                <ErrorBox title={statusError.title} description={statusError.description} />
               </div>
             )}
           </div>
 
-          {deleteError && (
-            <div className="mt-4">
-              <ErrorBox
-                title={deleteError.title}
-                description={deleteError.description}
-              />
-            </div>
-          )}
-
+          {/* أزرار الإجراءات السفلية */}
           <div className="mt-4 space-y-3">
             <div className="relative">
               <button
@@ -1367,19 +814,13 @@ export default function OrderDetail() {
                   <FiMessageCircle size={18} />
                   رسائل واتساب
                 </div>
-
-                {showWhatsAppMenu ? (
-                  <FiChevronUp size={16} />
-                ) : (
-                  <FiChevronDown size={16} />
-                )}
+                {showWhatsAppMenu ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
               </button>
 
               {showWhatsAppMenu && (
                 <div className="mt-2 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-lg">
                   {whatsappMessages.map((item, i) => {
                     const Icon = item.icon
-
                     return (
                       <button
                         key={i}
@@ -1390,15 +831,9 @@ export default function OrderDetail() {
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                           <Icon size={18} />
                         </span>
-
                         <span className="flex flex-col items-start">
-                          <span className="text-sm font-extrabold text-slate-800">
-                            {item.label}
-                          </span>
-
-                          <span className="mt-0.5 text-xs font-medium text-slate-400">
-                            {item.description}
-                          </span>
+                          <span className="text-sm font-extrabold text-slate-800">{item.label}</span>
+                          <span className="mt-0.5 text-xs font-medium text-slate-400">{item.description}</span>
                         </span>
                       </button>
                     )
@@ -1414,7 +849,7 @@ export default function OrderDetail() {
                 className="flex items-center justify-center gap-2 rounded-2xl bg-blue-50 py-3 text-sm font-extrabold text-blue-600 transition hover:bg-blue-100 active:scale-[0.99]"
               >
                 <FiPrinter size={18} />
-                PDF
+                طباعة وصل (PDF)
               </button>
 
               <button
@@ -1423,7 +858,7 @@ export default function OrderDetail() {
                 className="flex items-center justify-center gap-2 rounded-2xl bg-red-50 py-3 text-sm font-extrabold text-red-600 transition hover:bg-red-100 active:scale-[0.99]"
               >
                 <FiTrash2 size={18} />
-                حذف
+                حذف الطلب
               </button>
             </div>
           </div>
@@ -1435,23 +870,14 @@ export default function OrderDetail() {
 
 function ErrorBox({ title, description, refProp }) {
   return (
-    <div
-      ref={refProp}
-      className="rounded-3xl border border-red-100 bg-red-50 p-4 text-right"
-    >
+    <div ref={refProp} className="rounded-3xl border border-red-100 bg-red-50 p-4 text-right">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-red-500">
           <FiAlertCircle size={20} />
         </div>
-
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-black text-red-700">
-            {title}
-          </p>
-
-          <p className="mt-1 text-xs font-bold leading-6 text-red-500">
-            {description}
-          </p>
+          <p className="text-sm font-black text-red-700">{title}</p>
+          <p className="mt-1 text-xs font-bold leading-6 text-red-500">{description}</p>
         </div>
       </div>
     </div>
@@ -1463,35 +889,17 @@ function DetailRow({ icon: Icon, label, value, valueClassName = 'text-slate-900 
     <div className="flex items-center justify-between gap-4 py-3">
       <div className="flex items-center gap-2 text-slate-500">
         <Icon size={16} className="text-slate-400" />
-        <span className="text-sm font-bold">
-          {label}
-        </span>
+        <span className="text-sm font-bold">{label}</span>
       </div>
-
-      <span className={`text-left text-sm ${valueClassName}`}>
-        {value}
-      </span>
+      <span className={`text-left text-sm ${valueClassName}`}>{value}</span>
     </div>
   )
 }
 
-function EditField({
-  label,
-  icon: Icon,
-  name,
-  value,
-  onChange,
-  placeholder,
-  inputMode,
-  pattern,
-  maxLength,
-}) {
+function EditField({ label, icon: Icon, name, value, onChange, placeholder, inputMode, pattern, maxLength }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-bold text-slate-700">
-        {label}
-      </label>
-
+      <label className="mb-2 block text-sm font-bold text-slate-700">{label}</label>
       <div className="relative">
         <input
           type="text"
@@ -1504,11 +912,7 @@ function EditField({
           className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 outline-none transition duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
           placeholder={placeholder}
         />
-
-        <Icon
-          className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
-          size={18}
-        />
+        <Icon className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
       </div>
     </div>
   )

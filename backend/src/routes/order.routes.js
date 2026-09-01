@@ -18,6 +18,7 @@ router.post('/', createOrder);
 router.get('/:id', getOrder);
 router.put('/:id', updateOrder);
 router.patch('/:id/status', updateStatus);
+router.post('/export-excel', authMiddleware, orderController.exportOrdersToExcel);
 router.delete('/:id', deleteOrder);
 
 module.exports = router;

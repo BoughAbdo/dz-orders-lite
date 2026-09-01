@@ -134,6 +134,7 @@ export default function NewOrder() {
     phone: '',
     wilaya: '',
     city: '',
+    deliveryType: 'home',
     product: '',
     price: '',
     deliveryPrice: '',
@@ -374,6 +375,34 @@ export default function NewOrder() {
               placeholder="باب الزوار"
             />
           </div>
+          {/* نوع التوصيل */}
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">
+              نوع التوصيل
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, deliveryType: 'home' })}
+                className={`py-3 px-4 rounded-2xl border text-sm font-extrabold transition duration-200 ${form.deliveryType === 'home'
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                  }`}
+              >
+                توصيل للمنزل (Domicile)
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, deliveryType: 'desk' })}
+                className={`py-3 px-4 rounded-2xl border text-sm font-extrabold transition duration-200 ${form.deliveryType === 'desk'
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                  }`}
+              >
+                استلام من المكتب (StopDesk)
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* بيانات الطلب */}
@@ -554,9 +583,8 @@ function WilayaSelect({ label, value, wilayas, onChange }) {
         />
 
         <FiChevronDown
-          className={`absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-transform duration-200 ${
-            open ? 'rotate-180' : ''
-          }`}
+          className={`absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''
+            }`}
           size={18}
         />
       </button>

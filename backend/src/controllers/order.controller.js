@@ -1,5 +1,8 @@
 // controllers/order.controller.js
 const Order = require('../models/order.model');
+const ExcelJS = require('exceljs');
+const deliveryTemplates = require('../utils/deliveryTemplates');
+
 
 const validateOrderData = (data) => {
   const {
@@ -218,6 +221,7 @@ exports.createOrder = async (req, res) => {
       product,
       price,
       deliveryPrice,
+      deliveryType, 
       notes
     } = req.body;
 
@@ -230,6 +234,7 @@ exports.createOrder = async (req, res) => {
       product,
       price: Number(price),
       deliveryPrice: Number(deliveryPrice),
+      deliveryType: deliveryType || 'home',
       notes
     });
 
@@ -257,6 +262,7 @@ exports.updateOrder = async (req, res) => {
       product,
       price,
       deliveryPrice,
+      deliveryType,
       notes
     } = req.body;
 
@@ -270,6 +276,7 @@ exports.updateOrder = async (req, res) => {
         product,
         price: Number(price),
         deliveryPrice: Number(deliveryPrice),
+        deliveryType: deliveryType || 'home',
         notes
       },
       { new: true, runValidators: true }
@@ -354,5 +361,66 @@ exports.deleteOrder = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: 'خطأ في السيرفر', error: error.message });
+  }
+};
+
+// دالة تصدير الطلبات المحددة لشركات الشحن
+exports.exportOrdersToExcel = async (req, res) => {
+  try {
+    const { provider = 'yalidine', orderIds } = req.body;
+    const userId = req.user.id;
+
+    const template = deliveryTemplates[provider.toLowerCase()];
+    if (!template) {
+      return res.status(400).json({ message: 'شركة التوصيل المحددة غير مدعومة' });
+    }
+
+    const filter = { userId };
+
+    // إذا أرسل المستخدم مصفوفة معرّفات محددة، نفلتر بها
+    if (orderIds && Array.isArray(orderIds) && orderIds.length > 0) {
+      filter._id = { $in: orderIds };
+    } else {
+      // افتراضياً: تصدير جميع الطلبات المؤكدة إذا لم يتم تحديد طلبات بعينها
+      filter.status = 'confirmed';
+    }
+
+    const orders = await Order.find(filter).sort({ createdAt: -1 }).lean();
+
+    if (!orders || orders.length === 0) {
+      return res.status(404).json({ message: 'لا توجد طلبات مطابقة للتصدير' });
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Orders');
+
+    worksheet.columns = template.columns;
+
+    // تنسيق الصف الأول (Headers)
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF1E293B' } // Dark Slate
+    };
+
+    orders.forEach((order) => {
+      worksheet.addRow(template.mapRow(order));
+    });
+
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const fileName = `${template.fileName}_${dateStr}.xlsx`;
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Export Error:', error);
+    res.status(500).json({ message: 'فشل تصدير الملف', error: error.message });
   }
 };

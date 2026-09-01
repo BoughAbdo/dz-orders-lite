@@ -18,6 +18,10 @@ import {
   FiCheck,
   FiRefreshCw,
   FiAlertCircle,
+  FiCheckSquare,
+  FiSquare,
+  FiTruck,
+  FiFileText,
 } from 'react-icons/fi'
 
 const statusLabels = {
@@ -27,6 +31,13 @@ const statusLabels = {
   delivered: { label: 'تم التسليم', color: 'bg-green-50 text-green-600 border-green-100' },
   returned: { label: 'رجع', color: 'bg-red-50 text-red-600 border-red-100' },
 }
+
+const deliveryCompanies = [
+  { key: 'yalidine', name: 'Yalidine Express' },
+  { key: 'zr', name: 'ZR Express' },
+  { key: 'maystro', name: 'Maystro Delivery' },
+  { key: 'procolis', name: 'Procolis / Ecom' },
+]
 
 const filters = [
   { key: 'all', label: 'الكل' },
@@ -46,64 +57,13 @@ const dateFilters = [
 ]
 
 const algerianWilayas = [
-  'أدرار',
-  'الشلف',
-  'الأغواط',
-  'أم البواقي',
-  'باتنة',
-  'بجاية',
-  'بسكرة',
-  'بشار',
-  'البليدة',
-  'البويرة',
-  'تمنراست',
-  'تبسة',
-  'تلمسان',
-  'تيارت',
-  'تيزي وزو',
-  'الجزائر',
-  'الجلفة',
-  'جيجل',
-  'سطيف',
-  'سعيدة',
-  'سكيكدة',
-  'سيدي بلعباس',
-  'عنابة',
-  'قالمة',
-  'قسنطينة',
-  'المدية',
-  'مستغانم',
-  'المسيلة',
-  'معسكر',
-  'ورقلة',
-  'وهران',
-  'البيض',
-  'إليزي',
-  'برج بوعريريج',
-  'بومرداس',
-  'الطارف',
-  'تندوف',
-  'تيسمسيلت',
-  'الوادي',
-  'خنشلة',
-  'سوق أهراس',
-  'تيبازة',
-  'ميلة',
-  'عين الدفلى',
-  'النعامة',
-  'عين تموشنت',
-  'غرداية',
-  'غليزان',
-  'تيميمون',
-  'برج باجي مختار',
-  'أولاد جلال',
-  'بني عباس',
-  'عين صالح',
-  'عين قزام',
-  'تقرت',
-  'جانت',
-  'المغير',
-  'المنيعة',
+  'أدرار', 'الشلف', 'الأغواط', 'أم البواقي', 'باتنة', 'بجاية', 'بسكرة', 'بشار', 'البليدة', 'البويرة',
+  'تمنراست', 'تبسة', 'تلمسان', 'تيارت', 'تيزي وزو', 'الجزائر', 'الجلفة', 'جيجل', 'سطيف', 'سعيدة',
+  'سكيكدة', 'سيدي بلعباس', 'عنابة', 'قالمة', 'قسنطينة', 'المدية', 'مستغانم', 'المسيلة', 'معسكر',
+  'ورقلة', 'وهران', 'البيض', 'إليزي', 'برج بوعريريج', 'بومرداس', 'الطارف', 'تندوف', 'تيسمسيلت',
+  'الوادي', 'خنشلة', 'سوق أهراس', 'تيبازة', 'ميلة', 'عين الدفلى', 'النعامة', 'عين تموشنت', 'غرداية',
+  'غليزان', 'تيميمون', 'برج باجي مختار', 'أولاد جلال', 'بني عباس', 'عين صالح', 'عين قزام', 'تقرت',
+  'جانت', 'المغير', 'المنيعة'
 ]
 
 const getOrdersErrorMessage = (err) => {
@@ -113,47 +73,21 @@ const getOrdersErrorMessage = (err) => {
       description: 'تحقق من اتصال الإنترنت أو حاول مرة أخرى بعد لحظات.',
     }
   }
-
   if (err.response.status === 401) {
     return {
       title: 'انتهت جلسة الدخول',
       description: 'يرجى تسجيل الدخول مرة أخرى لمتابعة استخدام التطبيق.',
     }
   }
-
-  if (err.response.status === 403) {
-    return {
-      title: 'لا تملك صلاحية الوصول',
-      description: 'لا يمكنك عرض هذه الطلبات بهذا الحساب.',
-    }
-  }
-
-  if (err.response.status === 404) {
-    return {
-      title: 'لم يتم العثور على الطلبات',
-      description: 'تأكد من أن الرابط صحيح ثم حاول مرة أخرى.',
-    }
-  }
-
-  if (err.response.status >= 500) {
-    return {
-      title: 'حدث خطأ في الخادم',
-      description: 'الخدمة غير متاحة مؤقتًا، حاول مرة أخرى بعد قليل.',
-    }
-  }
-
   return {
     title: 'تعذر تحميل الطلبات',
-    description:
-      err.response?.data?.message ||
-      'لم نتمكن من تحميل الطلبات، حاول مرة أخرى بعد لحظات.',
+    description: err.response?.data?.message || 'لم نتمكن من تحميل الطلبات، حاول مرة أخرى.',
   }
 }
 
 function OrdersListSkeleton() {
   return (
     <div className="flex flex-col gap-3">
-      <OrderCardSkeleton />
       <OrderCardSkeleton />
       <OrderCardSkeleton />
       <OrderCardSkeleton />
@@ -173,6 +107,12 @@ export default function Orders() {
   const [error, setError] = useState(null)
   const [retryKey, setRetryKey] = useState(0)
 
+  // Multi-select & Export States
+  const [selectedIds, setSelectedIds] = useState([])
+  const [selectedCompany, setSelectedCompany] = useState('yalidine')
+  const [exportLoading, setExportLoading] = useState(false)
+  const [showCompanyMenu, setShowCompanyMenu] = useState(false)
+
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -185,7 +125,6 @@ export default function Orders() {
     const timer = setTimeout(() => {
       setDebouncedSearch(search.trim())
     }, 400)
-
     return () => clearTimeout(timer)
   }, [search])
 
@@ -198,26 +137,13 @@ export default function Orders() {
     setError(null)
 
     const params = new URLSearchParams()
-
     params.set('page', page)
     params.set('limit', limit)
 
-    if (filter !== 'all') {
-      params.set('status', filter)
-    }
-
-    if (debouncedSearch) {
-      params.set('search', debouncedSearch)
-    }
-
-    if (wilayaFilter !== 'all') {
-      params.set('wilaya', wilayaFilter)
-    }
-
-    if (dateFilter !== 'all') {
-      params.set('dateFilter', dateFilter)
-    }
-
+    if (filter !== 'all') params.set('status', filter)
+    if (debouncedSearch) params.set('search', debouncedSearch)
+    if (wilayaFilter !== 'all') params.set('wilaya', wilayaFilter)
+    if (dateFilter !== 'all') params.set('dateFilter', dateFilter)
     if (dateFilter === 'custom') {
       if (dateFrom) params.set('dateFrom', dateFrom)
       if (dateTo) params.set('dateTo', dateTo)
@@ -234,24 +160,66 @@ export default function Orders() {
       })
       .catch(err => {
         console.error(err)
-
         setError(getOrdersErrorMessage(err))
         setOrders([])
         setTotal(0)
         setPages(1)
       })
       .finally(() => setLoading(false))
-  }, [
-    filter,
-    debouncedSearch,
-    wilayaFilter,
-    dateFilter,
-    dateFrom,
-    dateTo,
-    page,
-    limit,
-    retryKey,
-  ])
+  }, [filter, debouncedSearch, wilayaFilter, dateFilter, dateFrom, dateTo, page, limit, retryKey])
+
+  const toggleSelectOrder = (id, e) => {
+    e.stopPropagation()
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    )
+  }
+
+  const toggleSelectAllPage = () => {
+    const currentPageIds = orders.map(o => o._id)
+    const isAllSelected = currentPageIds.every(id => selectedIds.includes(id))
+
+    if (isAllSelected) {
+      setSelectedIds(prev => prev.filter(id => !currentPageIds.includes(id)))
+    } else {
+      setSelectedIds(prev => Array.from(new Set([...prev, ...currentPageIds])))
+    }
+  }
+
+  const handleExportExcel = async (provider = selectedCompany) => {
+    if (orders.length === 0) return
+    setExportLoading(true)
+    setShowCompanyMenu(false)
+
+    try {
+      const response = await api.post(
+        '/orders/export-excel',
+        {
+          provider,
+          orderIds: selectedIds.length > 0 ? selectedIds : undefined,
+        },
+        { responseType: 'blob' }
+      )
+
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      const today = new Date().toISOString().slice(0, 10)
+      link.href = url
+      link.download = `${provider}_orders_${today}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Export Error:', err)
+      alert('حدث خطأ أثناء تحميل ملف الإكسل.')
+    } finally {
+      setExportLoading(false)
+    }
+  }
 
   const hasActiveFilters =
     search.trim() ||
@@ -273,127 +241,103 @@ export default function Orders() {
     setError(null)
   }
 
-  const retryLoadingOrders = () => {
-    setRetryKey(prev => prev + 1)
-  }
-
-  const escapeCSVValue = (value) => {
-    const safeValue = value === undefined || value === null ? '' : String(value)
-    return `"${safeValue.replace(/"/g, '""')}"`
-  }
-
-  const formatPhoneForCSV = (phone) => {
-    if (!phone) return ''
-
-    const cleanPhone = String(phone).trim()
-
-    // نجعل الهاتف نصاً داخل Excel / Google Sheets حتى لا يُحذف الصفر الأول
-    return `="${cleanPhone}"`
-  }
-
-  const exportToCSV = () => {
-    if (orders.length === 0) return
-
-    const headers = [
-      'اسم الزبون',
-      'رقم الهاتف',
-      'الولاية',
-      'البلدية',
-      'المنتج',
-      'السعر',
-      'سعر التوصيل',
-      'الإجمالي',
-      'الحالة',
-      'ملاحظات',
-      'تاريخ الطلب',
-    ]
-
-    const rows = orders.map(order => {
-      const price = Number(order.price || 0)
-      const deliveryPrice = Number(order.deliveryPrice || 0)
-      const totalPrice = price + deliveryPrice
-      const createdAt = order.createdAt
-        ? new Date(order.createdAt).toLocaleDateString('ar-DZ')
-        : ''
-
-      return [
-        order.customerName || '',
-        formatPhoneForCSV(order.phone),
-        order.wilaya || '',
-        order.city || '',
-        order.product || '',
-        price,
-        deliveryPrice,
-        totalPrice,
-        statusLabels[order.status]?.label || order.status || '',
-        order.notes || '',
-        createdAt,
-      ]
-    })
-
-    const csvContent = [
-      headers.map(escapeCSVValue).join(','),
-      ...rows.map(row => row.map(escapeCSVValue).join(',')),
-    ].join('\n')
-
-    const blob = new Blob(['\uFEFF' + csvContent], {
-      type: 'text/csv;charset=utf-8;',
-    })
-
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    const today = new Date().toISOString().slice(0, 10)
-
-    link.href = url
-    link.download = `orders-page-${page}-${today}.csv`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-
-    URL.revokeObjectURL(url)
-  }
+  const isCurrentPageAllSelected =
+    orders.length > 0 && orders.every(o => selectedIds.includes(o._id))
 
   return (
     <Layout>
+      {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-slate-900">
             الطلبات
           </h2>
-
           <p className="mt-1 text-sm font-medium text-slate-500">
-            {total} طلب
+            {total} طلب {selectedIds.length > 0 && `(تم تحديد ${selectedIds.length})`}
           </p>
         </div>
 
-        <div className="hidden items-center gap-2 sm:flex">
-          <button
-            type="button"
-            onClick={exportToCSV}
-            disabled={loading || orders.length === 0}
-            className="inline-flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-2.5 text-sm font-extrabold text-emerald-600 transition hover:bg-emerald-100 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
-          >
-            <FiDownload size={18} />
-            تحميل الصفحة الحالية
-          </button>
+        <div className="flex items-center gap-2">
+          {/* قائمة تصدير الإكسل */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowCompanyMenu(!showCompanyMenu)}
+              disabled={loading || orders.length === 0 || exportLoading}
+              className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-extrabold text-emerald-700 transition hover:bg-emerald-100 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <FiDownload size={18} />
+              <span>{exportLoading ? 'جاري التصدير...' : 'تصدير إكسل الشحن'}</span>
+              <FiChevronDown size={14} />
+            </button>
+
+            {showCompanyMenu && (
+              <div className="absolute left-0 top-full z-50 mt-2 w-56 rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl shadow-slate-200">
+                <p className="px-3 py-1.5 text-xs font-bold text-slate-400">
+                  اختر شركة الشحن ({selectedIds.length > 0 ? `${selectedIds.length} محددة` : 'كل المؤكدة'}):
+                </p>
+                {deliveryCompanies.map(c => (
+                  <button
+                    key={c.key}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCompany(c.key)
+                      handleExportExcel(c.key)
+                    }}
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-right text-xs font-extrabold text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700"
+                  >
+                    <span>{c.name}</span>
+                    <FiDownload size={14} className="text-slate-400" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <Link
             to="/orders/new"
             className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
           >
             <FiPlus size={18} />
-            طلب جديد
+            <span className="hidden sm:inline">طلب جديد</span>
           </Link>
         </div>
       </div>
 
-      {/* Search */}
+      {/* Select All Checkbox Bar */}
+      {orders.length > 0 && (
+        <div className="mb-4 flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
+          <button
+            type="button"
+            onClick={toggleSelectAllPage}
+            className="inline-flex items-center gap-2 text-xs font-black text-slate-700 hover:text-blue-600 transition"
+          >
+            {isCurrentPageAllSelected ? (
+              <FiCheckSquare size={18} className="text-blue-600" />
+            ) : (
+              <FiSquare size={18} className="text-slate-400" />
+            )}
+            <span>تحديد جميع طلبات هذه الصفحة ({orders.length})</span>
+          </button>
+
+          {selectedIds.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="text-xs font-bold text-slate-400 hover:text-red-500 transition"
+            >
+              إلغاء التحديد ({selectedIds.length})
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Search Bar */}
       <div className="relative mb-4">
         <FiSearch
           size={16}
           className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
         />
-
         <input
           type="text"
           value={search}
@@ -402,7 +346,6 @@ export default function Orders() {
           className="w-full rounded-2xl border border-slate-100 bg-white py-3 pl-10 pr-10 text-sm font-medium text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-300 focus:outline-none"
           dir="rtl"
         />
-
         {search && (
           <button
             type="button"
@@ -412,19 +355,6 @@ export default function Orders() {
             <FiX size={16} />
           </button>
         )}
-      </div>
-
-      {/* Download button on mobile */}
-      <div className="mb-4 sm:hidden">
-        <button
-          type="button"
-          onClick={exportToCSV}
-          disabled={loading || orders.length === 0}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-extrabold text-emerald-600 transition hover:bg-emerald-100 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
-        >
-          <FiDownload size={18} />
-          تحميل القائمة الظاهرة
-        </button>
       </div>
 
       {/* Status Filters */}
@@ -479,10 +409,7 @@ export default function Orders() {
             onChange={setWilayaFilter}
             options={[
               { key: 'all', label: 'كل الولايات' },
-              ...algerianWilayas.map(wilaya => ({
-                key: wilaya,
-                label: wilaya,
-              })),
+              ...algerianWilayas.map(w => ({ key: w, label: w })),
             ]}
           />
 
@@ -493,59 +420,22 @@ export default function Orders() {
             options={dateFilters}
           />
         </div>
-
-        {dateFilter === 'custom' && (
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-2 block text-xs font-bold text-slate-500">
-                من
-              </label>
-
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={e => setDateFrom(e.target.value)}
-                className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-xs font-bold text-slate-500">
-                إلى
-              </label>
-
-              <input
-                type="date"
-                value={dateTo}
-                onChange={e => setDateTo(e.target.value)}
-                className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
-              />
-            </div>
-          </div>
-        )}
       </div>
 
+      {/* Error View */}
       {error && (
         <div className="mb-4 rounded-3xl border border-red-100 bg-red-50 p-4 text-right">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-red-500">
               <FiAlertCircle size={20} />
             </div>
-
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-black text-red-700">
-                {error.title}
-              </p>
-
-              <p className="mt-1 text-xs font-bold leading-6 text-red-500">
-                {error.description}
-              </p>
-
+              <p className="text-sm font-black text-red-700">{error.title}</p>
+              <p className="mt-1 text-xs font-bold leading-6 text-red-500">{error.description}</p>
               <button
                 type="button"
-                onClick={retryLoadingOrders}
-                disabled={loading}
-                className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-red-100 bg-white px-4 py-2 text-xs font-extrabold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => setRetryKey(k => k + 1)}
+                className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-red-100 bg-white px-4 py-2 text-xs font-extrabold text-red-600 transition hover:bg-red-100"
               >
                 <FiRefreshCw size={14} />
                 إعادة المحاولة
@@ -555,6 +445,7 @@ export default function Orders() {
         </div>
       )}
 
+      {/* Orders List */}
       {loading ? (
         <OrdersListSkeleton />
       ) : orders.length === 0 ? (
@@ -562,131 +453,97 @@ export default function Orders() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-50 text-slate-400">
             <FiPackage size={30} />
           </div>
-
           <p className="text-lg font-black text-slate-900">
-            {error ? error.title : hasActiveFilters ? 'لا توجد نتائج' : 'لا يوجد طلبات'}
+            {hasActiveFilters ? 'لا توجد نتائج' : 'لا يوجد طلبات'}
           </p>
-
-          <p className="mt-1 text-sm font-medium text-slate-500">
-            {error
-              ? error.description
-              : hasActiveFilters
-                ? 'لا يوجد طلبات تطابق الفلاتر الحالية'
-                : 'ابدأ بإضافة أول طلب لمتجرك'
-            }
-          </p>
-
-          {error && (
-            <button
-              type="button"
-              onClick={retryLoadingOrders}
-              className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-red-100 bg-red-50 px-5 py-3 text-sm font-extrabold text-red-600 transition hover:bg-red-100 active:scale-[0.99]"
-            >
-              <FiRefreshCw size={18} />
-              إعادة المحاولة
-            </button>
-          )}
-
-          {hasActiveFilters && !error && (
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-5 py-3 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200 active:scale-[0.99]"
-            >
-              <FiX size={18} />
-              مسح الفلاتر
-            </button>
-          )}
-
-          {!hasActiveFilters && !error && (
-            <Link
-              to="/orders/new"
-              className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
-            >
-              <FiPlus size={18} />
-              إضافة طلب
-            </Link>
-          )}
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {orders.map(order => (
-            <Link
-              key={order._id}
-              to={`/orders/${order._id}`}
-              className="group rounded-3xl border border-slate-100 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/70"
-            >
-              <div className="mb-3 flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-black leading-6 text-slate-900">
-                    {order.customerName}
-                  </h3>
+          {orders.map(order => {
+            const isSelected = selectedIds.includes(order._id)
 
-                  <div className="mt-1 flex items-center gap-1.5 text-slate-400">
-                    <FiMapPin size={14} />
+            return (
+              <div
+                key={order._id}
+                className={`relative rounded-3xl border bg-white p-4 shadow-sm transition-all duration-200 ${
+                  isSelected
+                    ? 'border-blue-500 bg-blue-50/20 ring-2 ring-blue-500/20'
+                    : 'border-slate-100 hover:shadow-md'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    {/* Select Checkbox */}
+                    <button
+                      type="button"
+                      onClick={(e) => toggleSelectOrder(order._id, e)}
+                      className="p-1 text-slate-400 hover:text-blue-600 transition"
+                    >
+                      {isSelected ? (
+                        <FiCheckSquare size={22} className="text-blue-600" />
+                      ) : (
+                        <FiSquare size={22} />
+                      )}
+                    </button>
 
-                    <span className="text-xs font-bold">
-                      {order.wilaya || 'بدون ولاية'}
+                    <Link to={`/orders/${order._id}`} className="block">
+                      <h3 className="font-black leading-6 text-slate-900 hover:text-blue-600 transition">
+                        {order.customerName}
+                      </h3>
+                      <div className="mt-1 flex items-center gap-2 text-slate-400">
+                        <FiMapPin size={13} />
+                        <span className="text-xs font-bold">{order.wilaya} - {order.city}</span>
+                        <span className="text-[11px] font-extrabold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg">
+                          {order.deliveryType === 'desk' ? 'مكتب' : 'منزل'}
+                        </span>
+                      </div>
+                    </Link>
+                  </div>
+
+                  <span className={`rounded-full border px-3 py-1.5 text-xs font-extrabold ${statusLabels[order.status]?.color}`}>
+                    {statusLabels[order.status]?.label}
+                  </span>
+                </div>
+
+                <Link to={`/orders/${order._id}`} className="mt-3 block">
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <FiPackage size={15} className="text-slate-400" />
+                      <p className="line-clamp-1 text-sm font-bold">{order.product}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-slate-400">
+                      <FiTag size={13} />
+                      <span className="text-xs font-bold">الإجمالي (شامل التوصيل)</span>
+                    </div>
+                    <span className="text-base font-black text-slate-900">
+                      {(Number(order.price || 0) + Number(order.deliveryPrice || 0)).toLocaleString()} دج
                     </span>
                   </div>
-                </div>
-
-                <span
-                  className={`rounded-full border px-3 py-1.5 text-xs font-extrabold ${statusLabels[order.status]?.color}`}
-                >
-                  {statusLabels[order.status]?.label}
-                </span>
+                </Link>
               </div>
+            )
+          })}
 
-              <div className="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-3">
-                <div className="flex items-center gap-2 text-slate-600">
-                  <FiPackage size={16} className="text-slate-400" />
-
-                  <p className="line-clamp-1 text-sm font-bold">
-                    {order.product}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-3 flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-slate-400">
-                  <FiTag size={14} />
-                  <span className="text-xs font-bold">السعر</span>
-                </div>
-
-                <span className="text-base font-black text-slate-900">
-                  {Number(order.price || 0).toLocaleString()} دج
-                </span>
-              </div>
-            </Link>
-          ))}
-
+          {/* Pagination */}
           {pages > 1 && (
             <div className="mt-3 flex items-center justify-between gap-3 rounded-3xl border border-slate-100 bg-white p-3 shadow-sm">
               <button
                 type="button"
                 onClick={() => setPage(prev => Math.max(prev - 1, 1))}
                 disabled={page <= 1 || loading}
-                className="rounded-2xl bg-slate-100 px-4 py-2.5 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-2xl bg-slate-100 px-4 py-2.5 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200 disabled:opacity-50"
               >
                 السابق
               </button>
-
-              <div className="text-center">
-                <p className="text-sm font-black text-slate-700">
-                  الصفحة {page} من {pages}
-                </p>
-
-                <p className="mt-1 text-xs font-bold text-slate-400">
-                  إجمالي النتائج: {total}
-                </p>
-              </div>
-
+              <p className="text-sm font-black text-slate-700">الصفحة {page} من {pages}</p>
               <button
                 type="button"
                 onClick={() => setPage(prev => Math.min(prev + 1, pages))}
                 disabled={page >= pages || loading}
-                className="rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 disabled:opacity-50"
               >
                 التالي
               </button>
@@ -694,14 +551,6 @@ export default function Orders() {
           )}
         </div>
       )}
-
-      <Link
-        to="/orders/new"
-        className="fixed bottom-20 left-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-2xl text-white shadow-xl shadow-blue-600/30 transition hover:bg-blue-700 active:scale-95 sm:hidden"
-        aria-label="إضافة طلب جديد"
-      >
-        <FiPlus size={26} />
-      </Link>
     </Layout>
   )
 }
@@ -709,94 +558,46 @@ export default function Orders() {
 function FilterDropdown({ label, value, onChange, options }) {
   const [open, setOpen] = useState(false)
   const dropdownRef = useRef(null)
-
-  const selectedOption =
-    options.find(option => option.key === value) || options[0]
+  const selectedOption = options.find(option => option.key === value) || options[0]
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setOpen(false)
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside)
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
-
-  const handleSelect = (key) => {
-    onChange(key)
-    setOpen(false)
-  }
 
   return (
     <div ref={dropdownRef} className="relative">
-      <label className="mb-2 block text-xs font-black text-slate-500">
-        {label}
-      </label>
-
+      <label className="mb-2 block text-xs font-black text-slate-500">{label}</label>
       <button
         type="button"
-        onClick={() => setOpen(prev => !prev)}
-        className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm font-black shadow-sm transition-all duration-200
-          ${open
-            ? 'border-blue-300 bg-white text-slate-900 ring-4 ring-blue-100/70'
-            : 'border-slate-100 bg-slate-50 text-slate-700 hover:border-blue-200 hover:bg-white hover:shadow-md'
-          }`}
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-black text-slate-700 shadow-sm"
       >
-        <span className="truncate">
-          {selectedOption?.label}
-        </span>
-
-        <span
-          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl transition duration-200
-            ${open ? 'bg-blue-50 text-blue-600' : 'bg-white text-slate-400'}
-          `}
-        >
-          <FiChevronDown
-            size={15}
-            className={`transition duration-200 ${
-              open ? 'rotate-180' : ''
-            }`}
-          />
-        </span>
+        <span className="truncate">{selectedOption?.label}</span>
+        <FiChevronDown size={15} className={`transition ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 z-50 mt-2 rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl shadow-slate-300/50">
-          <div className="max-h-56 overflow-y-auto rounded-xl">
-            {options.map(option => {
-              const active = option.key === value
-
-              return (
-                <button
-                  key={option.key}
-                  type="button"
-                  onClick={() => handleSelect(option.key)}
-                  className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-right text-xs font-black transition-all duration-150
-                    ${active
-                      ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/20'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                    }`}
-                >
-                  <span className="truncate">
-                    {option.label}
-                  </span>
-
-                  {active && (
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/20 text-white">
-                      <FiCheck size={12} />
-                    </span>
-                  )}
-                </button>
-              )
-            })}
+        <div className="absolute left-0 right-0 z-50 mt-2 rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl">
+          <div className="max-h-56 overflow-y-auto">
+            {options.map(option => (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => { onChange(option.key); setOpen(false) }}
+                className={`flex w-full items-center justify-between px-3 py-2 text-xs font-black rounded-xl transition ${
+                  option.key === value ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span>{option.label}</span>
+                {option.key === value && <FiCheck size={12} />}
+              </button>
+            ))}
           </div>
         </div>
       )}

@@ -39,6 +39,11 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  deliveryType: {
+  type: String,
+  enum: ['home', 'desk'], // home = للمنزل | desk = استلام من المكتب (StopDesk)
+  default: 'home'
+  },
   status: {
     type: String,
     enum: ['new', 'confirmed', 'shipped', 'delivered', 'returned'],
