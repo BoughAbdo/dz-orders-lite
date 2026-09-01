@@ -20,8 +20,6 @@ import {
   FiAlertCircle,
   FiCheckSquare,
   FiSquare,
-  FiTruck,
-  FiFileText,
 } from 'react-icons/fi'
 
 const statusLabels = {
@@ -112,6 +110,7 @@ export default function Orders() {
   const [selectedCompany, setSelectedCompany] = useState('yalidine')
   const [exportLoading, setExportLoading] = useState(false)
   const [showCompanyMenu, setShowCompanyMenu] = useState(false)
+  const [exportMessage, setExportMessage] = useState(null)
 
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -187,9 +186,20 @@ export default function Orders() {
   }
 
   const handleExportExcel = async (provider = selectedCompany) => {
-    if (orders.length === 0) return
+    const hasConfirmedOrders = orders.some(o => o.status === 'confirmed')
+
+    if (selectedIds.length === 0 && !hasConfirmedOrders) {
+      setExportMessage({
+        type: 'warning',
+        text: 'يرجى تحديد الطلبات المراد تصديرها، أو تأكيد الطلبات أولاً (يتم تصدير الطلبات المؤكدة فقط تلقائياً).'
+      })
+      setTimeout(() => setExportMessage(null), 6000)
+      return
+    }
+
     setExportLoading(true)
     setShowCompanyMenu(false)
+    setExportMessage(null)
 
     try {
       const response = await api.post(
@@ -213,9 +223,30 @@ export default function Orders() {
       link.click()
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
+
+      setExportMessage({
+        type: 'success',
+        text: `تم تصدير ملف ${provider.toUpperCase()} بنجاح!`
+      })
+      setTimeout(() => setExportMessage(null), 4000)
     } catch (err) {
-      console.error('Export Error:', err)
-      alert('حدث خطأ أثناء تحميل ملف الإكسل.')
+      let errorText = 'تعذر تصدير ملف الإكسل، حاول مرة أخرى.'
+
+      if (err.response?.data instanceof Blob) {
+        try {
+          const rawText = await err.response.data.text()
+          const jsonError = JSON.parse(rawText)
+          errorText = jsonError.message || errorText
+        } catch {
+          // استخدام النص الافتراضي
+        }
+      }
+
+      setExportMessage({
+        type: 'error',
+        text: errorText
+      })
+      setTimeout(() => setExportMessage(null), 6000)
     } finally {
       setExportLoading(false)
     }
@@ -258,7 +289,7 @@ export default function Orders() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* قائمة تصدير الإكسل */}
+          {/* Export Dropdown */}
           <div className="relative">
             <button
               type="button"
@@ -303,6 +334,31 @@ export default function Orders() {
           </Link>
         </div>
       </div>
+
+      {/* Export Feedback Toast */}
+      {exportMessage && (
+        <div
+          className={`mb-4 flex items-center justify-between gap-3 rounded-2xl p-4 text-sm font-black transition-all ${
+            exportMessage.type === 'error'
+              ? 'border border-red-200 bg-red-50 text-red-700'
+              : exportMessage.type === 'warning'
+              ? 'border border-amber-200 bg-amber-50 text-amber-800'
+              : 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <FiAlertCircle size={18} className="shrink-0" />
+            <span>{exportMessage.text}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setExportMessage(null)}
+            className="p-1 hover:opacity-75"
+          >
+            <FiX size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Select All Checkbox Bar */}
       {orders.length > 0 && (
