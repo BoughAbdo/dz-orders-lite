@@ -105,10 +105,11 @@ export default function Orders() {
   const [error, setError] = useState(null)
   const [retryKey, setRetryKey] = useState(0)
 
-  // Multi-select & Export States
+  // Multi-select, Export & Bulk Action States
   const [selectedIds, setSelectedIds] = useState([])
   const [selectedCompany, setSelectedCompany] = useState('yalidine')
   const [exportLoading, setExportLoading] = useState(false)
+  const [bulkLoading, setBulkLoading] = useState(false)
   const [showCompanyMenu, setShowCompanyMenu] = useState(false)
   const [exportMessage, setExportMessage] = useState(null)
 
@@ -185,6 +186,42 @@ export default function Orders() {
     }
   }
 
+  // التحديث الجماعي للحالات
+  const handleBulkStatusChange = async (newStatus) => {
+    if (selectedIds.length === 0) return
+
+    setBulkLoading(true)
+    try {
+      const res = await api.patch('/orders/bulk-status', {
+        orderIds: selectedIds,
+        status: newStatus,
+      })
+
+      // تحديث الحالة في الواجهة فورياً
+      setOrders(prev =>
+        prev.map(order =>
+          selectedIds.includes(order._id) ? { ...order, status: newStatus } : order
+        )
+      )
+
+      setExportMessage({
+        type: 'success',
+        text: res.data.message || 'تم تحديث الحالات بنجاح!',
+      })
+      setTimeout(() => setExportMessage(null), 4000)
+      setSelectedIds([])
+    } catch (err) {
+      setExportMessage({
+        type: 'error',
+        text: err.response?.data?.message || 'تعذر تحديث الحالات، حاول مجدداً.',
+      })
+      setTimeout(() => setExportMessage(null), 5000)
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
+  // تصدير الإكسل
   const handleExportExcel = async (provider = selectedCompany) => {
     const hasConfirmedOrders = orders.some(o => o.status === 'confirmed')
 
@@ -238,7 +275,7 @@ export default function Orders() {
           const jsonError = JSON.parse(rawText)
           errorText = jsonError.message || errorText
         } catch {
-          // استخدام النص الافتراضي
+          // fallback
         }
       }
 
@@ -335,7 +372,7 @@ export default function Orders() {
         </div>
       </div>
 
-      {/* Export Feedback Toast */}
+      {/* Export & Bulk Feedback Toast */}
       {exportMessage && (
         <div
           className={`mb-4 flex items-center justify-between gap-3 rounded-2xl p-4 text-sm font-black transition-all ${
@@ -360,30 +397,75 @@ export default function Orders() {
         </div>
       )}
 
-      {/* Select All Checkbox Bar */}
+      {/* Select All Checkbox & Bulk Status Bar */}
       {orders.length > 0 && (
-        <div className="mb-4 flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
-          <button
-            type="button"
-            onClick={toggleSelectAllPage}
-            className="inline-flex items-center gap-2 text-xs font-black text-slate-700 hover:text-blue-600 transition"
-          >
-            {isCurrentPageAllSelected ? (
-              <FiCheckSquare size={18} className="text-blue-600" />
-            ) : (
-              <FiSquare size={18} className="text-slate-400" />
-            )}
-            <span>تحديد جميع طلبات هذه الصفحة ({orders.length})</span>
-          </button>
-
-          {selectedIds.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setSelectedIds([])}
-              className="text-xs font-bold text-slate-400 hover:text-red-500 transition"
+              onClick={toggleSelectAllPage}
+              className="inline-flex items-center gap-2 text-xs font-black text-slate-700 hover:text-blue-600 transition"
             >
-              إلغاء التحديد ({selectedIds.length})
+              {isCurrentPageAllSelected ? (
+                <FiCheckSquare size={18} className="text-blue-600" />
+              ) : (
+                <FiSquare size={18} className="text-slate-400" />
+              )}
+              <span>تحديد جميع طلبات هذه الصفحة ({orders.length})</span>
             </button>
+
+            {selectedIds.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedIds([])}
+                className="text-xs font-bold text-slate-400 hover:text-red-500 transition"
+              >
+                إلغاء التحديد ({selectedIds.length})
+              </button>
+            )}
+          </div>
+
+          {/* أزرار التحديث الجماعي السريع عند التحديد */}
+          {selectedIds.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto">
+              <span className="text-xs font-bold text-slate-400 ml-1">تغيير الحالة إلى:</span>
+              
+              <button
+                type="button"
+                disabled={bulkLoading}
+                onClick={() => handleBulkStatusChange('confirmed')}
+                className="rounded-xl bg-emerald-50 px-2.5 py-1.5 text-xs font-extrabold text-emerald-700 hover:bg-emerald-100 transition disabled:opacity-50"
+              >
+                مؤكد
+              </button>
+              
+              <button
+                type="button"
+                disabled={bulkLoading}
+                onClick={() => handleBulkStatusChange('shipped')}
+                className="rounded-xl bg-amber-50 px-2.5 py-1.5 text-xs font-extrabold text-amber-700 hover:bg-amber-100 transition disabled:opacity-50"
+              >
+                توصيل
+              </button>
+              
+              <button
+                type="button"
+                disabled={bulkLoading}
+                onClick={() => handleBulkStatusChange('delivered')}
+                className="rounded-xl bg-green-50 px-2.5 py-1.5 text-xs font-extrabold text-green-700 hover:bg-green-100 transition disabled:opacity-50"
+              >
+                مسلّم
+              </button>
+              
+              <button
+                type="button"
+                disabled={bulkLoading}
+                onClick={() => handleBulkStatusChange('returned')}
+                className="rounded-xl bg-red-50 px-2.5 py-1.5 text-xs font-extrabold text-red-700 hover:bg-red-100 transition disabled:opacity-50"
+              >
+                رجع
+              </button>
+            </div>
           )}
         </div>
       )}

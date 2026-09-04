@@ -424,3 +424,38 @@ exports.exportOrdersToExcel = async (req, res) => {
     res.status(500).json({ message: 'فشل تصدير الملف', error: error.message });
   }
 };
+
+// تحديث حالة عدة طلبيات دفعة واحدة (Bulk Status Update)
+exports.updateBulkStatus = async (req, res) => {
+  try {
+    const { orderIds, status } = req.body;
+
+    const allowedStatuses = ['new', 'confirmed', 'shipped', 'delivered', 'returned'];
+    if (!status || !allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: 'الحالة المحددة غير صالحة' });
+    }
+
+    if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+      return res.status(400).json({ message: 'يرجى تحديد طلبية واحدة على الأقل' });
+    }
+
+    // تحديث كل الطلبات المحددة التابعة لنفس المستخدم المسجل
+    const result = await Order.updateMany(
+      {
+        _id: { $in: orderIds },
+        userId: req.user.id
+      },
+      {
+        $set: { status }
+      }
+    );
+
+    res.status(200).json({
+      message: `تم تحديث ${result.modifiedCount} طلبية بنجاح إلى حالة (${status})`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Bulk Update Error:', error);
+    res.status(500).json({ message: 'خطأ في السيرفر أثناء تحديث الطلبيات', error: error.message });
+  }
+};

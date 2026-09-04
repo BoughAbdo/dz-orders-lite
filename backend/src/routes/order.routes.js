@@ -8,7 +8,8 @@ const {
   updateOrder,
   updateStatus,
   deleteOrder,
-  exportOrdersToExcel // <-- تم استيرادها هنا
+  exportOrdersToExcel,
+  updateBulkStatus 
 } = require('../controllers/order.controller');
 const auth = require('../middleware/auth.middleware');
 
@@ -16,7 +17,8 @@ router.use(auth);
 
 router.get('/', getOrders);
 router.post('/', createOrder);
-router.post('/export-excel', exportOrdersToExcel); // <-- تم تعديلها هنا ومحمية تلقائياً
+router.post('/export-excel', exportOrdersToExcel);
+router.patch('/bulk-status', updateBulkStatus); 
 router.get('/:id', getOrder);
 router.put('/:id', updateOrder);
 router.patch('/:id/status', updateStatus);
