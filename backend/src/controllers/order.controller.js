@@ -3,7 +3,6 @@ const Order = require('../models/order.model');
 const ExcelJS = require('exceljs');
 const deliveryTemplates = require('../utils/deliveryTemplates');
 
-
 const validateOrderData = (data) => {
   const {
     customerName,
@@ -419,6 +418,9 @@ exports.exportOrdersToExcel = async (req, res) => {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     );
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    // إرسال عدد الطلبات المصدرة للواجهة
+    res.setHeader('X-Exported-Count', orders.length);
+    res.setHeader('Access-Control-Expose-Headers', 'X-Exported-Count');
 
     await workbook.xlsx.write(res);
     res.end();
@@ -442,7 +444,7 @@ exports.updateBulkStatus = async (req, res) => {
       {
         _id: { $in: orderIds },
         userId: req.user.id,
-        status: 'confirmed' // يضمن منطقك: فقط المؤكدة تنتقل للشحن
+        status: 'confirmed'
       },
       {
         $set: { status: 'shipped' }

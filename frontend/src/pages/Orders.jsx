@@ -266,7 +266,7 @@ export default function Orders() {
     }
   }
 
-  // تصدير الإكسل للطلبات المؤكدة فقط
+  // تصدير الإكسل للطلبات المؤكدة فقط مع صياغة ذكية ودقيقة للرسالة
   const handleExportExcel = async (provider = selectedCompany) => {
     // إذا قام التاجر بتحديد طلبات، نتحقق أن بينها طلبات مؤكدة
     if (selectedIds.length > 0 && confirmedSelectedCount === 0) {
@@ -279,8 +279,8 @@ export default function Orders() {
     }
 
     // إذا لم يحدد أي طلب، نتحقق من وجود طلبات مؤكدة في الصفحة
-    const hasAnyConfirmedInPage = orders.some(o => o.status === 'confirmed')
-    if (selectedIds.length === 0 && !hasAnyConfirmedInPage) {
+    const totalConfirmedInPage = orders.filter(o => o.status === 'confirmed').length
+    if (selectedIds.length === 0 && totalConfirmedInPage === 0) {
       setExportMessage({
         type: 'warning',
         text: 'لا توجد أي طلبات بحالة (مؤكد) صالحة للتصدير لشركة الشحن.',
@@ -303,6 +303,14 @@ export default function Orders() {
         { responseType: 'blob' }
       )
 
+      // استخراج عدد الطلبات التي تم تصديرها من الهيدر القادم من الخادم
+      const serverCount = response.headers['x-exported-count']
+      const count = serverCount
+        ? Number(serverCount)
+        : selectedIds.length > 0
+        ? confirmedSelectedCount
+        : totalConfirmedInPage
+
       const blob = new Blob([response.data], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       })
@@ -316,14 +324,17 @@ export default function Orders() {
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
 
-      const exportedCountInfo =
-        selectedIds.length > 0 ? ` (${confirmedSelectedCount} طلبية مؤكدة)` : ''
+      // صياغة الرسالة بدقة حسب حالة التحديد
+      const successText =
+        selectedIds.length > 0
+          ? `تم تصدير ملف ${provider.toUpperCase()} (${count} طلبية مؤكدة محددة) بنجاح!`
+          : `تم تصدير ملف ${provider.toUpperCase()} لجميع الطلبات المؤكدة (${count} طلبية) بنجاح!`
 
       setExportMessage({
         type: 'success',
-        text: `تم تصدير ملف ${provider.toUpperCase()}${exportedCountInfo} بنجاح!`,
+        text: successText,
       })
-      setTimeout(() => setExportMessage(null), 4000)
+      setTimeout(() => setExportMessage(null), 5000)
     } catch (err) {
       let errorText = 'تعذر تصدير ملف الإكسل، تأكد من وجود طلبات مؤكدة.'
 
