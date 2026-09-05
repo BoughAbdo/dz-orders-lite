@@ -364,7 +364,7 @@ exports.deleteOrder = async (req, res) => {
   }
 };
 
-// دالة تصدير الطلبات المحددة لشركات الشحن
+// دالة تصدير الطلبات المؤكدة فقط لشركات الشحن
 exports.exportOrdersToExcel = async (req, res) => {
   try {
     const { provider = 'yalidine', orderIds } = req.body;
@@ -375,20 +375,23 @@ exports.exportOrdersToExcel = async (req, res) => {
       return res.status(400).json({ message: 'شركة التوصيل المحددة غير مدعومة' });
     }
 
-    const filter = { userId };
+    // شرط أساسي: التصدير لشركات التوصيل محصور حصراً في الطلبات المؤكدة
+    const filter = {
+      userId,
+      status: 'confirmed'
+    };
 
-    // إذا أرسل المستخدم مصفوفة معرّفات محددة، نفلتر بها
+    // إذا حدد التاجر طلبات بعينها، نأخذ فقط المؤكدة منها
     if (orderIds && Array.isArray(orderIds) && orderIds.length > 0) {
       filter._id = { $in: orderIds };
-    } else {
-      // افتراضياً: تصدير جميع الطلبات المؤكدة إذا لم يتم تحديد طلبات بعينها
-      filter.status = 'confirmed';
     }
 
     const orders = await Order.find(filter).sort({ createdAt: -1 }).lean();
 
     if (!orders || orders.length === 0) {
-      return res.status(404).json({ message: 'لا توجد طلبات مطابقة للتصدير' });
+      return res.status(400).json({
+        message: 'لا توجد أي طلبات بحالة (مؤكد) صالحة للتصدير لشركة الشحن.'
+      });
     }
 
     const workbook = new ExcelJS.Workbook();

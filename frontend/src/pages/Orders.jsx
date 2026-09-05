@@ -266,16 +266,25 @@ export default function Orders() {
     }
   }
 
-  // تصدير الإكسل
+  // تصدير الإكسل للطلبات المؤكدة فقط
   const handleExportExcel = async (provider = selectedCompany) => {
-    const hasConfirmedOrders = orders.some(o => o.status === 'confirmed')
-
-    if (selectedIds.length === 0 && !hasConfirmedOrders) {
+    // إذا قام التاجر بتحديد طلبات، نتحقق أن بينها طلبات مؤكدة
+    if (selectedIds.length > 0 && confirmedSelectedCount === 0) {
       setExportMessage({
         type: 'warning',
-        text: 'يرجى تحديد الطلبات المراد تصديرها، أو تأكيد الطلبات أولاً (يتم تصدير الطلبات المؤكدة فقط تلقائياً).'
+        text: 'لا يمكن التصدير: الطلبات المحددة لا تحتوي على أي طلب بحالة (مؤكد).',
       })
-      scrollToTop()
+      setTimeout(() => setExportMessage(null), 6000)
+      return
+    }
+
+    // إذا لم يحدد أي طلب، نتحقق من وجود طلبات مؤكدة في الصفحة
+    const hasAnyConfirmedInPage = orders.some(o => o.status === 'confirmed')
+    if (selectedIds.length === 0 && !hasAnyConfirmedInPage) {
+      setExportMessage({
+        type: 'warning',
+        text: 'لا توجد أي طلبات بحالة (مؤكد) صالحة للتصدير لشركة الشحن.',
+      })
       setTimeout(() => setExportMessage(null), 6000)
       return
     }
@@ -307,14 +316,16 @@ export default function Orders() {
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
 
+      const exportedCountInfo =
+        selectedIds.length > 0 ? ` (${confirmedSelectedCount} طلبية مؤكدة)` : ''
+
       setExportMessage({
         type: 'success',
-        text: `تم تصدير ملف ${provider.toUpperCase()} بنجاح!`
+        text: `تم تصدير ملف ${provider.toUpperCase()}${exportedCountInfo} بنجاح!`,
       })
-      scrollToTop()
       setTimeout(() => setExportMessage(null), 4000)
     } catch (err) {
-      let errorText = 'تعذر تصدير ملف الإكسل، حاول مرة أخرى.'
+      let errorText = 'تعذر تصدير ملف الإكسل، تأكد من وجود طلبات مؤكدة.'
 
       if (err.response?.data instanceof Blob) {
         try {
@@ -328,9 +339,8 @@ export default function Orders() {
 
       setExportMessage({
         type: 'error',
-        text: errorText
+        text: errorText,
       })
-      scrollToTop()
       setTimeout(() => setExportMessage(null), 6000)
     } finally {
       setExportLoading(false)
@@ -535,9 +545,10 @@ export default function Orders() {
                 type="button"
                 onClick={() => setFilter(f.key)}
                 className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-black transition duration-200
-                  ${filter === f.key
-                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/20'
-                    : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                  ${
+                    filter === f.key
+                      ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/20'
+                      : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                   }`}
               >
                 {f.label}
@@ -842,7 +853,10 @@ function FilterDropdown({ label, value, onChange, options }) {
               <button
                 key={option.key}
                 type="button"
-                onClick={() => { onChange(option.key); setOpen(false) }}
+                onClick={() => {
+                  onChange(option.key)
+                  setOpen(false)
+                }}
                 className={`flex w-full items-center justify-between px-2.5 py-2 text-xs font-black rounded-lg transition ${
                   option.key === value ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
                 }`}
