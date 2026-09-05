@@ -399,9 +399,12 @@ export default function Orders() {
             </button>
 
             {showCompanyMenu && (
-              <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-2xl border border-slate-100 bg-white p-2.5 shadow-2xl shadow-slate-200">
+              <div
+                dir="rtl"
+                className="absolute left-0 top-full z-50 mt-2 w-64 rounded-2xl border border-slate-100 bg-white p-2.5 shadow-2xl shadow-slate-200"
+              >
                 {/* ترويسة نطاق التصدير مع دعم دقيق للحالات المختلفة */}
-                <div className="border-b border-slate-100 px-2.5 pb-2.5">
+                <div className="border-b border-slate-100 px-2.5 pb-2.5 text-right">
                   <p className="text-[11px] font-black text-slate-400">نطاق التصدير لشركة الشحن:</p>
                   {selectedIds.length > 0 ? (
                     confirmedSelectedCount > 0 ? (
@@ -424,7 +427,7 @@ export default function Orders() {
                   )}
                 </div>
 
-                {/* قائمة الشركات مع تعطيل الأزرار تلقائياً عند عدم توفر طلبات مؤكدة */}
+                {/* قائمة الشركات بمحاذاة مضبوطة وثابتة */}
                 <div className="mt-1.5 space-y-1">
                   {deliveryCompanies.map(c => (
                     <button
@@ -437,8 +440,13 @@ export default function Orders() {
                       }}
                       className="group flex w-full items-center justify-between rounded-xl px-3 py-2 text-right transition disabled:cursor-not-allowed disabled:opacity-40 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700"
                     >
-                      <span className="text-xs font-black">{c.name}</span>
-                      <FiDownload size={14} className="text-slate-400 group-hover:text-emerald-600" />
+                      <span className="text-xs font-black text-slate-700 group-hover:text-emerald-700 transition">
+                        {c.name}
+                      </span>
+                      <FiDownload
+                        size={14}
+                        className="text-slate-400 group-hover:text-emerald-600 shrink-0 transition"
+                      />
                     </button>
                   ))}
                 </div>
