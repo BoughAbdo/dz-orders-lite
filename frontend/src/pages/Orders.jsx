@@ -187,9 +187,25 @@ export default function Orders() {
     }
   }
 
-  // تحويل الطلبات المؤكدة إلى قيد التوصيل دفعة واحدة
+  // حساب تفاصيل الحالات داخل التحديد
+  const confirmedSelectedCount = orders.filter(
+    o => selectedIds.includes(o._id) && o.status === 'confirmed'
+  ).length
+
+  const nonConfirmedSelectedCount = selectedIds.length - confirmedSelectedCount
+
+  // تحويل الطلبات المؤكدة فقط مع تنبيه UX واضح ومحدد
   const handleBulkShip = async () => {
     if (selectedIds.length === 0) return
+
+    if (confirmedSelectedCount === 0) {
+      setExportMessage({
+        type: 'warning',
+        text: 'لا توجد أي طلبات بحالة (مؤكد) ضمن الطلبات المحددة لتحويلها إلى قيد التوصيل.',
+      })
+      setTimeout(() => setExportMessage(null), 5000)
+      return
+    }
 
     setBulkLoading(true)
     try {
@@ -198,7 +214,7 @@ export default function Orders() {
         status: 'shipped',
       })
 
-      // تحديث حالة الطلبات المؤكدة المحددة إلى shipped محلياً
+      // تحديث المؤكدة فقط محلياً
       setOrders(prev =>
         prev.map(order =>
           selectedIds.includes(order._id) && order.status === 'confirmed'
@@ -207,16 +223,22 @@ export default function Orders() {
         )
       )
 
+      // رسالة توضيحية ذكية
+      const skippedText =
+        nonConfirmedSelectedCount > 0
+          ? ` (تم استثناء ${nonConfirmedSelectedCount} طلب بحالات أخرى لا تقبل الشحن المباشر)`
+          : ''
+
       setExportMessage({
         type: 'success',
-        text: res.data.message || 'تم تحويل الطلبات إلى قيد التوصيل بنجاح!',
+        text: `تم تحويل ${confirmedSelectedCount} طلب مؤكد إلى قيد التوصيل بنجاح!${skippedText}`,
       })
-      setTimeout(() => setExportMessage(null), 4000)
+      setTimeout(() => setExportMessage(null), 5000)
       setSelectedIds([])
     } catch (err) {
       setExportMessage({
         type: 'error',
-        text: err.response?.data?.message || 'تعذر تحويل الطلبات، تأكد أنها بحالة مؤكد.',
+        text: err.response?.data?.message || 'تعذر تحويل الطلبات، حاول مرة أخرى.',
       })
       setTimeout(() => setExportMessage(null), 5000)
     } finally {
@@ -315,11 +337,6 @@ export default function Orders() {
   const isCurrentPageAllSelected =
     orders.length > 0 && orders.every(o => selectedIds.includes(o._id))
 
-  // حساب هل توجد طلبات مؤكدة ضمن الطلبات المحددة
-  const hasConfirmedInSelection = orders.some(
-    o => selectedIds.includes(o._id) && o.status === 'confirmed'
-  )
-
   return (
     <Layout>
       {/* Header */}
@@ -405,7 +422,7 @@ export default function Orders() {
         </div>
       )}
 
-      {/* Select All Checkbox & Bulk Status Bar */}
+      {/* Select All Checkbox & Smart Bulk Action Bar */}
       {orders.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
           <div className="flex items-center gap-3">
@@ -433,17 +450,31 @@ export default function Orders() {
             )}
           </div>
 
-          {/* زر وحيد ومباشر: تحويل الطلبات المؤكدة المحددة إلى قيد التوصيل */}
-          {selectedIds.length > 0 && hasConfirmedInSelection && (
-            <button
-              type="button"
-              disabled={bulkLoading}
-              onClick={handleBulkShip}
-              className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-3.5 py-1.5 text-xs font-black text-white shadow-sm shadow-amber-500/20 hover:bg-amber-600 transition disabled:opacity-50"
-            >
-              <FiTruck size={14} />
-              <span>{bulkLoading ? 'جاري التحويل...' : 'تحويل إلى قيد التوصيل'}</span>
-            </button>
+          {/* الإجراءات الذكية عند تحديد طلبات */}
+          {selectedIds.length > 0 && (
+            <div className="flex items-center gap-2">
+              {confirmedSelectedCount > 0 ? (
+                <button
+                  type="button"
+                  disabled={bulkLoading}
+                  onClick={handleBulkShip}
+                  className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-3.5 py-1.5 text-xs font-black text-white shadow-sm shadow-amber-500/20 hover:bg-amber-600 transition disabled:opacity-50"
+                >
+                  <FiTruck size={14} />
+                  <span>
+                    {bulkLoading
+                      ? 'جاري التحويل...'
+                      : nonConfirmedSelectedCount > 0
+                      ? `تحويل ${confirmedSelectedCount} مؤكدة فقط إلى التوصيل`
+                      : `تحويل ${confirmedSelectedCount} إلى قيد التوصيل`}
+                  </span>
+                </button>
+              ) : (
+                <span className="text-[11px] font-bold text-slate-400">
+                  (حدد طلبات مؤكدة للشحن)
+                </span>
+              )}
+            </div>
           )}
         </div>
       )}
