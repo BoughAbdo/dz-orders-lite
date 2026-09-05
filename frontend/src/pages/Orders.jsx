@@ -215,6 +215,11 @@ export default function Orders() {
   // حساب إجمالي الطلبات المؤكدة في الصفحة الحالية
   const totalConfirmedInCurrentPage = orders.filter(o => o.status === 'confirmed').length
 
+  // التحقق مما إذا كان خيار التصدير يجب أن يكون معطلاً
+  const isExportDisabled =
+    (selectedIds.length > 0 && confirmedSelectedCount === 0) ||
+    (selectedIds.length === 0 && totalConfirmedInCurrentPage === 0)
+
   // تحويل الطلبات المؤكدة فقط مع الصعود التلقائي للأعلى
   const handleBulkShip = async () => {
     if (selectedIds.length === 0) return
@@ -269,27 +274,9 @@ export default function Orders() {
     }
   }
 
-  // تصدير الإكسل للطلبات المؤكدة فقط مع تحسين صياغة الـ UX
+  // تصدير الإكسل للطلبات المؤكدة فقط
   const handleExportExcel = async (provider = selectedCompany) => {
-    // إذا قام التاجر بتحديد طلبات، نتحقق أن بينها طلبات مؤكدة
-    if (selectedIds.length > 0 && confirmedSelectedCount === 0) {
-      setExportMessage({
-        type: 'warning',
-        text: 'لا يمكن التصدير: الطلبات المحددة لا تحتوي على أي طلب بحالة (مؤكد).',
-      })
-      setTimeout(() => setExportMessage(null), 6000)
-      return
-    }
-
-    // إذا لم يحدد أي طلب، نتحقق من وجود طلبات مؤكدة في الصفحة
-    if (selectedIds.length === 0 && totalConfirmedInCurrentPage === 0) {
-      setExportMessage({
-        type: 'warning',
-        text: 'لا توجد أي طلبات بحالة (مؤكد) في الصفحة الحالية لتصديرها لشركة الشحن.',
-      })
-      setTimeout(() => setExportMessage(null), 6000)
-      return
-    }
+    if (isExportDisabled) return
 
     setExportLoading(true)
     setShowCompanyMenu(false)
@@ -305,7 +292,6 @@ export default function Orders() {
         { responseType: 'blob' }
       )
 
-      // استخراج عدد الطلبات المصدرة بدقة من ترويسة الاستجابة
       const serverCount = response.headers['x-exported-count']
       const count = serverCount
         ? Number(serverCount)
@@ -326,7 +312,6 @@ export default function Orders() {
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
 
-      // رسالة واضحة تلغي اللبس للتاجر
       const successText =
         selectedIds.length > 0
           ? `تم تصدير ملف ${provider.toUpperCase()} (${count} طلبات مؤكدة محددة) بنجاح!`
@@ -414,30 +399,46 @@ export default function Orders() {
             </button>
 
             {showCompanyMenu && (
-              <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl shadow-slate-200/80">
-                {/* ترويسة نطاق التصدير الواضحة */}
-                <div className="border-b border-slate-100 px-3 py-2">
+              <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-2xl border border-slate-100 bg-white p-2.5 shadow-2xl shadow-slate-200">
+                {/* ترويسة نطاق التصدير مع دعم دقيق للحالات المختلفة */}
+                <div className="border-b border-slate-100 px-2.5 pb-2.5">
                   <p className="text-[11px] font-black text-slate-400">نطاق التصدير لشركة الشحن:</p>
-                  <p className="mt-0.5 text-xs font-black text-emerald-700">
-                    {selectedIds.length > 0
-                      ? `${confirmedSelectedCount} طلبات مؤكدة محددة`
-                      : `${totalConfirmedInCurrentPage} طلبات مؤكدة (الصفحة الحالية)`}
-                  </p>
+                  {selectedIds.length > 0 ? (
+                    confirmedSelectedCount > 0 ? (
+                      <p className="mt-0.5 text-xs font-black text-emerald-700">
+                        {confirmedSelectedCount} طلبات مؤكدة محددة
+                      </p>
+                    ) : (
+                      <p className="mt-0.5 text-xs font-black text-amber-600">
+                        لا توجد طلبات مؤكدة ضمن المحدد
+                      </p>
+                    )
+                  ) : totalConfirmedInCurrentPage > 0 ? (
+                    <p className="mt-0.5 text-xs font-black text-emerald-700">
+                      {totalConfirmedInCurrentPage} طلبات مؤكدة (الصفحة الحالية)
+                    </p>
+                  ) : (
+                    <p className="mt-0.5 text-xs font-black text-slate-400">
+                      لا توجد طلبات مؤكدة في الصفحة
+                    </p>
+                  )}
                 </div>
 
-                <div className="mt-1 space-y-1">
+                {/* قائمة الشركات مع تعطيل الأزرار تلقائياً عند عدم توفر طلبات مؤكدة */}
+                <div className="mt-1.5 space-y-1">
                   {deliveryCompanies.map(c => (
                     <button
                       key={c.key}
                       type="button"
+                      disabled={isExportDisabled || exportLoading}
                       onClick={() => {
                         setSelectedCompany(c.key)
                         handleExportExcel(c.key)
                       }}
-                      className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-right text-xs font-extrabold text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700"
+                      className="group flex w-full items-center justify-between rounded-xl px-3 py-2 text-right transition disabled:cursor-not-allowed disabled:opacity-40 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700"
                     >
-                      <span className="font-black">{c.name}</span>
-                      <FiDownload size={14} className="text-emerald-600" />
+                      <span className="text-xs font-black">{c.name}</span>
+                      <FiDownload size={14} className="text-slate-400 group-hover:text-emerald-600" />
                     </button>
                   ))}
                 </div>
