@@ -22,6 +22,8 @@ import {
   FiSquare,
   FiTruck,
   FiSliders,
+  FiPhone,
+  FiMessageCircle,
 } from 'react-icons/fi'
 
 const statusLabels = {
@@ -337,7 +339,7 @@ export default function Orders() {
 
   return (
     <Layout>
-      {/* Header مع إصلاح انكسار الشارات على الهاتف */}
+      {/* Header مع شارات غير منكسرة على الهاتف */}
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -599,6 +601,20 @@ export default function Orders() {
           {orders.map(order => {
             const isSelected = selectedIds.includes(order._id)
 
+            // إعداد رقم الهاتف ورابط الواتساب السريع
+            const cleanPhone = String(order.phone || '').replace(/\D/g, '')
+            const intlPhone = cleanPhone.startsWith('0')
+              ? `213${cleanPhone.slice(1)}`
+              : cleanPhone.startsWith('213')
+              ? cleanPhone
+              : `213${cleanPhone}`
+
+            const orderTotal = Number(order.price || 0) + Number(order.deliveryPrice || 0)
+            const whatsappMsg = encodeURIComponent(
+              `السلام عليكم ${order.customerName || ''}،\nتم تأكيد طلبك: ${order.product || ''}.\nالإجمالي: ${orderTotal.toLocaleString()} دج.\nسيتم التواصل معك بخصوص التوصيل قريباً إن شاء الله.`
+            )
+            const whatsappUrl = `https://wa.me/${intlPhone}?text=${whatsappMsg}`
+
             return (
               <div
                 key={order._id}
@@ -608,13 +624,13 @@ export default function Orders() {
                     : 'border-slate-100 hover:shadow-md'
                 }`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    {/* Select Checkbox */}
+                {/* رأس الكرت: التحديد، الاسم، الهاتف، وأزرار الاتصال السريع */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
                     <button
                       type="button"
                       onClick={(e) => toggleSelectOrder(order._id, e)}
-                      className="p-1 text-slate-400 hover:text-blue-600 transition"
+                      className="p-1 text-slate-400 hover:text-blue-600 transition shrink-0"
                     >
                       {isSelected ? (
                         <FiCheckSquare size={22} className="text-blue-600" />
@@ -623,26 +639,56 @@ export default function Orders() {
                       )}
                     </button>
 
-                    <Link to={`/orders/${order._id}`} className="block">
-                      <h3 className="font-black text-sm sm:text-base leading-6 text-slate-900 hover:text-blue-600 transition">
-                        {order.customerName}
-                      </h3>
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-slate-400">
-                        <FiMapPin size={12} />
-                        <span className="text-xs font-bold">{order.wilaya} - {order.city}</span>
-                        <span className="text-[10px] font-extrabold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg">
-                          {order.deliveryType === 'desk' ? 'مكتب' : 'منزل'}
+                    <div className="min-w-0">
+                      <Link to={`/orders/${order._id}`} className="block group">
+                        <h3 className="font-black text-sm sm:text-base leading-6 text-slate-900 group-hover:text-blue-600 transition truncate">
+                          {order.customerName}
+                        </h3>
+                      </Link>
+
+                      {/* رقم الهاتف وأزرار الاتصال السريع المباشرة */}
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-500 tracking-wider">
+                          {order.phone || '—'}
                         </span>
+
+                        {order.phone && (
+                          <div className="flex items-center gap-1.5">
+                            {/* زر الاتصال الهاتفي السريع */}
+                            <a
+                              href={`tel:${order.phone}`}
+                              onClick={(e) => e.stopPropagation()}
+                              title="اتصال هاتفي مباشر"
+                              className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition"
+                            >
+                              <FiPhone size={12} />
+                            </a>
+
+                            {/* زر واتساب السريع */}
+                            <a
+                              href={whatsappUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              title="إرسال رسالة تأكيد عبر واتساب"
+                              className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition"
+                            >
+                              <FiMessageCircle size={13} />
+                            </a>
+                          </div>
+                        )}
                       </div>
-                    </Link>
+                    </div>
                   </div>
 
-                  <span className={`rounded-full border px-2.5 py-1 text-xs font-extrabold shrink-0 ${statusLabels[order.status]?.color}`}>
+                  {/* شارة حالة الطلب */}
+                  <span className={`rounded-full border px-2.5 py-1 text-[11px] sm:text-xs font-extrabold shrink-0 ${statusLabels[order.status]?.color}`}>
                     {statusLabels[order.status]?.label}
                   </span>
                 </div>
 
-                <Link to={`/orders/${order._id}`} className="mt-2.5 block">
+                {/* تفاصيل المنتج والعنوان والسعر */}
+                <Link to={`/orders/${order._id}`} className="mt-3 block">
                   <div className="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2">
                     <div className="flex items-center gap-2 text-slate-600">
                       <FiPackage size={14} className="text-slate-400 shrink-0" />
@@ -652,12 +698,19 @@ export default function Orders() {
 
                   <div className="mt-2.5 flex items-center justify-between">
                     <div className="flex items-center gap-1 text-slate-400">
-                      <FiTag size={12} />
-                      <span className="text-xs font-bold">الإجمالي</span>
+                      <FiMapPin size={12} />
+                      <span className="text-xs font-bold">{order.wilaya} - {order.city}</span>
+                      <span className="text-[10px] font-extrabold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg mr-1">
+                        {order.deliveryType === 'desk' ? 'مكتب' : 'منزل'}
+                      </span>
                     </div>
-                    <span className="text-sm sm:text-base font-black text-slate-900">
-                      {(Number(order.price || 0) + Number(order.deliveryPrice || 0)).toLocaleString()} دج
-                    </span>
+
+                    <div className="flex items-center gap-1 text-slate-900">
+                      <span className="text-xs font-bold text-slate-400">الإجمالي:</span>
+                      <span className="text-sm sm:text-base font-black">
+                        {orderTotal.toLocaleString()} دج
+                      </span>
+                    </div>
                   </div>
                 </Link>
               </div>
