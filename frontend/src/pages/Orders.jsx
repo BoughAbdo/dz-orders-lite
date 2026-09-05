@@ -410,10 +410,10 @@ export default function Orders() {
       {exportMessage && (
         <div
           className={`mb-4 flex items-center justify-between gap-3 rounded-2xl p-3.5 text-xs sm:text-sm font-black transition-all ${exportMessage.type === 'error'
-              ? 'border border-red-200 bg-red-50 text-red-700'
-              : exportMessage.type === 'warning'
-                ? 'border border-amber-200 bg-amber-50 text-amber-800'
-                : 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+            ? 'border border-red-200 bg-red-50 text-red-700'
+            : exportMessage.type === 'warning'
+              ? 'border border-amber-200 bg-amber-50 text-amber-800'
+              : 'border border-emerald-200 bg-emerald-50 text-emerald-800'
             }`}
         >
           <div className="flex items-center gap-2">
@@ -491,8 +491,8 @@ export default function Orders() {
             type="button"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
             className={`relative inline-flex items-center gap-1.5 rounded-2xl border px-3 py-2.5 text-xs font-black transition ${hasAdvancedFilters || showAdvancedFilters
-                ? 'border-blue-200 bg-blue-50 text-blue-600'
-                : 'border-slate-100 bg-white text-slate-600 hover:bg-slate-50'
+              ? 'border-blue-200 bg-blue-50 text-blue-600'
+              : 'border-slate-100 bg-white text-slate-600 hover:bg-slate-50'
               }`}
           >
             <FiSliders size={14} />
@@ -617,8 +617,8 @@ export default function Orders() {
               <div
                 key={order._id}
                 className={`relative rounded-3xl border bg-white p-4 shadow-sm transition-all duration-200 ${isSelected
-                    ? 'border-blue-500 bg-blue-50/20 ring-2 ring-blue-500/20'
-                    : 'border-slate-100 hover:shadow-md'
+                  ? 'border-blue-500 bg-blue-50/20 ring-2 ring-blue-500/20'
+                  : 'border-slate-100 hover:shadow-md'
                   }`}
               >
                 {/* رأس الكرت: التحديد، الاسم، الهاتف، وأزرار الاتصال السريع */}
@@ -742,19 +742,18 @@ export default function Orders() {
       {/* الشريط العائم الذكي للإجراءات الجماعية (Floating Action Bar) */}
       {selectedIds.length > 0 && (
         <div className="fixed bottom-20 left-4 right-4 z-40 mx-auto max-w-lg transition-all duration-300 animate-in fade-in slide-in-from-bottom-5">
-          <div className="flex items-center justify-between gap-2 rounded-2xl border border-slate-800/20 bg-slate-900/95 p-3 text-white shadow-2xl backdrop-blur-md">
-            <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-black">
-                {selectedIds.length}
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedIds([])}
-                className="text-xs font-bold text-slate-400 hover:text-white transition"
-              >
-                إلغاء
-              </button>
-            </div>
+          <div className="flex items-center justify-between gap-3 rounded-full border border-white/10 bg-slate-900/95 px-4 py-2 text-white shadow-2xl backdrop-blur-md">            <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-black">
+              {selectedIds.length}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="text-xs font-bold text-slate-400 hover:text-white transition"
+            >
+              إلغاء
+            </button>
+          </div>
 
             {confirmedSelectedCount > 0 ? (
               <button
