@@ -198,7 +198,7 @@ export default function Orders() {
 
   const nonConfirmedSelectedCount = selectedIds.length - confirmedSelectedCount
 
-  // تحويل الطلبات المؤكدة فقط مع تنبيه UX واضح
+  // تحويل الطلبات المؤكدة فقط
   const handleBulkShip = async () => {
     if (selectedIds.length === 0) return
 
@@ -337,24 +337,26 @@ export default function Orders() {
 
   return (
     <Layout>
-      {/* Header Responsive */}
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
-            الطلبات
-          </h2>
-          <span className="rounded-xl bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-600">
-            {total}
-          </span>
-          {selectedIds.length > 0 && (
-            <span className="rounded-xl bg-blue-50 px-2 py-1 text-[11px] font-black text-blue-600">
-              ({selectedIds.length} محددة)
+      {/* Header مع إصلاح انكسار الشارات على الهاتف */}
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+              الطلبات
+            </h2>
+            <span className="rounded-xl bg-slate-100 px-2 py-0.5 text-xs font-black text-slate-600">
+              {total}
             </span>
+          </div>
+          {selectedIds.length > 0 && (
+            <p className="mt-0.5 text-[11px] font-bold text-blue-600 truncate">
+              تم تحديد {selectedIds.length} طلبية
+            </p>
           )}
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* Export Dropdown */}
+          {/* زر التصدير */}
           <div className="relative">
             <button
               type="button"
@@ -393,7 +395,7 @@ export default function Orders() {
 
           <Link
             to="/orders/new"
-            className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-600 px-3.5 py-2 text-xs sm:text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
+            className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-600 px-3 py-2 text-xs sm:text-sm font-extrabold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
           >
             <FiPlus size={16} />
             <span className="hidden sm:inline">طلب جديد</span>
@@ -427,59 +429,30 @@ export default function Orders() {
         </div>
       )}
 
-      {/* Select All Checkbox & Responsive Bulk Action Bar */}
+      {/* Select All Checkbox Bar */}
       {orders.length > 0 && (
-        <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center justify-between sm:justify-start gap-3">
+        <div className="mb-3 flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
+          <button
+            type="button"
+            onClick={toggleSelectAllPage}
+            className="inline-flex items-center gap-2 text-xs font-black text-slate-700 hover:text-blue-600 transition"
+          >
+            {isCurrentPageAllSelected ? (
+              <FiCheckSquare size={18} className="text-blue-600 shrink-0" />
+            ) : (
+              <FiSquare size={18} className="text-slate-400 shrink-0" />
+            )}
+            <span>تحديد جميع طلبات هذه الصفحة ({orders.length})</span>
+          </button>
+
+          {selectedIds.length > 0 && (
             <button
               type="button"
-              onClick={toggleSelectAllPage}
-              className="inline-flex items-center gap-2 text-xs font-black text-slate-700 hover:text-blue-600 transition"
+              onClick={() => setSelectedIds([])}
+              className="text-xs font-bold text-slate-400 hover:text-red-500 transition"
             >
-              {isCurrentPageAllSelected ? (
-                <FiCheckSquare size={18} className="text-blue-600 shrink-0" />
-              ) : (
-                <FiSquare size={18} className="text-slate-400 shrink-0" />
-              )}
-              <span>تحديد جميع طلبات الصفحة ({orders.length})</span>
+              إلغاء التحديد ({selectedIds.length})
             </button>
-
-            {selectedIds.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setSelectedIds([])}
-                className="text-xs font-bold text-slate-400 hover:text-red-500 transition"
-              >
-                إلغاء ({selectedIds.length})
-              </button>
-            )}
-          </div>
-
-          {/* زر الشحن السريع للمؤكدة */}
-          {selectedIds.length > 0 && (
-            <div className="flex items-center justify-end">
-              {confirmedSelectedCount > 0 ? (
-                <button
-                  type="button"
-                  disabled={bulkLoading}
-                  onClick={handleBulkShip}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-3.5 py-1.5 text-xs font-black text-white shadow-sm shadow-amber-500/20 hover:bg-amber-600 transition disabled:opacity-50"
-                >
-                  <FiTruck size={14} />
-                  <span>
-                    {bulkLoading
-                      ? 'جاري التحويل...'
-                      : nonConfirmedSelectedCount > 0
-                      ? `تحويل ${confirmedSelectedCount} مؤكدة فقط إلى التوصيل`
-                      : `تحويل ${confirmedSelectedCount} إلى قيد التوصيل`}
-                  </span>
-                </button>
-              ) : (
-                <span className="text-[11px] font-bold text-slate-400">
-                  (حدد طلبات مؤكدة للشحن)
-                </span>
-              )}
-            </div>
           )}
         </div>
       )}
@@ -530,7 +503,7 @@ export default function Orders() {
           </button>
         </div>
 
-        {/* Status Filters Horizontal Scroll */}
+        {/* Status Filters */}
         <div className="rounded-2xl border border-slate-100 bg-white p-2 shadow-sm">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
             {filters.map(f => (
@@ -622,7 +595,7 @@ export default function Orders() {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-2.5 pb-24">
           {orders.map(order => {
             const isSelected = selectedIds.includes(order._id)
 
@@ -713,6 +686,48 @@ export default function Orders() {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* الشريط العائم الذكي للإجراءات الجماعية (Floating Action Bar) */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-20 left-4 right-4 z-40 mx-auto max-w-lg transition-all duration-300 animate-in fade-in slide-in-from-bottom-5">
+          <div className="flex items-center justify-between gap-2 rounded-2xl border border-slate-800/20 bg-slate-900/95 p-3 text-white shadow-2xl backdrop-blur-md">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-black">
+                {selectedIds.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedIds([])}
+                className="text-xs font-bold text-slate-400 hover:text-white transition"
+              >
+                إلغاء
+              </button>
+            </div>
+
+            {confirmedSelectedCount > 0 ? (
+              <button
+                type="button"
+                disabled={bulkLoading}
+                onClick={handleBulkShip}
+                className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-3.5 py-2 text-xs font-black text-white shadow-md shadow-amber-500/30 hover:bg-amber-600 active:scale-95 transition disabled:opacity-50"
+              >
+                <FiTruck size={15} />
+                <span>
+                  {bulkLoading
+                    ? 'جاري التحويل...'
+                    : nonConfirmedSelectedCount > 0
+                    ? `تحويل ${confirmedSelectedCount} مؤكدة فقط للتوصيل`
+                    : `تحويل ${confirmedSelectedCount} إلى التوصيل`}
+                </span>
+              </button>
+            ) : (
+              <span className="text-[11px] font-bold text-slate-400">
+                (حدد طلبات مؤكدة للشحن)
+              </span>
+            )}
+          </div>
         </div>
       )}
     </Layout>
