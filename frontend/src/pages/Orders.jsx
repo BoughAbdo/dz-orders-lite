@@ -409,13 +409,12 @@ export default function Orders() {
       {/* Export & Bulk Feedback Toast */}
       {exportMessage && (
         <div
-          className={`mb-4 flex items-center justify-between gap-3 rounded-2xl p-3.5 text-xs sm:text-sm font-black transition-all ${
-            exportMessage.type === 'error'
+          className={`mb-4 flex items-center justify-between gap-3 rounded-2xl p-3.5 text-xs sm:text-sm font-black transition-all ${exportMessage.type === 'error'
               ? 'border border-red-200 bg-red-50 text-red-700'
               : exportMessage.type === 'warning'
-              ? 'border border-amber-200 bg-amber-50 text-amber-800'
-              : 'border border-emerald-200 bg-emerald-50 text-emerald-800'
-          }`}
+                ? 'border border-amber-200 bg-amber-50 text-amber-800'
+                : 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+            }`}
         >
           <div className="flex items-center gap-2">
             <FiAlertCircle size={18} className="shrink-0" />
@@ -491,11 +490,10 @@ export default function Orders() {
           <button
             type="button"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className={`relative inline-flex items-center gap-1.5 rounded-2xl border px-3 py-2.5 text-xs font-black transition ${
-              hasAdvancedFilters || showAdvancedFilters
+            className={`relative inline-flex items-center gap-1.5 rounded-2xl border px-3 py-2.5 text-xs font-black transition ${hasAdvancedFilters || showAdvancedFilters
                 ? 'border-blue-200 bg-blue-50 text-blue-600'
                 : 'border-slate-100 bg-white text-slate-600 hover:bg-slate-50'
-            }`}
+              }`}
           >
             <FiSliders size={14} />
             <span className="hidden sm:inline">فلترة متقدمة</span>
@@ -606,8 +604,8 @@ export default function Orders() {
             const intlPhone = cleanPhone.startsWith('0')
               ? `213${cleanPhone.slice(1)}`
               : cleanPhone.startsWith('213')
-              ? cleanPhone
-              : `213${cleanPhone}`
+                ? cleanPhone
+                : `213${cleanPhone}`
 
             const orderTotal = Number(order.price || 0) + Number(order.deliveryPrice || 0)
             const whatsappMsg = encodeURIComponent(
@@ -618,11 +616,10 @@ export default function Orders() {
             return (
               <div
                 key={order._id}
-                className={`relative rounded-3xl border bg-white p-4 shadow-sm transition-all duration-200 ${
-                  isSelected
+                className={`relative rounded-3xl border bg-white p-4 shadow-sm transition-all duration-200 ${isSelected
                     ? 'border-blue-500 bg-blue-50/20 ring-2 ring-blue-500/20'
                     : 'border-slate-100 hover:shadow-md'
-                }`}
+                  }`}
               >
                 {/* رأس الكرت: التحديد، الاسم، الهاتف، وأزرار الاتصال السريع */}
                 <div className="flex items-start justify-between gap-2">
@@ -647,8 +644,8 @@ export default function Orders() {
                       </Link>
 
                       {/* رقم الهاتف وأزرار الاتصال السريع المباشرة */}
-                      <div className="mt-1 flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-500 tracking-wider">
+                      <div className="mt-1.5 flex items-center gap-2.5">
+                        <span className="text-xs sm:text-sm font-bold text-slate-600 tracking-wider">
                           {order.phone || '—'}
                         </span>
 
@@ -659,9 +656,9 @@ export default function Orders() {
                               href={`tel:${order.phone}`}
                               onClick={(e) => e.stopPropagation()}
                               title="اتصال هاتفي مباشر"
-                              className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition"
+                              className="flex h-8 w-8 sm:h-8.5 sm:w-8.5 items-center justify-center rounded-xl border border-blue-200/60 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 shadow-sm transition active:scale-95"
                             >
-                              <FiPhone size={12} />
+                              <FiPhone size={15} />
                             </a>
 
                             {/* زر واتساب السريع */}
@@ -671,9 +668,9 @@ export default function Orders() {
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
                               title="إرسال رسالة تأكيد عبر واتساب"
-                              className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition"
+                              className="flex h-8 w-8 sm:h-8.5 sm:w-8.5 items-center justify-center rounded-xl border border-emerald-200/60 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 shadow-sm transition active:scale-95"
                             >
-                              <FiMessageCircle size={13} />
+                              <FiMessageCircle size={16} />
                             </a>
                           </div>
                         )}
@@ -771,8 +768,8 @@ export default function Orders() {
                   {bulkLoading
                     ? 'جاري التحويل...'
                     : nonConfirmedSelectedCount > 0
-                    ? `تحويل ${confirmedSelectedCount} مؤكدة فقط للتوصيل`
-                    : `تحويل ${confirmedSelectedCount} إلى التوصيل`}
+                      ? `تحويل ${confirmedSelectedCount} مؤكدة فقط للتوصيل`
+                      : `تحويل ${confirmedSelectedCount} إلى التوصيل`}
                 </span>
               </button>
             ) : (
@@ -822,9 +819,8 @@ function FilterDropdown({ label, value, onChange, options }) {
                 key={option.key}
                 type="button"
                 onClick={() => { onChange(option.key); setOpen(false) }}
-                className={`flex w-full items-center justify-between px-2.5 py-2 text-xs font-black rounded-lg transition ${
-                  option.key === value ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
-                }`}
+                className={`flex w-full items-center justify-between px-2.5 py-2 text-xs font-black rounded-lg transition ${option.key === value ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
+                  }`}
               >
                 <span>{option.label}</span>
                 {option.key === value && <FiCheck size={12} />}
