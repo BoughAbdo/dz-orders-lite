@@ -21,6 +21,7 @@ import {
   FiCheckSquare,
   FiSquare,
   FiTruck,
+  FiSliders,
 } from 'react-icons/fi'
 
 const statusLabels = {
@@ -114,6 +115,9 @@ export default function Orders() {
   const [showCompanyMenu, setShowCompanyMenu] = useState(false)
   const [exportMessage, setExportMessage] = useState(null)
 
+  // Collapsible Filters
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -194,7 +198,7 @@ export default function Orders() {
 
   const nonConfirmedSelectedCount = selectedIds.length - confirmedSelectedCount
 
-  // تحويل الطلبات المؤكدة فقط مع تنبيه UX واضح ومحدد
+  // تحويل الطلبات المؤكدة فقط مع تنبيه UX واضح
   const handleBulkShip = async () => {
     if (selectedIds.length === 0) return
 
@@ -223,7 +227,6 @@ export default function Orders() {
         )
       )
 
-      // رسالة توضيحية ذكية
       const skippedText =
         nonConfirmedSelectedCount > 0
           ? ` (تم استثناء ${nonConfirmedSelectedCount} طلب بحالات أخرى لا تقبل الشحن المباشر)`
@@ -314,13 +317,8 @@ export default function Orders() {
     }
   }
 
-  const hasActiveFilters =
-    search.trim() ||
-    filter !== 'all' ||
-    wilayaFilter !== 'all' ||
-    dateFilter !== 'all' ||
-    dateFrom ||
-    dateTo
+  const hasAdvancedFilters = wilayaFilter !== 'all' || dateFilter !== 'all' || dateFrom || dateTo
+  const hasActiveFilters = search.trim() || filter !== 'all' || hasAdvancedFilters
 
   const resetFilters = () => {
     setSearch('')
@@ -339,33 +337,39 @@ export default function Orders() {
 
   return (
     <Layout>
-      {/* Header */}
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-black tracking-tight text-slate-900">
+      {/* Header Responsive */}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
             الطلبات
           </h2>
-          <p className="mt-1 text-sm font-medium text-slate-500">
-            {total} طلب {selectedIds.length > 0 && `(تم تحديد ${selectedIds.length})`}
-          </p>
+          <span className="rounded-xl bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-600">
+            {total}
+          </span>
+          {selectedIds.length > 0 && (
+            <span className="rounded-xl bg-blue-50 px-2 py-1 text-[11px] font-black text-blue-600">
+              ({selectedIds.length} محددة)
+            </span>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Export Dropdown */}
           <div className="relative">
             <button
               type="button"
               onClick={() => setShowCompanyMenu(!showCompanyMenu)}
               disabled={loading || orders.length === 0 || exportLoading}
-              className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-extrabold text-emerald-700 transition hover:bg-emerald-100 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs sm:text-sm font-extrabold text-emerald-700 transition hover:bg-emerald-100 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <FiDownload size={18} />
-              <span>{exportLoading ? 'جاري التصدير...' : 'تصدير إكسل الشحن'}</span>
-              <FiChevronDown size={14} />
+              <FiDownload size={15} />
+              <span className="hidden sm:inline">{exportLoading ? 'جاري التصدير...' : 'تصدير إكسل الشحن'}</span>
+              <span className="sm:hidden">إكسل الشحن</span>
+              <FiChevronDown size={12} />
             </button>
 
             {showCompanyMenu && (
-              <div className="absolute left-0 top-full z-50 mt-2 w-56 rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl shadow-slate-200">
+              <div className="absolute left-0 top-full z-50 mt-2 w-52 rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl shadow-slate-200">
                 <p className="px-3 py-1.5 text-xs font-bold text-slate-400">
                   اختر شركة الشحن ({selectedIds.length > 0 ? `${selectedIds.length} محددة` : 'كل المؤكدة'}):
                 </p>
@@ -377,10 +381,10 @@ export default function Orders() {
                       setSelectedCompany(c.key)
                       handleExportExcel(c.key)
                     }}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-right text-xs font-extrabold text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700"
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-right text-xs font-extrabold text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700"
                   >
                     <span>{c.name}</span>
-                    <FiDownload size={14} className="text-slate-400" />
+                    <FiDownload size={13} className="text-slate-400" />
                   </button>
                 ))}
               </div>
@@ -389,10 +393,11 @@ export default function Orders() {
 
           <Link
             to="/orders/new"
-            className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
+            className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-600 px-3.5 py-2 text-xs sm:text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
           >
-            <FiPlus size={18} />
+            <FiPlus size={16} />
             <span className="hidden sm:inline">طلب جديد</span>
+            <span className="sm:hidden">جديد</span>
           </Link>
         </div>
       </div>
@@ -400,7 +405,7 @@ export default function Orders() {
       {/* Export & Bulk Feedback Toast */}
       {exportMessage && (
         <div
-          className={`mb-4 flex items-center justify-between gap-3 rounded-2xl p-4 text-sm font-black transition-all ${
+          className={`mb-4 flex items-center justify-between gap-3 rounded-2xl p-3.5 text-xs sm:text-sm font-black transition-all ${
             exportMessage.type === 'error'
               ? 'border border-red-200 bg-red-50 text-red-700'
               : exportMessage.type === 'warning'
@@ -422,21 +427,21 @@ export default function Orders() {
         </div>
       )}
 
-      {/* Select All Checkbox & Smart Bulk Action Bar */}
+      {/* Select All Checkbox & Responsive Bulk Action Bar */}
       {orders.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
-          <div className="flex items-center gap-3">
+        <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center justify-between sm:justify-start gap-3">
             <button
               type="button"
               onClick={toggleSelectAllPage}
               className="inline-flex items-center gap-2 text-xs font-black text-slate-700 hover:text-blue-600 transition"
             >
               {isCurrentPageAllSelected ? (
-                <FiCheckSquare size={18} className="text-blue-600" />
+                <FiCheckSquare size={18} className="text-blue-600 shrink-0" />
               ) : (
-                <FiSquare size={18} className="text-slate-400" />
+                <FiSquare size={18} className="text-slate-400 shrink-0" />
               )}
-              <span>تحديد جميع طلبات هذه الصفحة ({orders.length})</span>
+              <span>تحديد جميع طلبات الصفحة ({orders.length})</span>
             </button>
 
             {selectedIds.length > 0 && (
@@ -445,20 +450,20 @@ export default function Orders() {
                 onClick={() => setSelectedIds([])}
                 className="text-xs font-bold text-slate-400 hover:text-red-500 transition"
               >
-                إلغاء التحديد ({selectedIds.length})
+                إلغاء ({selectedIds.length})
               </button>
             )}
           </div>
 
-          {/* الإجراءات الذكية عند تحديد طلبات */}
+          {/* زر الشحن السريع للمؤكدة */}
           {selectedIds.length > 0 && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-end">
               {confirmedSelectedCount > 0 ? (
                 <button
                   type="button"
                   disabled={bulkLoading}
                   onClick={handleBulkShip}
-                  className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-3.5 py-1.5 text-xs font-black text-white shadow-sm shadow-amber-500/20 hover:bg-amber-600 transition disabled:opacity-50"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-3.5 py-1.5 text-xs font-black text-white shadow-sm shadow-amber-500/20 hover:bg-amber-600 transition disabled:opacity-50"
                 >
                   <FiTruck size={14} />
                   <span>
@@ -479,94 +484,106 @@ export default function Orders() {
         </div>
       )}
 
-      {/* Search Bar */}
-      <div className="relative mb-4">
-        <FiSearch
-          size={16}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
-        />
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="ابحث بالاسم، الهاتف، المنتج، الولاية، البلدية..."
-          className="w-full rounded-2xl border border-slate-100 bg-white py-3 pl-10 pr-10 text-sm font-medium text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-300 focus:outline-none"
-          dir="rtl"
-        />
-        {search && (
-          <button
-            type="button"
-            onClick={() => setSearch('')}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-600"
-          >
-            <FiX size={16} />
-          </button>
-        )}
-      </div>
-
-      {/* Status Filters */}
-      <div className="mb-4 rounded-3xl border border-slate-100 bg-white p-3 shadow-sm">
-        <div className="mb-3 flex items-center gap-2 text-slate-500">
-          <FiFilter size={16} />
-          <span className="text-xs font-bold">تصفية حسب الحالة</span>
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {filters.map(f => (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => setFilter(f.key)}
-              className={`whitespace-nowrap rounded-2xl px-4 py-2 text-sm font-bold transition duration-200
-                ${filter === f.key
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                  : 'border border-slate-100 bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
-                }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Advanced Filters */}
-      <div className="mb-5 rounded-3xl border border-slate-100 bg-white p-3 shadow-sm">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-slate-500">
-            <FiCalendar size={16} />
-            <span className="text-xs font-bold">فلترة متقدمة</span>
+      {/* Search & Collapsible Filters Bar */}
+      <div className="mb-3 space-y-2">
+        <div className="flex items-center gap-2">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <FiSearch
+              size={16}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="ابحث بالاسم، الهاتف، المنتج، الولاية، البلدية..."
+              className="w-full rounded-2xl border border-slate-100 bg-white py-2.5 pl-9 pr-9 text-xs sm:text-sm font-medium text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-300 focus:outline-none"
+              dir="rtl"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-600"
+              >
+                <FiX size={15} />
+              </button>
+            )}
           </div>
 
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-50 px-3 py-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-100"
-            >
-              <FiX size={14} />
-              مسح الفلاتر
-            </button>
-          )}
+          {/* Toggle Advanced Filters Button */}
+          <button
+            type="button"
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className={`relative inline-flex items-center gap-1.5 rounded-2xl border px-3 py-2.5 text-xs font-black transition ${
+              hasAdvancedFilters || showAdvancedFilters
+                ? 'border-blue-200 bg-blue-50 text-blue-600'
+                : 'border-slate-100 bg-white text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <FiSliders size={14} />
+            <span className="hidden sm:inline">فلترة متقدمة</span>
+            {hasAdvancedFilters && (
+              <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+            )}
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <FilterDropdown
-            label="الولاية"
-            value={wilayaFilter}
-            onChange={setWilayaFilter}
-            options={[
-              { key: 'all', label: 'كل الولايات' },
-              ...algerianWilayas.map(w => ({ key: w, label: w })),
-            ]}
-          />
+        {/* Status Filters Horizontal Scroll */}
+        <div className="rounded-2xl border border-slate-100 bg-white p-2 shadow-sm">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+            {filters.map(f => (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setFilter(f.key)}
+                className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-black transition duration-200
+                  ${filter === f.key
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/20'
+                    : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                  }`}
+              >
+                {f.label}
+              </button>
+            ))}
 
-          <FilterDropdown
-            label="التاريخ"
-            value={dateFilter}
-            onChange={setDateFilter}
-            options={dateFilters}
-          />
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="mr-auto shrink-0 inline-flex items-center gap-1 rounded-xl bg-red-50 px-2.5 py-1.5 text-xs font-black text-red-600 hover:bg-red-100 transition"
+              >
+                <FiX size={12} />
+                <span>إلغاء الفلاتر</span>
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Collapsible Section for Wilaya & Date */}
+        {showAdvancedFilters && (
+          <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm transition-all duration-200">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              <FilterDropdown
+                label="الولاية"
+                value={wilayaFilter}
+                onChange={setWilayaFilter}
+                options={[
+                  { key: 'all', label: 'كل الولايات' },
+                  ...algerianWilayas.map(w => ({ key: w, label: w })),
+                ]}
+              />
+
+              <FilterDropdown
+                label="التاريخ"
+                value={dateFilter}
+                onChange={setDateFilter}
+                options={dateFilters}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Error View */}
@@ -600,12 +617,12 @@ export default function Orders() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-50 text-slate-400">
             <FiPackage size={30} />
           </div>
-          <p className="text-lg font-black text-slate-900">
-            {hasActiveFilters ? 'لا توجد نتائج' : 'لا يوجد طلبات'}
+          <p className="text-base sm:text-lg font-black text-slate-900">
+            {hasActiveFilters ? 'لا توجد نتائج مطابقة' : 'لا يوجد طلبات'}
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5">
           {orders.map(order => {
             const isSelected = selectedIds.includes(order._id)
 
@@ -634,38 +651,38 @@ export default function Orders() {
                     </button>
 
                     <Link to={`/orders/${order._id}`} className="block">
-                      <h3 className="font-black leading-6 text-slate-900 hover:text-blue-600 transition">
+                      <h3 className="font-black text-sm sm:text-base leading-6 text-slate-900 hover:text-blue-600 transition">
                         {order.customerName}
                       </h3>
-                      <div className="mt-1 flex items-center gap-2 text-slate-400">
-                        <FiMapPin size={13} />
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-slate-400">
+                        <FiMapPin size={12} />
                         <span className="text-xs font-bold">{order.wilaya} - {order.city}</span>
-                        <span className="text-[11px] font-extrabold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg">
+                        <span className="text-[10px] font-extrabold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg">
                           {order.deliveryType === 'desk' ? 'مكتب' : 'منزل'}
                         </span>
                       </div>
                     </Link>
                   </div>
 
-                  <span className={`rounded-full border px-3 py-1.5 text-xs font-extrabold ${statusLabels[order.status]?.color}`}>
+                  <span className={`rounded-full border px-2.5 py-1 text-xs font-extrabold shrink-0 ${statusLabels[order.status]?.color}`}>
                     {statusLabels[order.status]?.label}
                   </span>
                 </div>
 
-                <Link to={`/orders/${order._id}`} className="mt-3 block">
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                <Link to={`/orders/${order._id}`} className="mt-2.5 block">
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2">
                     <div className="flex items-center gap-2 text-slate-600">
-                      <FiPackage size={15} className="text-slate-400" />
-                      <p className="line-clamp-1 text-sm font-bold">{order.product}</p>
+                      <FiPackage size={14} className="text-slate-400 shrink-0" />
+                      <p className="line-clamp-1 text-xs sm:text-sm font-bold">{order.product}</p>
                     </div>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-slate-400">
-                      <FiTag size={13} />
-                      <span className="text-xs font-bold">الإجمالي (شامل التوصيل)</span>
+                  <div className="mt-2.5 flex items-center justify-between">
+                    <div className="flex items-center gap-1 text-slate-400">
+                      <FiTag size={12} />
+                      <span className="text-xs font-bold">الإجمالي</span>
                     </div>
-                    <span className="text-base font-black text-slate-900">
+                    <span className="text-sm sm:text-base font-black text-slate-900">
                       {(Number(order.price || 0) + Number(order.deliveryPrice || 0)).toLocaleString()} دج
                     </span>
                   </div>
@@ -676,21 +693,21 @@ export default function Orders() {
 
           {/* Pagination */}
           {pages > 1 && (
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-3xl border border-slate-100 bg-white p-3 shadow-sm">
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white p-2.5 shadow-sm">
               <button
                 type="button"
                 onClick={() => setPage(prev => Math.max(prev - 1, 1))}
                 disabled={page <= 1 || loading}
-                className="rounded-2xl bg-slate-100 px-4 py-2.5 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200 disabled:opacity-50"
+                className="rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-200 disabled:opacity-50"
               >
                 السابق
               </button>
-              <p className="text-sm font-black text-slate-700">الصفحة {page} من {pages}</p>
+              <p className="text-xs font-black text-slate-700">الصفحة {page} من {pages}</p>
               <button
                 type="button"
                 onClick={() => setPage(prev => Math.min(prev + 1, pages))}
                 disabled={page >= pages || loading}
-                className="rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 disabled:opacity-50"
+                className="rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-extrabold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 disabled:opacity-50"
               >
                 التالي
               </button>
@@ -719,25 +736,25 @@ function FilterDropdown({ label, value, onChange, options }) {
 
   return (
     <div ref={dropdownRef} className="relative">
-      <label className="mb-2 block text-xs font-black text-slate-500">{label}</label>
+      <label className="mb-1.5 block text-[11px] font-black text-slate-500">{label}</label>
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-black text-slate-700 shadow-sm"
+        className="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs font-black text-slate-700 shadow-sm"
       >
         <span className="truncate">{selectedOption?.label}</span>
-        <FiChevronDown size={15} className={`transition ${open ? 'rotate-180' : ''}`} />
+        <FiChevronDown size={14} className={`transition ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 z-50 mt-2 rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl">
-          <div className="max-h-56 overflow-y-auto">
+        <div className="absolute left-0 right-0 z-50 mt-1.5 rounded-xl border border-slate-100 bg-white p-1.5 shadow-xl">
+          <div className="max-h-52 overflow-y-auto">
             {options.map(option => (
               <button
                 key={option.key}
                 type="button"
                 onClick={() => { onChange(option.key); setOpen(false) }}
-                className={`flex w-full items-center justify-between px-3 py-2 text-xs font-black rounded-xl transition ${
+                className={`flex w-full items-center justify-between px-2.5 py-2 text-xs font-black rounded-lg transition ${
                   option.key === value ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
                 }`}
               >
