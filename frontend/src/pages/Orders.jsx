@@ -117,6 +117,9 @@ export default function Orders() {
   const [showCompanyMenu, setShowCompanyMenu] = useState(false)
   const [exportMessage, setExportMessage] = useState(null)
 
+  // Ref للصعود السلس نحو رسالة النجاح في أعلى الصفحة
+  const toastRef = useRef(null)
+
   // Collapsible Filters
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
 
@@ -127,6 +130,15 @@ export default function Orders() {
   const [dateFilter, setDateFilter] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+
+  const scrollToTop = () => {
+    setTimeout(() => {
+      toastRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }, 50)
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -200,7 +212,7 @@ export default function Orders() {
 
   const nonConfirmedSelectedCount = selectedIds.length - confirmedSelectedCount
 
-  // تحويل الطلبات المؤكدة فقط
+  // تحويل الطلبات المؤكدة فقط مع الصعود التلقائي للأعلى
   const handleBulkShip = async () => {
     if (selectedIds.length === 0) return
 
@@ -209,6 +221,7 @@ export default function Orders() {
         type: 'warning',
         text: 'لا توجد أي طلبات بحالة (مؤكد) ضمن الطلبات المحددة لتحويلها إلى قيد التوصيل.',
       })
+      scrollToTop()
       setTimeout(() => setExportMessage(null), 5000)
       return
     }
@@ -238,6 +251,7 @@ export default function Orders() {
         type: 'success',
         text: `تم تحويل ${confirmedSelectedCount} طلب مؤكد إلى قيد التوصيل بنجاح!${skippedText}`,
       })
+      scrollToTop()
       setTimeout(() => setExportMessage(null), 5000)
       setSelectedIds([])
     } catch (err) {
@@ -245,6 +259,7 @@ export default function Orders() {
         type: 'error',
         text: err.response?.data?.message || 'تعذر تحويل الطلبات، حاول مرة أخرى.',
       })
+      scrollToTop()
       setTimeout(() => setExportMessage(null), 5000)
     } finally {
       setBulkLoading(false)
@@ -260,6 +275,7 @@ export default function Orders() {
         type: 'warning',
         text: 'يرجى تحديد الطلبات المراد تصديرها، أو تأكيد الطلبات أولاً (يتم تصدير الطلبات المؤكدة فقط تلقائياً).'
       })
+      scrollToTop()
       setTimeout(() => setExportMessage(null), 6000)
       return
     }
@@ -295,6 +311,7 @@ export default function Orders() {
         type: 'success',
         text: `تم تصدير ملف ${provider.toUpperCase()} بنجاح!`
       })
+      scrollToTop()
       setTimeout(() => setExportMessage(null), 4000)
     } catch (err) {
       let errorText = 'تعذر تصدير ملف الإكسل، حاول مرة أخرى.'
@@ -313,6 +330,7 @@ export default function Orders() {
         type: 'error',
         text: errorText
       })
+      scrollToTop()
       setTimeout(() => setExportMessage(null), 6000)
     } finally {
       setExportLoading(false)
@@ -406,29 +424,33 @@ export default function Orders() {
         </div>
       </div>
 
-      {/* Export & Bulk Feedback Toast */}
-      {exportMessage && (
-        <div
-          className={`mb-4 flex items-center justify-between gap-3 rounded-2xl p-3.5 text-xs sm:text-sm font-black transition-all ${exportMessage.type === 'error'
-            ? 'border border-red-200 bg-red-50 text-red-700'
-            : exportMessage.type === 'warning'
-              ? 'border border-amber-200 bg-amber-50 text-amber-800'
-              : 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+      {/* نقطة مرجعية للوصول برسالة التنبيه للأعلى بدقة */}
+      <div ref={toastRef} className="scroll-mt-4">
+        {/* Export & Bulk Feedback Toast */}
+        {exportMessage && (
+          <div
+            className={`mb-4 flex items-center justify-between gap-3 rounded-2xl p-3.5 text-xs sm:text-sm font-black transition-all ${
+              exportMessage.type === 'error'
+                ? 'border border-red-200 bg-red-50 text-red-700'
+                : exportMessage.type === 'warning'
+                ? 'border border-amber-200 bg-amber-50 text-amber-800'
+                : 'border border-emerald-200 bg-emerald-50 text-emerald-800'
             }`}
-        >
-          <div className="flex items-center gap-2">
-            <FiAlertCircle size={18} className="shrink-0" />
-            <span>{exportMessage.text}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setExportMessage(null)}
-            className="p-1 hover:opacity-75"
           >
-            <FiX size={16} />
-          </button>
-        </div>
-      )}
+            <div className="flex items-center gap-2">
+              <FiAlertCircle size={18} className="shrink-0" />
+              <span>{exportMessage.text}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setExportMessage(null)}
+              className="p-1 hover:opacity-75"
+            >
+              <FiX size={16} />
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Select All Checkbox Bar */}
       {orders.length > 0 && (
@@ -490,10 +512,11 @@ export default function Orders() {
           <button
             type="button"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className={`relative inline-flex items-center gap-1.5 rounded-2xl border px-3 py-2.5 text-xs font-black transition ${hasAdvancedFilters || showAdvancedFilters
-              ? 'border-blue-200 bg-blue-50 text-blue-600'
-              : 'border-slate-100 bg-white text-slate-600 hover:bg-slate-50'
-              }`}
+            className={`relative inline-flex items-center gap-1.5 rounded-2xl border px-3 py-2.5 text-xs font-black transition ${
+              hasAdvancedFilters || showAdvancedFilters
+                ? 'border-blue-200 bg-blue-50 text-blue-600'
+                : 'border-slate-100 bg-white text-slate-600 hover:bg-slate-50'
+            }`}
           >
             <FiSliders size={14} />
             <span className="hidden sm:inline">فلترة متقدمة</span>
@@ -604,8 +627,8 @@ export default function Orders() {
             const intlPhone = cleanPhone.startsWith('0')
               ? `213${cleanPhone.slice(1)}`
               : cleanPhone.startsWith('213')
-                ? cleanPhone
-                : `213${cleanPhone}`
+              ? cleanPhone
+              : `213${cleanPhone}`
 
             const orderTotal = Number(order.price || 0) + Number(order.deliveryPrice || 0)
             const whatsappMsg = encodeURIComponent(
@@ -616,10 +639,11 @@ export default function Orders() {
             return (
               <div
                 key={order._id}
-                className={`relative rounded-3xl border bg-white p-4 shadow-sm transition-all duration-200 ${isSelected
-                  ? 'border-blue-500 bg-blue-50/20 ring-2 ring-blue-500/20'
-                  : 'border-slate-100 hover:shadow-md'
-                  }`}
+                className={`relative rounded-3xl border bg-white p-4 shadow-sm transition-all duration-200 ${
+                  isSelected
+                    ? 'border-blue-500 bg-blue-50/20 ring-2 ring-blue-500/20'
+                    : 'border-slate-100 hover:shadow-md'
+                }`}
               >
                 {/* رأس الكرت: التحديد، الاسم، الهاتف، وأزرار الاتصال السريع */}
                 <div className="flex items-start justify-between gap-2">
@@ -742,18 +766,19 @@ export default function Orders() {
       {/* الشريط العائم الذكي للإجراءات الجماعية (Floating Action Bar) */}
       {selectedIds.length > 0 && (
         <div className="fixed bottom-20 left-4 right-4 z-40 mx-auto max-w-lg transition-all duration-300 animate-in fade-in slide-in-from-bottom-5">
-          <div className="flex items-center justify-between gap-3 rounded-full border border-white/10 bg-slate-900/95 px-4 py-2 text-white shadow-2xl backdrop-blur-md">            <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-black">
-              {selectedIds.length}
-            </span>
-            <button
-              type="button"
-              onClick={() => setSelectedIds([])}
-              className="text-xs font-bold text-slate-400 hover:text-white transition"
-            >
-              إلغاء
-            </button>
-          </div>
+          <div className="flex items-center justify-between gap-3 rounded-full border border-white/10 bg-slate-900/95 px-4 py-2 text-white shadow-2xl backdrop-blur-md">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-black">
+                {selectedIds.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedIds([])}
+                className="text-xs font-bold text-slate-400 hover:text-white transition"
+              >
+                إلغاء
+              </button>
+            </div>
 
             {confirmedSelectedCount > 0 ? (
               <button
@@ -767,8 +792,8 @@ export default function Orders() {
                   {bulkLoading
                     ? 'جاري التحويل...'
                     : nonConfirmedSelectedCount > 0
-                      ? `تحويل ${confirmedSelectedCount} مؤكدة فقط للتوصيل`
-                      : `تحويل ${confirmedSelectedCount} إلى التوصيل`}
+                    ? `تحويل ${confirmedSelectedCount} مؤكدة فقط للتوصيل`
+                    : `تحويل ${confirmedSelectedCount} إلى التوصيل`}
                 </span>
               </button>
             ) : (
@@ -818,8 +843,9 @@ function FilterDropdown({ label, value, onChange, options }) {
                 key={option.key}
                 type="button"
                 onClick={() => { onChange(option.key); setOpen(false) }}
-                className={`flex w-full items-center justify-between px-2.5 py-2 text-xs font-black rounded-lg transition ${option.key === value ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
-                  }`}
+                className={`flex w-full items-center justify-between px-2.5 py-2 text-xs font-black rounded-lg transition ${
+                  option.key === value ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
+                }`}
               >
                 <span>{option.label}</span>
                 {option.key === value && <FiCheck size={12} />}
