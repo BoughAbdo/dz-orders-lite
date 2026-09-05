@@ -425,37 +425,39 @@ exports.exportOrdersToExcel = async (req, res) => {
   }
 };
 
-// تحديث حالة عدة طلبيات دفعة واحدة (Bulk Status Update)
+// تحويل الطلبات المؤكدة إلى قيد التوصيل دفعة واحدة
 exports.updateBulkStatus = async (req, res) => {
   try {
-    const { orderIds, status } = req.body;
-
-    const allowedStatuses = ['new', 'confirmed', 'shipped', 'delivered', 'returned'];
-    if (!status || !allowedStatuses.includes(status)) {
-      return res.status(400).json({ message: 'الحالة المحددة غير صالحة' });
-    }
+    const { orderIds, status = 'shipped' } = req.body;
 
     if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
-      return res.status(400).json({ message: 'يرجى تحديد طلبية واحدة على الأقل' });
+      return res.status(400).json({ message: 'يرجى تحديد طلبية واحدة على الأقل.' });
     }
 
-    // تحديث كل الطلبات المحددة التابعة لنفس المستخدم المسجل
+    // نحدد فقط الطلبات المؤكدة لنقلها إلى قيد التوصيل
     const result = await Order.updateMany(
       {
         _id: { $in: orderIds },
-        userId: req.user.id
+        userId: req.user.id,
+        status: 'confirmed' // يضمن منطقك: فقط المؤكدة تنتقل للشحن
       },
       {
-        $set: { status }
+        $set: { status: 'shipped' }
       }
     );
 
+    if (result.modifiedCount === 0) {
+      return res.status(400).json({
+        message: 'لم يتم العثور على طلبيات مؤكدة لتحويلها إلى قيد التوصيل.'
+      });
+    }
+
     res.status(200).json({
-      message: `تم تحديث ${result.modifiedCount} طلبية بنجاح إلى حالة (${status})`,
+      message: `تم تحويل ${result.modifiedCount} طلبية إلى (قيد التوصيل) بنجاح!`,
       modifiedCount: result.modifiedCount
     });
   } catch (error) {
     console.error('Bulk Update Error:', error);
-    res.status(500).json({ message: 'خطأ في السيرفر أثناء تحديث الطلبيات', error: error.message });
+    res.status(500).json({ message: 'خطأ في السيرفر أثناء تحويل الطلبات.', error: error.message });
   }
 };

@@ -20,6 +20,7 @@ import {
   FiAlertCircle,
   FiCheckSquare,
   FiSquare,
+  FiTruck,
 } from 'react-icons/fi'
 
 const statusLabels = {
@@ -186,34 +187,36 @@ export default function Orders() {
     }
   }
 
-  // التحديث الجماعي للحالات
-  const handleBulkStatusChange = async (newStatus) => {
+  // تحويل الطلبات المؤكدة إلى قيد التوصيل دفعة واحدة
+  const handleBulkShip = async () => {
     if (selectedIds.length === 0) return
 
     setBulkLoading(true)
     try {
       const res = await api.patch('/orders/bulk-status', {
         orderIds: selectedIds,
-        status: newStatus,
+        status: 'shipped',
       })
 
-      // تحديث الحالة في الواجهة فورياً
+      // تحديث حالة الطلبات المؤكدة المحددة إلى shipped محلياً
       setOrders(prev =>
         prev.map(order =>
-          selectedIds.includes(order._id) ? { ...order, status: newStatus } : order
+          selectedIds.includes(order._id) && order.status === 'confirmed'
+            ? { ...order, status: 'shipped' }
+            : order
         )
       )
 
       setExportMessage({
         type: 'success',
-        text: res.data.message || 'تم تحديث الحالات بنجاح!',
+        text: res.data.message || 'تم تحويل الطلبات إلى قيد التوصيل بنجاح!',
       })
       setTimeout(() => setExportMessage(null), 4000)
       setSelectedIds([])
     } catch (err) {
       setExportMessage({
         type: 'error',
-        text: err.response?.data?.message || 'تعذر تحديث الحالات، حاول مجدداً.',
+        text: err.response?.data?.message || 'تعذر تحويل الطلبات، تأكد أنها بحالة مؤكد.',
       })
       setTimeout(() => setExportMessage(null), 5000)
     } finally {
@@ -311,6 +314,11 @@ export default function Orders() {
 
   const isCurrentPageAllSelected =
     orders.length > 0 && orders.every(o => selectedIds.includes(o._id))
+
+  // حساب هل توجد طلبات مؤكدة ضمن الطلبات المحددة
+  const hasConfirmedInSelection = orders.some(
+    o => selectedIds.includes(o._id) && o.status === 'confirmed'
+  )
 
   return (
     <Layout>
@@ -425,47 +433,17 @@ export default function Orders() {
             )}
           </div>
 
-          {/* أزرار التحديث الجماعي السريع عند التحديد */}
-          {selectedIds.length > 0 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto">
-              <span className="text-xs font-bold text-slate-400 ml-1">تغيير الحالة إلى:</span>
-              
-              <button
-                type="button"
-                disabled={bulkLoading}
-                onClick={() => handleBulkStatusChange('confirmed')}
-                className="rounded-xl bg-emerald-50 px-2.5 py-1.5 text-xs font-extrabold text-emerald-700 hover:bg-emerald-100 transition disabled:opacity-50"
-              >
-                مؤكد
-              </button>
-              
-              <button
-                type="button"
-                disabled={bulkLoading}
-                onClick={() => handleBulkStatusChange('shipped')}
-                className="rounded-xl bg-amber-50 px-2.5 py-1.5 text-xs font-extrabold text-amber-700 hover:bg-amber-100 transition disabled:opacity-50"
-              >
-                توصيل
-              </button>
-              
-              <button
-                type="button"
-                disabled={bulkLoading}
-                onClick={() => handleBulkStatusChange('delivered')}
-                className="rounded-xl bg-green-50 px-2.5 py-1.5 text-xs font-extrabold text-green-700 hover:bg-green-100 transition disabled:opacity-50"
-              >
-                مسلّم
-              </button>
-              
-              <button
-                type="button"
-                disabled={bulkLoading}
-                onClick={() => handleBulkStatusChange('returned')}
-                className="rounded-xl bg-red-50 px-2.5 py-1.5 text-xs font-extrabold text-red-700 hover:bg-red-100 transition disabled:opacity-50"
-              >
-                رجع
-              </button>
-            </div>
+          {/* زر وحيد ومباشر: تحويل الطلبات المؤكدة المحددة إلى قيد التوصيل */}
+          {selectedIds.length > 0 && hasConfirmedInSelection && (
+            <button
+              type="button"
+              disabled={bulkLoading}
+              onClick={handleBulkShip}
+              className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-3.5 py-1.5 text-xs font-black text-white shadow-sm shadow-amber-500/20 hover:bg-amber-600 transition disabled:opacity-50"
+            >
+              <FiTruck size={14} />
+              <span>{bulkLoading ? 'جاري التحويل...' : 'تحويل إلى قيد التوصيل'}</span>
+            </button>
           )}
         </div>
       )}
