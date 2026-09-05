@@ -212,6 +212,9 @@ export default function Orders() {
 
   const nonConfirmedSelectedCount = selectedIds.length - confirmedSelectedCount
 
+  // حساب إجمالي الطلبات المؤكدة في الصفحة الحالية
+  const totalConfirmedInCurrentPage = orders.filter(o => o.status === 'confirmed').length
+
   // تحويل الطلبات المؤكدة فقط مع الصعود التلقائي للأعلى
   const handleBulkShip = async () => {
     if (selectedIds.length === 0) return
@@ -266,7 +269,7 @@ export default function Orders() {
     }
   }
 
-  // تصدير الإكسل للطلبات المؤكدة فقط مع صياغة ذكية ودقيقة للرسالة
+  // تصدير الإكسل للطلبات المؤكدة فقط مع تحسين صياغة الـ UX
   const handleExportExcel = async (provider = selectedCompany) => {
     // إذا قام التاجر بتحديد طلبات، نتحقق أن بينها طلبات مؤكدة
     if (selectedIds.length > 0 && confirmedSelectedCount === 0) {
@@ -279,11 +282,10 @@ export default function Orders() {
     }
 
     // إذا لم يحدد أي طلب، نتحقق من وجود طلبات مؤكدة في الصفحة
-    const totalConfirmedInPage = orders.filter(o => o.status === 'confirmed').length
-    if (selectedIds.length === 0 && totalConfirmedInPage === 0) {
+    if (selectedIds.length === 0 && totalConfirmedInCurrentPage === 0) {
       setExportMessage({
         type: 'warning',
-        text: 'لا توجد أي طلبات بحالة (مؤكد) صالحة للتصدير لشركة الشحن.',
+        text: 'لا توجد أي طلبات بحالة (مؤكد) في الصفحة الحالية لتصديرها لشركة الشحن.',
       })
       setTimeout(() => setExportMessage(null), 6000)
       return
@@ -303,13 +305,13 @@ export default function Orders() {
         { responseType: 'blob' }
       )
 
-      // استخراج عدد الطلبات التي تم تصديرها من الهيدر القادم من الخادم
+      // استخراج عدد الطلبات المصدرة بدقة من ترويسة الاستجابة
       const serverCount = response.headers['x-exported-count']
       const count = serverCount
         ? Number(serverCount)
         : selectedIds.length > 0
         ? confirmedSelectedCount
-        : totalConfirmedInPage
+        : totalConfirmedInCurrentPage
 
       const blob = new Blob([response.data], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -324,11 +326,11 @@ export default function Orders() {
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
 
-      // صياغة الرسالة بدقة حسب حالة التحديد
+      // رسالة واضحة تلغي اللبس للتاجر
       const successText =
         selectedIds.length > 0
-          ? `تم تصدير ملف ${provider.toUpperCase()} (${count} طلبية مؤكدة محددة) بنجاح!`
-          : `تم تصدير ملف ${provider.toUpperCase()} لجميع الطلبات المؤكدة (${count} طلبية) بنجاح!`
+          ? `تم تصدير ملف ${provider.toUpperCase()} (${count} طلبات مؤكدة محددة) بنجاح!`
+          : `تم تصدير ملف ${provider.toUpperCase()} لجميع الطلبات المؤكدة في الصفحة (${count} طلبات) بنجاح!`
 
       setExportMessage({
         type: 'success',
@@ -397,7 +399,7 @@ export default function Orders() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* زر التصدير */}
+          {/* زر التصدير مع القائمة المحسنة */}
           <div className="relative">
             <button
               type="button"
@@ -412,24 +414,33 @@ export default function Orders() {
             </button>
 
             {showCompanyMenu && (
-              <div className="absolute left-0 top-full z-50 mt-2 w-52 rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl shadow-slate-200">
-                <p className="px-3 py-1.5 text-xs font-bold text-slate-400">
-                  اختر شركة الشحن ({selectedIds.length > 0 ? `${selectedIds.length} محددة` : 'كل المؤكدة'}):
-                </p>
-                {deliveryCompanies.map(c => (
-                  <button
-                    key={c.key}
-                    type="button"
-                    onClick={() => {
-                      setSelectedCompany(c.key)
-                      handleExportExcel(c.key)
-                    }}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-right text-xs font-extrabold text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700"
-                  >
-                    <span>{c.name}</span>
-                    <FiDownload size={13} className="text-slate-400" />
-                  </button>
-                ))}
+              <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl shadow-slate-200/80">
+                {/* ترويسة نطاق التصدير الواضحة */}
+                <div className="border-b border-slate-100 px-3 py-2">
+                  <p className="text-[11px] font-black text-slate-400">نطاق التصدير لشركة الشحن:</p>
+                  <p className="mt-0.5 text-xs font-black text-emerald-700">
+                    {selectedIds.length > 0
+                      ? `${confirmedSelectedCount} طلبات مؤكدة محددة`
+                      : `${totalConfirmedInCurrentPage} طلبات مؤكدة (الصفحة الحالية)`}
+                  </p>
+                </div>
+
+                <div className="mt-1 space-y-1">
+                  {deliveryCompanies.map(c => (
+                    <button
+                      key={c.key}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCompany(c.key)
+                        handleExportExcel(c.key)
+                      }}
+                      className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-right text-xs font-extrabold text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700"
+                    >
+                      <span className="font-black">{c.name}</span>
+                      <FiDownload size={14} className="text-emerald-600" />
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
