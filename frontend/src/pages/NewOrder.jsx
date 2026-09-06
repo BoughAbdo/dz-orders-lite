@@ -1,5 +1,5 @@
 // frontend/src/pages/NewOrder.jsx
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import api from '../services/api'
@@ -15,6 +15,7 @@ import {
   FiSave,
   FiChevronDown,
   FiSearch,
+  FiTag,
 } from 'react-icons/fi'
 
 const wilayas = [
@@ -141,11 +142,22 @@ export default function NewOrder() {
     notes: '',
   })
 
+  // قائمة المنتجات المسجلة للاختيار السريع
+  const [catalogProducts, setCatalogProducts] = useState([])
+  const [selectedCatalogProduct, setSelectedCatalogProduct] = useState(null)
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
   const navigate = useNavigate()
   const errorRef = useRef(null)
+
+  // جلب المنتجات تلقائياً
+  useEffect(() => {
+    api.get('/products')
+      .then((res) => setCatalogProducts(res.data || []))
+      .catch((err) => console.log('Products preset error:', err))
+  }, [])
 
   const scrollToError = () => {
     setTimeout(() => {
@@ -173,6 +185,26 @@ export default function NewOrder() {
     if (error) {
       setError(null)
     }
+  }
+
+  // اختيار منتج من الكتالوج
+  const handleSelectCatalogProduct = (p) => {
+    setSelectedCatalogProduct(p)
+    setForm({
+      ...form,
+      product: p.name,
+      price: String(p.price || ''),
+    })
+    if (error) setError(null)
+  }
+
+  // إضافة مقاس إلى اسم المنتج بنقرة زر
+  const handleAppendSize = (size) => {
+    const baseName = selectedCatalogProduct ? selectedCatalogProduct.name : form.product
+    setForm({
+      ...form,
+      product: `${baseName} - مقاس ${size}`,
+    })
   }
 
   const validateForm = () => {
@@ -375,8 +407,9 @@ export default function NewOrder() {
               placeholder="باب الزوار"
             />
           </div>
+
           {/* نوع التوصيل */}
-          <div>
+          <div className="mt-4">
             <label className="block text-sm font-bold text-slate-700 mb-2">
               نوع التوصيل
             </label>
@@ -405,7 +438,7 @@ export default function NewOrder() {
           </div>
         </div>
 
-        {/* بيانات الطلب */}
+        {/* بيانات الطلب مع الاختيار السريع من الكتالوج */}
         <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
           <SectionTitle
             icon={FiPackage}
@@ -413,15 +446,66 @@ export default function NewOrder() {
             color="bg-emerald-50 text-emerald-600"
           />
 
+          {/* رقاقات الاختيار السريع من الكتالوج */}
+          {catalogProducts.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center gap-1.5 mb-2 text-xs font-black text-slate-500">
+                <FiTag size={13} className="text-blue-600" />
+                <span>اختر من المنتجات المحفوظة لتعبئة سريعة:</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {catalogProducts.map((p) => {
+                  const isSelected = selectedCatalogProduct?._id === p._id
+                  return (
+                    <button
+                      key={p._id}
+                      type="button"
+                      onClick={() => handleSelectCatalogProduct(p)}
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-extrabold transition active:scale-95 ${
+                        isSelected
+                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/20'
+                          : 'bg-slate-50 text-slate-700 border border-slate-200/80 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span>{p.name}</span>
+                      <span className={`text-[10px] ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>
+                        ({p.price?.toLocaleString()} دج)
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col gap-4">
-            <FormField
-              label="المنتج *"
-              icon={FiPackage}
-              name="product"
-              value={form.product}
-              onChange={handleChange}
-              placeholder="حذاء أسود مقاس 42"
-            />
+            <div>
+              <FormField
+                label="المنتج *"
+                icon={FiPackage}
+                name="product"
+                value={form.product}
+                onChange={handleChange}
+                placeholder="حذاء أسود مقاس 42"
+              />
+
+              {/* رقاقات المقاسات السريعة إن وُجدت في المنتج المختار */}
+              {selectedCatalogProduct?.sizes?.length > 0 && (
+                <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] font-bold text-slate-400">إضافة مقاس:</span>
+                  {selectedCatalogProduct.sizes.map((sz, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleAppendSize(sz)}
+                      className="rounded-lg bg-blue-50 hover:bg-blue-100 px-2.5 py-1 text-[11px] font-black text-blue-700 transition"
+                    >
+                      {sz}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="grid grid-cols-2 gap-3">
               <FormField
