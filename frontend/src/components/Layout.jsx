@@ -6,7 +6,8 @@ import {
   FiPackage,
   FiPlusCircle,
   FiLogOut,
-  FiSettings, 
+  FiSettings,
+  FiTag,
 } from 'react-icons/fi'
 
 export default function Layout({ children }) {
@@ -22,6 +23,7 @@ export default function Layout({ children }) {
   const navItems = [
     { path: '/dashboard', label: 'الرئيسية', icon: FiBarChart2 },
     { path: '/orders', label: 'الطلبات', icon: FiPackage },
+    { path: '/products', label: 'المنتجات', icon: FiTag },
     { path: '/orders/new', label: 'طلب جديد', icon: FiPlusCircle },
     { path: '/settings', label: 'الإعدادات', icon: FiSettings },
   ]
@@ -85,7 +87,7 @@ export default function Layout({ children }) {
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-100 bg-white/95 shadow-[0_-10px_40px_rgba(15,23,42,0.06)] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl px-2 py-2">
+        <div className="mx-auto flex max-w-5xl px-1.5 py-2">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = isNavItemActive(item.path)
@@ -95,20 +97,20 @@ export default function Layout({ children }) {
                 key={item.path}
                 to={item.path}
                 aria-label={item.label}
-                className={`group flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2.5 text-xs font-extrabold transition duration-200
+                className={`group flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-extrabold transition duration-200
                   ${isActive
                     ? 'bg-blue-50 text-blue-600'
                     : 'text-slate-400 hover:bg-slate-50 hover:text-slate-700'
                   }`}
               >
                 <Icon
-                  size={22}
+                  size={20}
                   className={`transition-transform duration-200 ${
                     isActive ? 'scale-110' : 'group-hover:scale-110'
                   }`}
                 />
 
-                <span>{item.label}</span>
+                <span className="truncate">{item.label}</span>
               </Link>
             )
           })}

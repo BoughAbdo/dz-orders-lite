@@ -11,6 +11,7 @@ import Orders from './pages/Orders'
 import NewOrder from './pages/NewOrder'
 import OrderDetail from './pages/OrderDetail'
 import Settings from './pages/Settings'
+import Products from './pages/Products'
 
 function AppLoadingScreen() {
   return (
@@ -69,6 +70,15 @@ export default function App() {
         element={
           <PrivateRoute>
             <Orders />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/products"
+        element={
+          <PrivateRoute>
+            <Products />
           </PrivateRoute>
         }
       />
