@@ -1,12 +1,12 @@
 // frontend/src/pages/Products.jsx
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import api from '../services/api'
 import {
   FiTag,
   FiPlus,
   FiDollarSign,
-  FiLayers,
   FiEdit3,
   FiTrash2,
   FiX,
@@ -14,16 +14,18 @@ import {
   FiAlertCircle,
   FiRefreshCw,
   FiTrendingUp,
+  FiShoppingBag,
 } from 'react-icons/fi'
 
 export default function Products() {
+  const navigate = useNavigate()
+
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Modal State
   const [showModal, setShowModal] = useState(false)
-  const [modalMode, setModalMode] = useState('create') // 'create' | 'edit'
+  const [modalMode, setModalMode] = useState('create')
   const [currentId, setCurrentId] = useState(null)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState(null)
@@ -32,9 +34,12 @@ export default function Products() {
     name: '',
     price: '',
     costPrice: '',
-    sizes: '',
-    colors: '',
+    sizes: [],
+    colors: [],
   })
+
+  const [sizeInput, setSizeInput] = useState('')
+  const [colorInput, setColorInput] = useState('')
 
   const loadProducts = async () => {
     setLoading(true)
@@ -58,9 +63,11 @@ export default function Products() {
       name: '',
       price: '',
       costPrice: '',
-      sizes: '',
-      colors: '',
+      sizes: [],
+      colors: [],
     })
+    setSizeInput('')
+    setColorInput('')
     setModalMode('create')
     setCurrentId(null)
     setFormError(null)
@@ -72,13 +79,45 @@ export default function Products() {
       name: p.name || '',
       price: String(p.price || ''),
       costPrice: p.costPrice ? String(p.costPrice) : '',
-      sizes: Array.isArray(p.sizes) ? p.sizes.join(', ') : '',
-      colors: Array.isArray(p.colors) ? p.colors.join(', ') : '',
+      sizes: Array.isArray(p.sizes) ? p.sizes : [],
+      colors: Array.isArray(p.colors) ? p.colors : [],
     })
+    setSizeInput('')
+    setColorInput('')
     setModalMode('edit')
     setCurrentId(p._id)
     setFormError(null)
     setShowModal(true)
+  }
+
+  const handleAddSize = () => {
+    const trimmed = sizeInput.trim()
+    if (trimmed && !formData.sizes.includes(trimmed)) {
+      setFormData({ ...formData, sizes: [...formData.sizes, trimmed] })
+      setSizeInput('')
+    }
+  }
+
+  const handleRemoveSize = (szToRemove) => {
+    setFormData({
+      ...formData,
+      sizes: formData.sizes.filter((s) => s !== szToRemove),
+    })
+  }
+
+  const handleAddColor = () => {
+    const trimmed = colorInput.trim()
+    if (trimmed && !formData.colors.includes(trimmed)) {
+      setFormData({ ...formData, colors: [...formData.colors, trimmed] })
+      setColorInput('')
+    }
+  }
+
+  const handleRemoveColor = (clToRemove) => {
+    setFormData({
+      ...formData,
+      colors: formData.colors.filter((c) => c !== clToRemove),
+    })
   }
 
   const handleSave = async (e) => {
@@ -129,9 +168,12 @@ export default function Products() {
     }
   }
 
+  const handleQuickOrder = (product) => {
+    navigate('/orders/new', { state: { presetProduct: product } })
+  }
+
   return (
     <Layout>
-      {/* Header */}
       <div className="mb-5 flex items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
@@ -155,7 +197,6 @@ export default function Products() {
         </button>
       </div>
 
-      {/* Error state */}
       {error && (
         <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-black text-red-700 flex items-center justify-between">
           <span>{error}</span>
@@ -169,11 +210,10 @@ export default function Products() {
         </div>
       )}
 
-      {/* Content */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 rounded-3xl bg-white border border-slate-100 p-4 animate-pulse" />
+            <div key={i} className="h-36 rounded-3xl bg-white border border-slate-100 p-4 animate-pulse" />
           ))}
         </div>
       ) : products.length === 0 ? (
@@ -202,85 +242,95 @@ export default function Products() {
             return (
               <div
                 key={p._id}
-                className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm hover:shadow-md transition"
+                className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm hover:shadow-md transition flex flex-col justify-between"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="font-black text-sm text-slate-900 truncate">{p.name}</h3>
-                    <div className="mt-1 flex items-center gap-3">
-                      <span className="text-sm font-black text-blue-600">
-                        {p.price?.toLocaleString()} دج
-                      </span>
-                      {p.costPrice > 0 && (
-                        <span className="text-[11px] font-bold text-slate-400">
-                          (تكلفة: {p.costPrice.toLocaleString()} دج)
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="font-black text-sm text-slate-900 truncate">{p.name}</h3>
+                      <div className="mt-1 flex items-center gap-2.5">
+                        <span className="text-sm font-black text-blue-600">
+                          {p.price?.toLocaleString()} دج
                         </span>
-                      )}
+                        {p.costPrice > 0 && (
+                          <span className="text-[11px] font-bold text-slate-400">
+                            (تكلفة: {p.costPrice.toLocaleString()} دج)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(p)}
+                        className="p-1.5 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-blue-600 transition"
+                        title="تعديل"
+                      >
+                        <FiEdit3 size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(p._id, p.name)}
+                        className="p-1.5 rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-600 transition"
+                        title="حذف"
+                      >
+                        <FiTrash2 size={15} />
+                      </button>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(p)}
-                      className="p-1.5 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-blue-600 transition"
-                      title="تعديل"
-                    >
-                      <FiEdit3 size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(p._id, p.name)}
-                      className="p-1.5 rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-600 transition"
-                      title="حذف"
-                    >
-                      <FiTrash2 size={15} />
-                    </button>
-                  </div>
+                  {(p.sizes?.length > 0 || p.colors?.length > 0) && (
+                    <div className="mt-3 pt-2.5 border-t border-slate-50 flex flex-wrap gap-1.5">
+                      {p.sizes?.map((sz, idx) => (
+                        <span
+                          key={idx}
+                          className="rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-600"
+                        >
+                          {sz}
+                        </span>
+                      ))}
+                      {p.colors?.map((cl, idx) => (
+                        <span
+                          key={idx}
+                          className="rounded-lg bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700"
+                        >
+                          {cl}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {margin !== null && (
+                    <div className="mt-2 text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                      <FiTrendingUp size={12} />
+                      <span>ربح تقريبي: {margin.toLocaleString()} دج</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* مقاسات وألوان */}
-                {(p.sizes?.length > 0 || p.colors?.length > 0) && (
-                  <div className="mt-3 pt-3 border-t border-slate-50 flex flex-wrap gap-1.5">
-                    {p.sizes?.map((sz, idx) => (
-                      <span
-                        key={idx}
-                        className="rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-600"
-                      >
-                        {sz}
-                      </span>
-                    ))}
-                    {p.colors?.map((cl, idx) => (
-                      <span
-                        key={idx}
-                        className="rounded-lg bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700"
-                      >
-                        {cl}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* هامش الربح التقريبي */}
-                {margin !== null && (
-                  <div className="mt-2 text-[11px] font-bold text-emerald-600 flex items-center gap-1">
-                    <FiTrendingUp size={12} />
-                    <span>ربح تقريبي: {margin.toLocaleString()} دج</span>
-                  </div>
-                )}
+                <div className="mt-3.5 pt-2.5 border-t border-slate-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickOrder(p)}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-600 hover:bg-blue-600 hover:text-white transition active:scale-95"
+                  >
+                    <FiShoppingBag size={13} />
+                    <span>إنشاء طلب سريع</span>
+                  </button>
+                </div>
               </div>
             )
           })}
         </div>
       )}
 
-      {/* Modal إضافة / تعديل منتج */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-3xl bg-white p-5 shadow-2xl animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-black text-slate-900">
-                {modalMode === 'create' ? 'إضافة منتج جديد' : 'تعديل المنتج'}
+                {modalMode === 'create' ? 'إضافة منتج جديد' : 'تعديل بيانات المنتج'}
               </h3>
               <button
                 type="button"
@@ -322,7 +372,7 @@ export default function Products() {
                     min="0"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    placeholder="6500"
+                    placeholder="4800"
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 outline-none focus:border-blue-500 focus:bg-white"
                   />
                 </div>
@@ -336,7 +386,7 @@ export default function Products() {
                     min="0"
                     value={formData.costPrice}
                     onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
-                    placeholder="3500 (اختياري)"
+                    placeholder="2600 (اختياري)"
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 outline-none focus:border-blue-500 focus:bg-white"
                   />
                 </div>
@@ -344,28 +394,98 @@ export default function Products() {
 
               <div>
                 <label className="mb-1 block text-xs font-black text-slate-700">
-                  المقاسات المتاحة (مفصولة بفاصلة)
+                  المقاسات (اكتب ثم اضغط Enter)
                 </label>
-                <input
-                  type="text"
-                  value={formData.sizes}
-                  onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
-                  placeholder="مثال: 40, 41, 42, 43, 44 أو S, M, L, XL"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 outline-none focus:border-blue-500 focus:bg-white"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={sizeInput}
+                    onChange={(e) => setSizeInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ',') {
+                        e.preventDefault()
+                        handleAddSize()
+                      }
+                    }}
+                    placeholder="مثال: 40، 41 أو M، L..."
+                    className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-800 outline-none focus:border-blue-500 focus:bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddSize}
+                    className="rounded-2xl bg-slate-100 px-3 text-xs font-black text-slate-700 hover:bg-slate-200"
+                  >
+                    إضافة
+                  </button>
+                </div>
+
+                {formData.sizes.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {formData.sizes.map((s, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-700"
+                      >
+                        <span>{s}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSize(s)}
+                          className="hover:text-red-500"
+                        >
+                          <FiX size={12} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
                 <label className="mb-1 block text-xs font-black text-slate-700">
-                  الألوان المتاحة (مفصولة بفاصلة)
+                  الألوان (اكتب ثم اضغط Enter)
                 </label>
-                <input
-                  type="text"
-                  value={formData.colors}
-                  onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
-                  placeholder="مثال: أسود, بني, كحلي (اختياري)"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 outline-none focus:border-blue-500 focus:bg-white"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={colorInput}
+                    onChange={(e) => setColorInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ',') {
+                        e.preventDefault()
+                        handleAddColor()
+                      }
+                    }}
+                    placeholder="مثال: أسود، بني..."
+                    className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-800 outline-none focus:border-blue-500 focus:bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddColor}
+                    className="rounded-2xl bg-slate-100 px-3 text-xs font-black text-slate-700 hover:bg-slate-200"
+                  >
+                    إضافة
+                  </button>
+                </div>
+
+                {formData.colors.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {formData.colors.map((c, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700"
+                      >
+                        <span>{c}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveColor(c)}
+                          className="hover:text-red-500"
+                        >
+                          <FiX size={12} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">

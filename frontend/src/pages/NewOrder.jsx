@@ -1,6 +1,6 @@
 // frontend/src/pages/NewOrder.jsx
 import { useRef, useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import Layout from '../components/Layout'
 import api from '../services/api'
 import {
@@ -16,6 +16,8 @@ import {
   FiChevronDown,
   FiSearch,
   FiTag,
+  FiX,
+  FiCheckCircle,
 } from 'react-icons/fi'
 
 const wilayas = [
@@ -77,17 +79,6 @@ const wilayas = [
   { code: '56', name: 'جانت' },
   { code: '57', name: 'المغير' },
   { code: '58', name: 'المنيعة' },
-  { code: '59', name: 'آفلو' },
-  { code: '60', name: 'بريكة' },
-  { code: '61', name: 'القنطرة' },
-  { code: '62', name: 'بئر العاتر' },
-  { code: '63', name: 'العريشة' },
-  { code: '64', name: 'قصر الشلالة' },
-  { code: '65', name: 'عين وسارة' },
-  { code: '66', name: 'مسعد' },
-  { code: '67', name: 'قصر البخاري' },
-  { code: '68', name: 'بوسعادة' },
-  { code: '69', name: 'الأبيض سيدي الشيخ' },
 ]
 
 const getNewOrderErrorMessage = (err) => {
@@ -130,6 +121,10 @@ const getNewOrderErrorMessage = (err) => {
 }
 
 export default function NewOrder() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const errorRef = useRef(null)
+
   const [form, setForm] = useState({
     customerName: '',
     phone: '',
@@ -138,26 +133,29 @@ export default function NewOrder() {
     deliveryType: 'home',
     product: '',
     price: '',
-    deliveryPrice: '',
+    deliveryPrice: '600',
     notes: '',
   })
 
-  // قائمة المنتجات المسجلة للاختيار السريع
   const [catalogProducts, setCatalogProducts] = useState([])
   const [selectedCatalogProduct, setSelectedCatalogProduct] = useState(null)
+  const [activeSize, setActiveSize] = useState(null)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const navigate = useNavigate()
-  const errorRef = useRef(null)
-
-  // جلب المنتجات تلقائياً
   useEffect(() => {
     api.get('/products')
-      .then((res) => setCatalogProducts(res.data || []))
+      .then((res) => {
+        const items = res.data || []
+        setCatalogProducts(items)
+
+        if (location.state?.presetProduct) {
+          handleSelectCatalogProduct(location.state.presetProduct)
+        }
+      })
       .catch((err) => console.log('Products preset error:', err))
-  }, [])
+  }, [location.state])
 
   const scrollToError = () => {
     setTimeout(() => {
@@ -170,41 +168,63 @@ export default function NewOrder() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
-
-    if (error) {
-      setError(null)
-    }
+    if (error) setError(null)
   }
 
   const handleNumericChange = (e) => {
     const { name, value } = e.target
     const onlyNumbers = value.replace(/\D/g, '')
-
     setForm({ ...form, [name]: onlyNumbers })
-
-    if (error) {
-      setError(null)
-    }
-  }
-
-  // اختيار منتج من الكتالوج
-  const handleSelectCatalogProduct = (p) => {
-    setSelectedCatalogProduct(p)
-    setForm({
-      ...form,
-      product: p.name,
-      price: String(p.price || ''),
-    })
     if (error) setError(null)
   }
 
-  // إضافة مقاس إلى اسم المنتج بنقرة زر
-  const handleAppendSize = (size) => {
-    const baseName = selectedCatalogProduct ? selectedCatalogProduct.name : form.product
+  const handleDeliveryTypeChange = (type) => {
+    if (type === form.deliveryType) return
+
+    const currentPrice = Number(form.deliveryPrice) || 0
+    let updatedPrice = currentPrice
+
+    if (type === 'desk' && form.deliveryType === 'home') {
+      updatedPrice = Math.max(0, currentPrice - 200)
+    } else if (type === 'home' && form.deliveryType === 'desk') {
+      updatedPrice = currentPrice + 200
+    }
+
     setForm({
       ...form,
-      product: `${baseName} - مقاس ${size}`,
+      deliveryType: type,
+      deliveryPrice: String(updatedPrice),
     })
+  }
+
+  const handleSelectCatalogProduct = (p) => {
+    setSelectedCatalogProduct(p)
+    setActiveSize(null)
+    setForm((prev) => ({
+      ...prev,
+      product: p.name,
+      price: String(p.price || ''),
+    }))
+    if (error) setError(null)
+  }
+
+  const handleResetCatalogSelection = () => {
+    setSelectedCatalogProduct(null)
+    setActiveSize(null)
+    setForm((prev) => ({
+      ...prev,
+      product: '',
+      price: '',
+    }))
+  }
+
+  const handleSelectSize = (size) => {
+    const baseName = selectedCatalogProduct ? selectedCatalogProduct.name : form.product
+    setActiveSize(size)
+    setForm((prev) => ({
+      ...prev,
+      product: `${baseName} - مقاس ${size}`,
+    }))
   }
 
   const validateForm = () => {
@@ -215,14 +235,7 @@ export default function NewOrder() {
       }
     }
 
-    if (!form.phone.trim()) {
-      return {
-        title: 'رقم الهاتف مطلوب',
-        description: 'يرجى إدخال رقم هاتف الزبون حتى يمكنك التواصل معه.',
-      }
-    }
-
-    if (form.phone.trim().length < 9) {
+    if (!form.phone.trim() || form.phone.trim().length < 9) {
       return {
         title: 'رقم الهاتف غير صحيح',
         description: 'يرجى إدخال رقم هاتف صحيح، مثال: 0550000000.',
@@ -250,28 +263,14 @@ export default function NewOrder() {
       }
     }
 
-    if (!form.price) {
-      return {
-        title: 'سعر المنتج مطلوب',
-        description: 'يرجى إدخال سعر المنتج بالأرقام فقط.',
-      }
-    }
-
-    if (Number(form.price) <= 0) {
+    if (!form.price || Number(form.price) <= 0) {
       return {
         title: 'سعر المنتج غير صحيح',
         description: 'يجب أن يكون سعر المنتج أكبر من 0 دج.',
       }
     }
 
-    if (!form.deliveryPrice) {
-      return {
-        title: 'سعر التوصيل مطلوب',
-        description: 'يرجى إدخال سعر التوصيل بالأرقام فقط.',
-      }
-    }
-
-    if (Number(form.deliveryPrice) < 0) {
+    if (form.deliveryPrice === undefined || Number(form.deliveryPrice) < 0) {
       return {
         title: 'سعر التوصيل غير صحيح',
         description: 'لا يمكن أن يكون سعر التوصيل أقل من 0 دج.',
@@ -316,6 +315,10 @@ export default function NewOrder() {
     }
   }
 
+  const productPriceNum = Number(form.price) || 0
+  const deliveryPriceNum = Number(form.deliveryPrice) || 0
+  const totalAmount = productPriceNum + deliveryPriceNum
+
   return (
     <Layout>
       <div className="mb-6">
@@ -324,7 +327,7 @@ export default function NewOrder() {
         </h2>
 
         <p className="text-slate-500 text-sm font-medium mt-1">
-          أدخل بيانات الطلب
+          أدخل بيانات الطلب والتوصيل
         </p>
       </div>
 
@@ -406,39 +409,40 @@ export default function NewOrder() {
               onChange={handleChange}
               placeholder="باب الزوار"
             />
-          </div>
 
-          {/* نوع التوصيل */}
-          <div className="mt-4">
-            <label className="block text-sm font-bold text-slate-700 mb-2">
-              نوع التوصيل
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setForm({ ...form, deliveryType: 'home' })}
-                className={`py-3 px-4 rounded-2xl border text-sm font-extrabold transition duration-200 ${form.deliveryType === 'home'
-                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">
+                نوع التوصيل
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleDeliveryTypeChange('home')}
+                  className={`py-3 px-4 rounded-2xl border text-sm font-extrabold transition duration-200 ${
+                    form.deliveryType === 'home'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                   }`}
-              >
-                توصيل للمنزل (Domicile)
-              </button>
-              <button
-                type="button"
-                onClick={() => setForm({ ...form, deliveryType: 'desk' })}
-                className={`py-3 px-4 rounded-2xl border text-sm font-extrabold transition duration-200 ${form.deliveryType === 'desk'
-                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                >
+                  توصيل للمنزل (Domicile)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeliveryTypeChange('desk')}
+                  className={`py-3 px-4 rounded-2xl border text-sm font-extrabold transition duration-200 ${
+                    form.deliveryType === 'desk'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                   }`}
-              >
-                استلام من المكتب (StopDesk)
-              </button>
+                >
+                  استلام من المكتب (StopDesk) -200دج
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* بيانات الطلب مع الاختيار السريع من الكتالوج */}
+        {/* بيانات الطلب */}
         <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
           <SectionTitle
             icon={FiPackage}
@@ -446,13 +450,25 @@ export default function NewOrder() {
             color="bg-emerald-50 text-emerald-600"
           />
 
-          {/* رقاقات الاختيار السريع من الكتالوج */}
           {catalogProducts.length > 0 && (
             <div className="mb-4">
-              <div className="flex items-center gap-1.5 mb-2 text-xs font-black text-slate-500">
-                <FiTag size={13} className="text-blue-600" />
-                <span>اختر من المنتجات المحفوظة لتعبئة سريعة:</span>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-1.5 text-xs font-black text-slate-500">
+                  <FiTag size={13} className="text-blue-600" />
+                  <span>اختر من المنتجات المحفوظة لتعبئة سريعة:</span>
+                </div>
+                {selectedCatalogProduct && (
+                  <button
+                    type="button"
+                    onClick={handleResetCatalogSelection}
+                    className="inline-flex items-center gap-1 text-[11px] font-black text-red-500 hover:text-red-700 transition"
+                  >
+                    <FiX size={13} />
+                    <span>إلغاء التحديد السريع</span>
+                  </button>
+                )}
               </div>
+
               <div className="flex flex-wrap gap-2">
                 {catalogProducts.map((p) => {
                   const isSelected = selectedCatalogProduct?._id === p._id
@@ -489,20 +505,26 @@ export default function NewOrder() {
                 placeholder="حذاء أسود مقاس 42"
               />
 
-              {/* رقاقات المقاسات السريعة إن وُجدت في المنتج المختار */}
               {selectedCatalogProduct?.sizes?.length > 0 && (
                 <div className="mt-2 flex items-center gap-1.5 flex-wrap">
                   <span className="text-[11px] font-bold text-slate-400">إضافة مقاس:</span>
-                  {selectedCatalogProduct.sizes.map((sz, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleAppendSize(sz)}
-                      className="rounded-lg bg-blue-50 hover:bg-blue-100 px-2.5 py-1 text-[11px] font-black text-blue-700 transition"
-                    >
-                      {sz}
-                    </button>
-                  ))}
+                  {selectedCatalogProduct.sizes.map((sz, idx) => {
+                    const isSizeActive = activeSize === sz
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSelectSize(sz)}
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
+                          isSizeActive
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                        }`}
+                      >
+                        {sz}
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -531,6 +553,21 @@ export default function NewOrder() {
                 inputMode="numeric"
                 pattern="[0-9]*"
               />
+            </div>
+
+            <div className="mt-1 rounded-2xl bg-gradient-to-r from-blue-50/70 to-slate-50 border border-blue-100/70 p-3.5 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                <FiCheckCircle className="text-blue-600" size={16} />
+                <span>الإجمالي للتحصيل عند التسليم:</span>
+              </div>
+              <div className="text-right">
+                <span className="text-base sm:text-lg font-black text-blue-700">
+                  {totalAmount.toLocaleString()} دج
+                </span>
+                <span className="block text-[10px] font-bold text-slate-400">
+                  ({productPriceNum.toLocaleString()} سلع + {deliveryPriceNum.toLocaleString()} توصيل)
+                </span>
+              </div>
             </div>
 
             <div>
