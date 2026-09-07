@@ -99,24 +99,13 @@ const getNewOrderErrorMessage = (err) => {
   if (err.response.status === 400) {
     return {
       title: 'بيانات الطلب غير مكتملة',
-      description:
-        err.response?.data?.message ||
-        'راجع الحقول المطلوبة ثم حاول مرة أخرى.',
-    }
-  }
-
-  if (err.response.status >= 500) {
-    return {
-      title: 'تعذر حفظ الطلب',
-      description: 'حدث خطأ مؤقت في الخادم، حاول مرة أخرى بعد قليل.',
+      description: err.response?.data?.message || 'راجع الحقول المطلوبة ثم حاول مرة أخرى.',
     }
   }
 
   return {
     title: 'تعذر حفظ الطلب',
-    description:
-      err.response?.data?.message ||
-      'لم نتمكن من حفظ الطلب، حاول مرة أخرى بعد لحظات.',
+    description: err.response?.data?.message || 'حدث خطأ غير متوقع، حاول مرة أخرى.',
   }
 }
 
@@ -159,10 +148,7 @@ export default function NewOrder() {
 
   const scrollToError = () => {
     setTimeout(() => {
-      errorRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      })
+      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }, 0)
   }
 
@@ -173,8 +159,7 @@ export default function NewOrder() {
 
   const handleNumericChange = (e) => {
     const { name, value } = e.target
-    const onlyNumbers = value.replace(/\D/g, '')
-    setForm({ ...form, [name]: onlyNumbers })
+    setForm({ ...form, [name]: value.replace(/\D/g, '') })
     if (error) setError(null)
   }
 
@@ -229,60 +214,31 @@ export default function NewOrder() {
 
   const validateForm = () => {
     if (!form.customerName.trim()) {
-      return {
-        title: 'اسم الزبون مطلوب',
-        description: 'يرجى إدخال اسم الزبون قبل حفظ الطلب.',
-      }
+      return { title: 'اسم الزبون مطلوب', description: 'يرجى إدخال اسم الزبون.' }
     }
-
     if (!form.phone.trim() || form.phone.trim().length < 9) {
-      return {
-        title: 'رقم الهاتف غير صحيح',
-        description: 'يرجى إدخال رقم هاتف صحيح، مثال: 0550000000.',
-      }
+      return { title: 'رقم الهاتف غير صحيح', description: 'أدخل رقم هاتف صحيح، مثال: 0550000000.' }
     }
-
     if (!form.wilaya.trim()) {
-      return {
-        title: 'الولاية مطلوبة',
-        description: 'يرجى اختيار ولاية التوصيل من القائمة.',
-      }
+      return { title: 'الولاية مطلوبة', description: 'يرجى اختيار ولاية التوصيل من القائمة.' }
     }
-
     if (!form.city.trim()) {
-      return {
-        title: 'البلدية مطلوبة',
-        description: 'يرجى إدخال البلدية أو منطقة التوصيل.',
-      }
+      return { title: 'البلدية مطلوبة', description: 'يرجى إدخال البلدية أو منطقة التوصيل.' }
     }
-
     if (!form.product.trim()) {
-      return {
-        title: 'اسم المنتج مطلوب',
-        description: 'يرجى إدخال اسم المنتج أو وصف قصير للطلب.',
-      }
+      return { title: 'اسم المنتج مطلوب', description: 'يرجى تحديد أو كتابة اسم المنتج.' }
     }
-
     if (!form.price || Number(form.price) <= 0) {
-      return {
-        title: 'سعر المنتج غير صحيح',
-        description: 'يجب أن يكون سعر المنتج أكبر من 0 دج.',
-      }
+      return { title: 'سعر المنتج غير صحيح', description: 'يجب أن يكون سعر المنتج أكبر من 0 دج.' }
     }
-
     if (form.deliveryPrice === undefined || Number(form.deliveryPrice) < 0) {
-      return {
-        title: 'سعر التوصيل غير صحيح',
-        description: 'لا يمكن أن يكون سعر التوصيل أقل من 0 دج.',
-      }
+      return { title: 'سعر التوصيل غير صحيح', description: 'لا يمكن أن يكون سعر التوصيل أقل من 0 دج.' }
     }
-
     return null
   }
 
   const handleSubmit = async () => {
     const validationError = validateForm()
-
     if (validationError) {
       setError(validationError)
       scrollToError()
@@ -321,52 +277,36 @@ export default function NewOrder() {
 
   return (
     <Layout>
+      {/* الترويسة الرئيسية */}
       <div className="mb-6">
-        <h2 className="text-2xl font-black tracking-tight text-slate-900">
-          طلب جديد
-        </h2>
-
-        <p className="text-slate-500 text-sm font-medium mt-1">
-          أدخل بيانات الطلب والتوصيل
+        <h2 className="text-2xl font-black tracking-tight text-slate-900">تسجيل طلبية جديدة</h2>
+        <p className="text-slate-500 text-xs sm:text-sm font-semibold mt-1">
+          أدخل بيانات الزبون وعنوان الشحن لاحتساب الإجمالي وتجهيز الطرد
         </p>
       </div>
 
       {error && (
-        <div
-          ref={errorRef}
-          className="bg-red-50 border border-red-100 p-4 rounded-3xl mb-5 text-right"
-        >
-          <p className="text-sm font-black text-red-700">
-            {error.title}
-          </p>
-
-          <p className="mt-1 text-xs font-bold text-red-500 leading-6">
-            {error.description}
-          </p>
+        <div ref={errorRef} className="bg-red-50 border border-red-200 p-4 rounded-3xl mb-5 text-right">
+          <p className="text-sm font-black text-red-700">{error.title}</p>
+          <p className="mt-1 text-xs font-bold text-red-500 leading-6">{error.description}</p>
         </div>
       )}
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-5">
         {/* بيانات الزبون */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
-          <SectionTitle
-            icon={FiUser}
-            title="بيانات الزبون"
-            color="bg-blue-50 text-blue-600"
-          />
-
-          <div className="flex flex-col gap-4">
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm">
+          <SectionTitle icon={FiUser} title="بيانات الزبون" color="bg-blue-50 text-blue-600" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
-              label="اسم الزبون *"
+              label="اسم الزبون الكامل *"
               icon={FiUser}
               name="customerName"
               value={form.customerName}
               onChange={handleChange}
-              placeholder="محمد أمين"
+              placeholder="مثال: محمد لمين"
             />
-
             <FormField
-              label="رقم الهاتف *"
+              label="رقم الهاتف للتواصل *"
               icon={FiPhone}
               name="phone"
               value={form.phone}
@@ -380,91 +320,78 @@ export default function NewOrder() {
         </div>
 
         {/* عنوان التوصيل */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
-          <SectionTitle
-            icon={FiMapPin}
-            title="عنوان التوصيل"
-            color="bg-amber-50 text-amber-600"
-          />
-
-          <div className="flex flex-col gap-4">
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm">
+          <SectionTitle icon={FiMapPin} title="عنوان وطريقة التوصيل" color="bg-amber-50 text-amber-600" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <WilayaSelect
-              label="الولاية *"
+              label="ولاية التوصيل *"
               value={form.wilaya}
               wilayas={wilayas}
               onChange={(wilayaName) => {
                 setForm({ ...form, wilaya: wilayaName })
-
-                if (error) {
-                  setError(null)
-                }
+                if (error) setError(null)
               }}
             />
 
             <FormField
-              label="البلدية *"
+              label="البلدية أو العنوان التفصيلي *"
               icon={FiHome}
               name="city"
               value={form.city}
               onChange={handleChange}
-              placeholder="باب الزوار"
+              placeholder="مثال: باب الزوار - حي 5 جويلية"
             />
+          </div>
 
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                نوع التوصيل
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleDeliveryTypeChange('home')}
-                  className={`py-3 px-4 rounded-2xl border text-sm font-extrabold transition duration-200 ${
-                    form.deliveryType === 'home'
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                  }`}
-                >
-                  توصيل للمنزل (Domicile)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDeliveryTypeChange('desk')}
-                  className={`py-3 px-4 rounded-2xl border text-sm font-extrabold transition duration-200 ${
-                    form.deliveryType === 'desk'
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                  }`}
-                >
-                  استلام من المكتب (StopDesk) -200دج
-                </button>
-              </div>
+          <div className="mt-4 pt-4 border-t border-slate-50">
+            <label className="block text-xs font-black text-slate-700 mb-2">طريقة استلام الطرد</label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => handleDeliveryTypeChange('home')}
+                className={`py-3 px-4 rounded-2xl border text-xs sm:text-sm font-black transition ${
+                  form.deliveryType === 'home'
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
+                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                توصيل للعنوان (Domicile)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeliveryTypeChange('desk')}
+                className={`py-3 px-4 rounded-2xl border text-xs sm:text-sm font-black transition ${
+                  form.deliveryType === 'desk'
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
+                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                استلام من المكتب (StopDesk) -200دج
+              </button>
             </div>
           </div>
         </div>
 
         {/* بيانات الطلب */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
-          <SectionTitle
-            icon={FiPackage}
-            title="بيانات الطلب"
-            color="bg-emerald-50 text-emerald-600"
-          />
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm">
+          <SectionTitle icon={FiPackage} title="بيانات السلعة والمبالغ المالية" color="bg-emerald-50 text-emerald-600" />
 
+          {/* الاختيار السريع المنظم للكتالوج */}
           {catalogProducts.length > 0 && (
-            <div className="mb-4">
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-1.5 text-xs font-black text-slate-500">
-                  <FiTag size={13} className="text-blue-600" />
-                  <span>اختر من المنتجات المحفوظة لتعبئة سريعة:</span>
+            <div className="mb-5 rounded-2xl bg-slate-50/80 border border-slate-100 p-3.5">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5 text-xs font-black text-slate-600">
+                  <FiTag size={14} className="text-blue-600" />
+                  <span>اختر من كتالوج السلع للتعبئة الفورية:</span>
                 </div>
                 {selectedCatalogProduct && (
                   <button
                     type="button"
                     onClick={handleResetCatalogSelection}
-                    className="inline-flex items-center gap-1 text-[11px] font-black text-red-500 hover:text-red-700 transition"
+                    className="inline-flex items-center gap-1 text-[11px] font-black text-slate-400 hover:text-red-600 transition"
                   >
                     <FiX size={13} />
-                    <span>إلغاء التحديد السريع</span>
+                    <span>إلغاء التحديد</span>
                   </button>
                 )}
               </div>
@@ -477,15 +404,17 @@ export default function NewOrder() {
                       key={p._id}
                       type="button"
                       onClick={() => handleSelectCatalogProduct(p)}
-                      className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-extrabold transition active:scale-95 ${
+                      className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-extrabold transition active:scale-95 ${
                         isSelected
-                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/20'
-                          : 'bg-slate-50 text-slate-700 border border-slate-200/80 hover:bg-slate-100'
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                          : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-300'
                       }`}
                     >
                       <span>{p.name}</span>
-                      <span className={`text-[10px] ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>
-                        ({p.price?.toLocaleString()} دج)
+                      <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-black ${
+                        isSelected ? 'bg-blue-700 text-white' : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        {p.price?.toLocaleString()} دج
                       </span>
                     </button>
                   )
@@ -497,17 +426,18 @@ export default function NewOrder() {
           <div className="flex flex-col gap-4">
             <div>
               <FormField
-                label="المنتج *"
+                label="المنتج أو السلعة المطلوبة *"
                 icon={FiPackage}
                 name="product"
                 value={form.product}
                 onChange={handleChange}
-                placeholder="حذاء أسود مقاس 42"
+                placeholder="مثال: حذاء كلاسيكي أسود"
               />
 
+              {/* المقاسات بأزرار واضحة */}
               {selectedCatalogProduct?.sizes?.length > 0 && (
-                <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[11px] font-bold text-slate-400">إضافة مقاس:</span>
+                <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-black text-slate-400">حدد المقاس:</span>
                   {selectedCatalogProduct.sizes.map((sz, idx) => {
                     const isSizeActive = activeSize === sz
                     return (
@@ -515,10 +445,10 @@ export default function NewOrder() {
                         key={idx}
                         type="button"
                         onClick={() => handleSelectSize(sz)}
-                        className={`rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
+                        className={`rounded-xl px-3 py-1.5 text-xs font-black transition ${
                           isSizeActive
                             ? 'bg-blue-600 text-white shadow-sm'
-                            : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                            : 'bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
                         }`}
                       >
                         {sz}
@@ -529,21 +459,21 @@ export default function NewOrder() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
-                label="السعر *"
+                label="سعر السلعة (دج) *"
                 icon={FiDollarSign}
                 name="price"
                 type="text"
                 value={form.price}
                 onChange={handleNumericChange}
-                placeholder="5500"
+                placeholder="4800"
                 inputMode="numeric"
                 pattern="[0-9]*"
               />
 
               <FormField
-                label="سعر التوصيل *"
+                label="سعر الشحن والتوصيل (دج) *"
                 icon={FiTruck}
                 name="deliveryPrice"
                 type="text"
@@ -555,40 +485,34 @@ export default function NewOrder() {
               />
             </div>
 
-            <div className="mt-1 rounded-2xl bg-gradient-to-r from-blue-50/70 to-slate-50 border border-blue-100/70 p-3.5 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
-                <FiCheckCircle className="text-blue-600" size={16} />
-                <span>الإجمالي للتحصيل عند التسليم:</span>
+            {/* شريط الملخص المالي الواضح */}
+            <div className="mt-2 rounded-2xl bg-slate-900 text-white p-4 flex items-center justify-between shadow-xl shadow-slate-900/10">
+              <div className="flex items-center gap-2.5 text-xs sm:text-sm font-black">
+                <FiCheckCircle className="text-emerald-400 shrink-0" size={18} />
+                <span>المبلغ الكلي الواجب تحصيله عند التسليم:</span>
               </div>
-              <div className="text-right">
-                <span className="text-base sm:text-lg font-black text-blue-700">
+              <div className="text-left">
+                <span className="text-lg sm:text-xl font-black text-emerald-400">
                   {totalAmount.toLocaleString()} دج
                 </span>
-                <span className="block text-[10px] font-bold text-slate-400">
-                  ({productPriceNum.toLocaleString()} سلع + {deliveryPriceNum.toLocaleString()} توصيل)
+                <span className="block text-[10px] font-bold text-slate-400 mt-0.5">
+                  ({productPriceNum.toLocaleString()} للمنتج + {deliveryPriceNum.toLocaleString()} للشحن)
                 </span>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                ملاحظات
-              </label>
-
+              <label className="block text-xs font-black text-slate-700 mb-1.5">ملاحظات للطلبية (اختياري)</label>
               <div className="relative">
                 <textarea
                   name="notes"
                   value={form.notes}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70 resize-none"
-                  placeholder="أي ملاحظات إضافية..."
-                  rows={3}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pr-11 text-right text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/50 resize-none"
+                  placeholder="أي ملاحظات خاصة برقم الشقة أو موعد الاتصال بالزبون..."
+                  rows={2}
                 />
-
-                <FiFileText
-                  className="absolute right-4 top-4 text-slate-400 pointer-events-none"
-                  size={18}
-                />
+                <FiFileText className="absolute right-4 top-3.5 text-slate-400 pointer-events-none" size={16} />
               </div>
             </div>
           </div>
@@ -597,10 +521,10 @@ export default function NewOrder() {
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-[0.99] text-white font-extrabold py-3.5 transition duration-200 text-sm shadow-lg shadow-blue-600/20 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-[0.99] text-white font-extrabold py-4 transition duration-200 text-sm sm:text-base shadow-xl shadow-blue-600/25 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <FiSave size={18} />
-          {loading ? 'جاري الحفظ...' : 'حفظ الطلب'}
+          {loading ? 'جاري الحفظ...' : 'تأكيد وحفظ الطلبية'}
         </button>
       </div>
     </Layout>
@@ -609,14 +533,11 @@ export default function NewOrder() {
 
 function SectionTitle({ icon: Icon, title, color }) {
   return (
-    <div className="flex items-center gap-2 mb-4">
-      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${color}`}>
-        <Icon size={20} />
+    <div className="flex items-center gap-2.5 mb-4">
+      <div className={`w-9 h-9 rounded-2xl flex items-center justify-center ${color}`}>
+        <Icon size={18} />
       </div>
-
-      <p className="text-sm font-black text-slate-900">
-        {title}
-      </p>
+      <p className="text-sm sm:text-base font-black text-slate-900">{title}</p>
     </div>
   )
 }
@@ -635,10 +556,7 @@ function FormField({
 }) {
   return (
     <div>
-      <label className="block text-sm font-bold text-slate-700 mb-2">
-        {label}
-      </label>
-
+      <label className="block text-xs font-black text-slate-700 mb-1.5">{label}</label>
       <div className="relative">
         <input
           type={type}
@@ -648,14 +566,10 @@ function FormField({
           inputMode={inputMode}
           pattern={pattern}
           maxLength={maxLength}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-11 text-right text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/50"
           placeholder={placeholder}
         />
-
-        <Icon
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-          size={18}
-        />
+        <Icon className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={17} />
       </div>
     </div>
   )
@@ -665,113 +579,70 @@ function WilayaSelect({ label, value, wilayas, onChange }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
 
-  const selectedWilaya = wilayas.find(wilaya => wilaya.name === value)
-
-  const filteredWilayas = wilayas.filter(wilaya => {
-    const query = search.trim().toLowerCase()
-
-    return (
-      wilaya.name.toLowerCase().includes(query) ||
-      wilaya.code.includes(query)
-    )
+  const selectedWilaya = wilayas.find((w) => w.name === value)
+  const filteredWilayas = wilayas.filter((w) => {
+    const q = search.trim().toLowerCase()
+    return w.name.toLowerCase().includes(q) || w.code.includes(q)
   })
 
   return (
     <div className="relative">
-      <label className="block text-sm font-bold text-slate-700 mb-2">
-        {label}
-      </label>
-
+      <label className="block text-xs font-black text-slate-700 mb-1.5">{label}</label>
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`relative w-full rounded-2xl border px-4 py-3.5 pr-11 pl-11 text-right text-[15px] font-semibold outline-none transition duration-200
-          ${open
-            ? 'border-blue-500 bg-white ring-4 ring-blue-100/70'
-            : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
-          }
-          ${selectedWilaya ? 'text-slate-900' : 'text-slate-400'}
-        `}
+        className={`relative w-full rounded-2xl border px-4 py-3.5 pr-11 pl-11 text-right text-xs sm:text-sm font-bold outline-none transition ${
+          open ? 'border-blue-500 bg-white ring-4 ring-blue-100/70' : 'border-slate-200 bg-slate-50 hover:bg-white'
+        } ${selectedWilaya ? 'text-slate-900' : 'text-slate-400'}`}
       >
-        {selectedWilaya
-          ? `${selectedWilaya.code} - ${selectedWilaya.name}`
-          : 'اختر الولاية'
-        }
-
-        <FiMapPin
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-          size={18}
-        />
-
+        {selectedWilaya ? `${selectedWilaya.code} - ${selectedWilaya.name}` : 'اختر ولاية التوصيل'}
+        <FiMapPin className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={17} />
         <FiChevronDown
-          className={`absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''
-            }`}
-          size={18}
+          className={`absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-transform ${
+            open ? 'rotate-180' : ''
+          }`}
+          size={17}
         />
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl shadow-slate-200/80">
+        <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl">
           <div className="p-3 border-b border-slate-100">
             <div className="relative">
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-right text-sm font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 pr-10 text-right text-xs font-bold outline-none focus:border-blue-500 focus:bg-white"
                 placeholder="ابحث بالاسم أو الرقم..."
                 autoFocus
               />
-
-              <FiSearch
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
-                size={17}
-              />
+              <FiSearch className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
             </div>
           </div>
 
-          <div className="max-h-72 overflow-y-auto p-2">
-            {filteredWilayas.length === 0 ? (
-              <div className="px-4 py-6 text-center text-sm font-medium text-slate-400">
-                لا توجد ولاية بهذا البحث
-              </div>
-            ) : (
-              filteredWilayas.map(wilaya => {
-                const active = value === wilaya.name
-
-                return (
-                  <button
-                    key={wilaya.code}
-                    type="button"
-                    onClick={() => {
-                      onChange(wilaya.name)
-                      setOpen(false)
-                      setSearch('')
-                    }}
-                    className={`flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-3 text-right transition duration-200
-                      ${active
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-slate-700 hover:bg-slate-50'
-                      }
-                    `}
-                  >
-                    <span className="text-sm font-bold">
-                      {wilaya.name}
-                    </span>
-
-                    <span
-                      className={`flex h-8 min-w-8 items-center justify-center rounded-xl text-xs font-black
-                        ${active
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-slate-100 text-slate-500'
-                        }
-                      `}
-                    >
-                      {wilaya.code}
-                    </span>
-                  </button>
-                )
-              })
-            )}
+          <div className="max-h-64 overflow-y-auto p-2">
+            {filteredWilayas.map((w) => {
+              const active = value === w.name
+              return (
+                <button
+                  key={w.code}
+                  type="button"
+                  onClick={() => {
+                    onChange(w.name)
+                    setOpen(false)
+                    setSearch('')
+                  }}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-right transition text-xs font-black ${
+                    active ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>{w.name}</span>
+                  <span className={`px-2 py-0.5 rounded-lg text-[10px] ${active ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                    {w.code}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </div>
       )}
