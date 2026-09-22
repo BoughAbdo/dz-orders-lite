@@ -9,12 +9,9 @@ import {
   FiPlus,
   FiPackage,
   FiMapPin,
-  FiTag,
-  FiFilter,
   FiSearch,
   FiX,
   FiDownload,
-  FiCalendar,
   FiChevronDown,
   FiCheck,
   FiRefreshCw,
@@ -370,53 +367,67 @@ export default function Orders() {
 
   return (
     <Layout>
-      {/* Header مع زر استيراد إكسل وزر التصدير والطلب الجديد */}
-      <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
-              الطلبات
-            </h2>
-            <span className="rounded-xl bg-slate-100 px-2.5 py-0.5 text-xs font-black text-slate-600">
-              {total}
-            </span>
+      {/* Header متجاوب تماماً للهاتف والديسكتوب */}
+      <div className="mb-4 space-y-3">
+        {/* السطر الأول: العنوان والعداد وزر طلب جديد على الهاتف والديسكتوب */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+                الطلبات
+              </h2>
+              <span className="rounded-xl bg-slate-100 px-2.5 py-0.5 text-xs font-black text-slate-600">
+                {total}
+              </span>
+            </div>
+            {selectedIds.length > 0 && (
+              <p className="mt-0.5 text-[11px] font-bold text-blue-600 truncate">
+                تم تحديد {selectedIds.length} طلبية
+              </p>
+            )}
           </div>
-          {selectedIds.length > 0 && (
-            <p className="mt-0.5 text-[11px] font-bold text-blue-600 truncate">
-              تم تحديد {selectedIds.length} طلبية
-            </p>
-          )}
+
+          {/* زر طلب جديد على الشاشات الكبيرة والصغيرة */}
+          <div className="flex items-center gap-2">
+            <Link
+              to="/orders/new"
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-600 px-4 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99] shrink-0"
+            >
+              <FiPlus size={16} />
+              <span>طلب جديد</span>
+            </Link>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+        {/* السطر الثاني: أزرار الإكسل (شبكة ثنائية متساوية على الهاتف، مصفوفة جانبية على الديسكتوب) */}
+        <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-start gap-2 pt-1">
           {/* زر استيراد إكسل الجماعي */}
           <button
             type="button"
             onClick={() => setShowImportModal(true)}
-            className="inline-flex items-center gap-1.5 rounded-2xl border border-blue-200/80 bg-blue-50/70 hover:bg-blue-100 text-blue-700 px-3 py-2 text-xs sm:text-sm font-extrabold transition active:scale-[0.99] shadow-sm"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-2xl border border-blue-200/80 bg-blue-50/70 hover:bg-blue-100 text-blue-700 px-3 py-2.5 text-xs sm:text-sm font-extrabold transition active:scale-[0.99] shadow-sm"
           >
             <FiUploadCloud size={16} className="text-blue-600 shrink-0" />
             <span>استيراد إكسل</span>
           </button>
 
-          {/* زر التصدير مع القائمة المحسنة */}
-          <div className="relative">
+          {/* زر التصدير مع القائمة */}
+          <div className="relative w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setShowCompanyMenu(!showCompanyMenu)}
               disabled={loading || orders.length === 0 || exportLoading}
-              className="inline-flex items-center gap-1.5 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs sm:text-sm font-extrabold text-emerald-700 transition hover:bg-emerald-100 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs sm:text-sm font-extrabold text-emerald-700 transition hover:bg-emerald-100 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
             >
               <FiDownload size={15} />
-              <span className="hidden sm:inline">{exportLoading ? 'جاري التصدير...' : 'تصدير إكسل الشحن'}</span>
-              <span className="sm:hidden">إكسل الشحن</span>
-              <FiChevronDown size={12} />
+              <span>{exportLoading ? 'جاري التصدير...' : 'تصدير إكسل الشحن'}</span>
+              <FiChevronDown size={13} className={`transition ${showCompanyMenu ? 'rotate-180' : ''}`} />
             </button>
 
             {showCompanyMenu && (
               <div
                 dir="rtl"
-                className="absolute left-0 top-full z-50 mt-2 w-64 rounded-2xl border border-slate-100 bg-white p-2.5 shadow-2xl shadow-slate-200"
+                className="absolute left-0 sm:right-auto top-full z-50 mt-2 w-64 rounded-2xl border border-slate-100 bg-white p-2.5 shadow-2xl shadow-slate-200"
               >
                 <div className="border-b border-slate-100 px-2.5 pb-2.5 text-right">
                   <p className="text-[11px] font-black text-slate-400">نطاق التصدير لشركة الشحن:</p>
@@ -466,14 +477,6 @@ export default function Orders() {
               </div>
             )}
           </div>
-
-          <Link
-            to="/orders/new"
-            className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-600 px-3.5 py-2 text-xs sm:text-sm font-extrabold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
-          >
-            <FiPlus size={16} />
-            <span>طلب جديد</span>
-          </Link>
         </div>
       </div>
 
