@@ -466,3 +466,106 @@ exports.updateBulkStatus = async (req, res) => {
     res.status(500).json({ message: 'خطأ في السيرفر أثناء تحويل الطلبات.', error: error.message });
   }
 };
+
+// استيراد طلبات جماعية دفعة واحدة (Bulk Import)
+exports.createBulkOrders = async (req, res) => {
+  try {
+    const { orders } = req.body;
+
+    if (!orders || !Array.isArray(orders) || orders.length === 0) {
+      return res.status(400).json({
+        message: 'يرجى إرسال قائمة تحتوي على طلبية واحدة على الأقل للاستيراد.',
+      });
+    }
+
+    if (orders.length > 500) {
+      return res.status(400).json({
+        message: 'الحد الأقصى للاستيراد دفعة واحدة هو 500 طلبية.',
+      });
+    }
+
+    const validOrders = [];
+    const errors = [];
+
+    orders.forEach((item, index) => {
+      const rowNum = index + 1;
+      const customerName = item.customerName ? String(item.customerName).trim() : '';
+      const phone = item.phone ? String(item.phone).replace(/\D/g, '').trim() : '';
+      const wilaya = item.wilaya ? String(item.wilaya).trim() : '';
+      const city = item.city ? String(item.city).trim() : '';
+      const product = item.product ? String(item.product).trim() : '';
+      const price = Number(item.price);
+      const deliveryPrice = item.deliveryPrice !== undefined && item.deliveryPrice !== '' 
+        ? Number(item.deliveryPrice) 
+        : 600;
+      const deliveryType = item.deliveryType === 'desk' || 
+        String(item.deliveryType).toLowerCase().includes('مكتب') || 
+        String(item.deliveryType).toLowerCase().includes('stopdesk')
+        ? 'desk'
+        : 'home';
+      const notes = item.notes ? String(item.notes).trim() : '';
+
+      // التحقق من الحقول الإجبارية
+      if (!customerName) {
+        errors.push(`السطر ${rowNum}: اسم الزبون مطلوب.`);
+        return;
+      }
+      if (!phone || phone.length < 9) {
+        errors.push(`السطر ${rowNum}: رقم الهاتف غير صحيح (${phone || 'فارغ'}).`);
+        return;
+      }
+      if (!wilaya) {
+        errors.push(`السطر ${rowNum}: الولاية مطلوبة.`);
+        return;
+      }
+      if (!city) {
+        errors.push(`السطر ${rowNum}: البلدية مطلوبة.`);
+        return;
+      }
+      if (!product) {
+        errors.push(`السطر ${rowNum}: اسم المنتج مطلوب.`);
+        return;
+      }
+      if (Number.isNaN(price) || price <= 0) {
+        errors.push(`السطر ${rowNum}: سعر المنتج غير صالح.`);
+        return;
+      }
+
+      validOrders.push({
+        userId: req.user.id,
+        customerName,
+        phone,
+        wilaya,
+        city,
+        product,
+        price,
+        deliveryPrice: Number.isNaN(deliveryPrice) ? 600 : deliveryPrice,
+        deliveryType,
+        notes,
+        status: 'new',
+      });
+    });
+
+    if (validOrders.length === 0) {
+      return res.status(400).json({
+        message: 'لم يتم العثور على أي صفوف صالحة للاستيراد.',
+        errors,
+      });
+    }
+
+    const insertedOrders = await Order.insertMany(validOrders);
+
+    return res.status(201).json({
+      message: `تم استيراد ${insertedOrders.length} طلبية بنجاح!`,
+      importedCount: insertedOrders.length,
+      failedCount: errors.length,
+      errors: errors.slice(0, 10),
+    });
+  } catch (error) {
+    console.error('Bulk Import Error:', error);
+    return res.status(500).json({
+      message: 'خطأ في السيرفر أثناء استيراد الطلبات.',
+      error: error.message,
+    });
+  }
+};

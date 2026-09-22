@@ -1,15 +1,16 @@
-// routes/order.routes.js
+// backend/src/routes/order.routes.js
 const express = require('express');
 const router = express.Router();
 const {
   getOrders,
   getOrder,
   createOrder,
+  createBulkOrders,
   updateOrder,
   updateStatus,
   deleteOrder,
   exportOrdersToExcel,
-  updateBulkStatus 
+  updateBulkStatus,
 } = require('../controllers/order.controller');
 const auth = require('../middleware/auth.middleware');
 
@@ -17,8 +18,9 @@ router.use(auth);
 
 router.get('/', getOrders);
 router.post('/', createOrder);
+router.post('/bulk', createBulkOrders);
 router.post('/export-excel', exportOrdersToExcel);
-router.patch('/bulk-status', updateBulkStatus); 
+router.patch('/bulk-status', updateBulkStatus);
 router.get('/:id', getOrder);
 router.put('/:id', updateOrder);
 router.patch('/:id/status', updateStatus);
