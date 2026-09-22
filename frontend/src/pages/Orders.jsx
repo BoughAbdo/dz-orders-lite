@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import api from '../services/api'
 import { OrderCardSkeleton } from '../components/SkeletonCards'
+import BulkImportModal from '../components/BulkImportModal'
 import {
   FiPlus,
   FiPackage,
@@ -24,6 +25,7 @@ import {
   FiSliders,
   FiPhone,
   FiMessageCircle,
+  FiUploadCloud,
 } from 'react-icons/fi'
 
 const statusLabels = {
@@ -117,6 +119,9 @@ export default function Orders() {
   const [showCompanyMenu, setShowCompanyMenu] = useState(false)
   const [exportMessage, setExportMessage] = useState(null)
 
+  // Bulk Import Modal State
+  const [showImportModal, setShowImportModal] = useState(false)
+
   // Ref للصعود السلس نحو رسالة النجاح في أعلى الصفحة
   const toastRef = useRef(null)
 
@@ -140,18 +145,7 @@ export default function Orders() {
     }, 50)
   }
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search.trim())
-    }, 400)
-    return () => clearTimeout(timer)
-  }, [search])
-
-  useEffect(() => {
-    setPage(1)
-  }, [filter, debouncedSearch, wilayaFilter, dateFilter, dateFrom, dateTo])
-
-  useEffect(() => {
+  const loadOrders = () => {
     setLoading(true)
     setError(null)
 
@@ -185,6 +179,21 @@ export default function Orders() {
         setPages(1)
       })
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search.trim())
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  useEffect(() => {
+    setPage(1)
+  }, [filter, debouncedSearch, wilayaFilter, dateFilter, dateFrom, dateTo])
+
+  useEffect(() => {
+    loadOrders()
   }, [filter, debouncedSearch, wilayaFilter, dateFilter, dateFrom, dateTo, page, limit, retryKey])
 
   const toggleSelectOrder = (id, e) => {
@@ -211,16 +220,12 @@ export default function Orders() {
   ).length
 
   const nonConfirmedSelectedCount = selectedIds.length - confirmedSelectedCount
-
-  // حساب إجمالي الطلبات المؤكدة في الصفحة الحالية
   const totalConfirmedInCurrentPage = orders.filter(o => o.status === 'confirmed').length
 
-  // التحقق مما إذا كان خيار التصدير يجب أن يكون معطلاً
   const isExportDisabled =
     (selectedIds.length > 0 && confirmedSelectedCount === 0) ||
     (selectedIds.length === 0 && totalConfirmedInCurrentPage === 0)
 
-  // تحويل الطلبات المؤكدة فقط مع الصعود التلقائي للأعلى
   const handleBulkShip = async () => {
     if (selectedIds.length === 0) return
 
@@ -236,12 +241,11 @@ export default function Orders() {
 
     setBulkLoading(true)
     try {
-      const res = await api.patch('/orders/bulk-status', {
+      await api.patch('/orders/bulk-status', {
         orderIds: selectedIds,
         status: 'shipped',
       })
 
-      // تحديث المؤكدة فقط محلياً
       setOrders(prev =>
         prev.map(order =>
           selectedIds.includes(order._id) && order.status === 'confirmed'
@@ -274,7 +278,6 @@ export default function Orders() {
     }
   }
 
-  // تصدير الإكسل للطلبات المؤكدة فقط
   const handleExportExcel = async (provider = selectedCompany) => {
     if (isExportDisabled) return
 
@@ -321,6 +324,7 @@ export default function Orders() {
         type: 'success',
         text: successText,
       })
+      scrollToTop()
       setTimeout(() => setExportMessage(null), 5000)
     } catch (err) {
       let errorText = 'تعذر تصدير ملف الإكسل، تأكد من وجود طلبات مؤكدة.'
@@ -339,6 +343,7 @@ export default function Orders() {
         type: 'error',
         text: errorText,
       })
+      scrollToTop()
       setTimeout(() => setExportMessage(null), 6000)
     } finally {
       setExportLoading(false)
@@ -365,14 +370,14 @@ export default function Orders() {
 
   return (
     <Layout>
-      {/* Header مع شارات غير منكسرة على الهاتف */}
-      <div className="mb-4 flex items-center justify-between gap-2">
+      {/* Header مع زر استيراد إكسل وزر التصدير والطلب الجديد */}
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
               الطلبات
             </h2>
-            <span className="rounded-xl bg-slate-100 px-2 py-0.5 text-xs font-black text-slate-600">
+            <span className="rounded-xl bg-slate-100 px-2.5 py-0.5 text-xs font-black text-slate-600">
               {total}
             </span>
           </div>
@@ -383,7 +388,17 @@ export default function Orders() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          {/* زر استيراد إكسل الجماعي */}
+          <button
+            type="button"
+            onClick={() => setShowImportModal(true)}
+            className="inline-flex items-center gap-1.5 rounded-2xl border border-blue-200/80 bg-blue-50/70 hover:bg-blue-100 text-blue-700 px-3 py-2 text-xs sm:text-sm font-extrabold transition active:scale-[0.99] shadow-sm"
+          >
+            <FiUploadCloud size={16} className="text-blue-600 shrink-0" />
+            <span>استيراد إكسل</span>
+          </button>
+
           {/* زر التصدير مع القائمة المحسنة */}
           <div className="relative">
             <button
@@ -403,7 +418,6 @@ export default function Orders() {
                 dir="rtl"
                 className="absolute left-0 top-full z-50 mt-2 w-64 rounded-2xl border border-slate-100 bg-white p-2.5 shadow-2xl shadow-slate-200"
               >
-                {/* ترويسة نطاق التصدير مع دعم دقيق للحالات المختلفة */}
                 <div className="border-b border-slate-100 px-2.5 pb-2.5 text-right">
                   <p className="text-[11px] font-black text-slate-400">نطاق التصدير لشركة الشحن:</p>
                   {selectedIds.length > 0 ? (
@@ -427,7 +441,6 @@ export default function Orders() {
                   )}
                 </div>
 
-                {/* قائمة الشركات بمحاذاة مضبوطة وثابتة */}
                 <div className="mt-1.5 space-y-1">
                   {deliveryCompanies.map(c => (
                     <button
@@ -456,18 +469,16 @@ export default function Orders() {
 
           <Link
             to="/orders/new"
-            className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-600 px-3 py-2 text-xs sm:text-sm font-extrabold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
+            className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-600 px-3.5 py-2 text-xs sm:text-sm font-extrabold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
           >
             <FiPlus size={16} />
-            <span className="hidden sm:inline">طلب جديد</span>
-            <span className="sm:hidden">جديد</span>
+            <span>طلب جديد</span>
           </Link>
         </div>
       </div>
 
       {/* نقطة مرجعية للوصول برسالة التنبيه للأعلى بدقة */}
       <div ref={toastRef} className="scroll-mt-4">
-        {/* Export & Bulk Feedback Toast */}
         {exportMessage && (
           <div
             className={`mb-4 flex items-center justify-between gap-3 rounded-2xl p-3.5 text-xs sm:text-sm font-black transition-all ${
@@ -664,7 +675,6 @@ export default function Orders() {
           {orders.map(order => {
             const isSelected = selectedIds.includes(order._id)
 
-            // إعداد رقم الهاتف ورابط الواتساب السريع
             const cleanPhone = String(order.phone || '').replace(/\D/g, '')
             const intlPhone = cleanPhone.startsWith('0')
               ? `213${cleanPhone.slice(1)}`
@@ -687,7 +697,6 @@ export default function Orders() {
                     : 'border-slate-100 hover:shadow-md'
                 }`}
               >
-                {/* رأس الكرت: التحديد، الاسم، الهاتف، وأزرار الاتصال السريع */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3 min-w-0">
                     <button
@@ -709,7 +718,6 @@ export default function Orders() {
                         </h3>
                       </Link>
 
-                      {/* رقم الهاتف وأزرار الاتصال السريع المباشرة */}
                       <div className="mt-1.5 flex items-center gap-2.5">
                         <span className="text-xs sm:text-sm font-bold text-slate-600 tracking-wider">
                           {order.phone || '—'}
@@ -717,7 +725,6 @@ export default function Orders() {
 
                         {order.phone && (
                           <div className="flex items-center gap-1.5">
-                            {/* زر الاتصال الهاتفي السريع */}
                             <a
                               href={`tel:${order.phone}`}
                               onClick={(e) => e.stopPropagation()}
@@ -727,7 +734,6 @@ export default function Orders() {
                               <FiPhone size={15} />
                             </a>
 
-                            {/* زر واتساب السريع */}
                             <a
                               href={whatsappUrl}
                               target="_blank"
@@ -744,13 +750,11 @@ export default function Orders() {
                     </div>
                   </div>
 
-                  {/* شارة حالة الطلب */}
                   <span className={`rounded-full border px-2.5 py-1 text-[11px] sm:text-xs font-extrabold shrink-0 ${statusLabels[order.status]?.color}`}>
                     {statusLabels[order.status]?.label}
                   </span>
                 </div>
 
-                {/* تفاصيل المنتج والعنوان والسعر */}
                 <Link to={`/orders/${order._id}`} className="mt-3 block">
                   <div className="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2">
                     <div className="flex items-center gap-2 text-slate-600">
@@ -805,7 +809,7 @@ export default function Orders() {
         </div>
       )}
 
-      {/* الشريط العائم الذكي للإجراءات الجماعية (Floating Action Bar) */}
+      {/* شريط الإجراءات الجماعية العائم */}
       {selectedIds.length > 0 && (
         <div className="fixed bottom-20 left-4 right-4 z-40 mx-auto max-w-lg transition-all duration-300 animate-in fade-in slide-in-from-bottom-5">
           <div className="flex items-center justify-between gap-3 rounded-full border border-white/10 bg-slate-900/95 px-4 py-2 text-white shadow-2xl backdrop-blur-md">
@@ -846,6 +850,21 @@ export default function Orders() {
           </div>
         </div>
       )}
+
+      {/* نافذة استيراد الإكسل الجماعي */}
+      <BulkImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onSuccess={(data) => {
+          setExportMessage({
+            type: 'success',
+            text: data.message || 'تم استيراد الطلبات بنجاح!',
+          })
+          scrollToTop()
+          loadOrders()
+          setTimeout(() => setExportMessage(null), 5000)
+        }}
+      />
     </Layout>
   )
 }
