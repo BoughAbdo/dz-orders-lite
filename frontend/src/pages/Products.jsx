@@ -14,7 +14,6 @@ import {
   FiRefreshCw,
   FiTrendingUp,
   FiShoppingBag,
-  FiLayers,
 } from 'react-icons/fi'
 
 export default function Products() {
@@ -73,8 +72,8 @@ export default function Products() {
       name: p.name || '',
       price: String(p.price || ''),
       costPrice: p.costPrice ? String(p.costPrice) : '',
-      sizes: Array.isArray(p.sizes) ? p.sizes : [],
-      colors: Array.isArray(p.colors) ? p.colors : [],
+      sizes: Array.isArray(p.sizes) ? [...p.sizes] : [],
+      colors: Array.isArray(p.colors) ? [...p.colors] : [],
     })
     setSizeInput('')
     setColorInput('')
@@ -87,29 +86,36 @@ export default function Products() {
   const handleAddSize = () => {
     const trimmed = sizeInput.trim()
     if (trimmed && !formData.sizes.includes(trimmed)) {
-      setFormData({ ...formData, sizes: [...formData.sizes, trimmed] })
+      setFormData((prev) => ({ ...prev, sizes: [...prev.sizes, trimmed] }))
       setSizeInput('')
     }
   }
 
   const handleRemoveSize = (sz) => {
-    setFormData({ ...formData, sizes: formData.sizes.filter((s) => s !== sz) })
+    setFormData((prev) => ({
+      ...prev,
+      sizes: prev.sizes.filter((s) => s !== sz),
+    }))
   }
 
   const handleAddColor = () => {
     const trimmed = colorInput.trim()
     if (trimmed && !formData.colors.includes(trimmed)) {
-      setFormData({ ...formData, colors: [...formData.colors, trimmed] })
+      setFormData((prev) => ({ ...prev, colors: [...prev.colors, trimmed] }))
       setColorInput('')
     }
   }
 
   const handleRemoveColor = (cl) => {
-    setFormData({ ...formData, colors: formData.colors.filter((c) => c !== cl) })
+    setFormData((prev) => ({
+      ...prev,
+      colors: prev.colors.filter((c) => c !== cl),
+    }))
   }
 
   const handleSave = async (e) => {
     e.preventDefault()
+
     if (!formData.name.trim()) {
       setFormError('يرجى إدخال اسم المنتج')
       return
@@ -122,12 +128,23 @@ export default function Products() {
     setSaving(true)
     setFormError(null)
 
+    // دمج أي مدخلات لا تزال مكتوبة في حقول المقاس أو اللون ولم يُضغط زر إضافتها
+    const finalSizes = [...formData.sizes]
+    if (sizeInput.trim() && !finalSizes.includes(sizeInput.trim())) {
+      finalSizes.push(sizeInput.trim())
+    }
+
+    const finalColors = [...formData.colors]
+    if (colorInput.trim() && !finalColors.includes(colorInput.trim())) {
+      finalColors.push(colorInput.trim())
+    }
+
     const payload = {
       name: formData.name.trim(),
       price: Number(formData.price),
       costPrice: formData.costPrice ? Number(formData.costPrice) : 0,
-      sizes: formData.sizes,
-      colors: formData.colors,
+      sizes: finalSizes,
+      colors: finalColors,
     }
 
     try {
@@ -162,7 +179,6 @@ export default function Products() {
 
   return (
     <Layout>
-      {/* Header الترويسة الرئيسية */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
         <div>
           <div className="flex items-center gap-2.5">
@@ -220,7 +236,7 @@ export default function Products() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-20 items-stretch">
           {products.map((p) => {
             const margin = p.costPrice > 0 ? p.price - p.costPrice : null
 
@@ -230,7 +246,6 @@ export default function Products() {
                 className="group relative rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-xl hover:shadow-slate-100 flex flex-col justify-between"
               >
                 <div>
-                  {/* رأس البطاقة */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition duration-200">
@@ -266,7 +281,6 @@ export default function Products() {
                     </div>
                   </div>
 
-                  {/* كتلة الأسعار والأرباح */}
                   <div className="mt-4 rounded-2xl bg-slate-50 p-3.5 flex items-center justify-between border border-slate-100">
                     <div>
                       <span className="text-[11px] font-bold text-slate-400 block">سعر البيع</span>
@@ -286,9 +300,8 @@ export default function Products() {
                     )}
                   </div>
 
-                  {/* المقاسات والألوان */}
                   {(p.sizes?.length > 0 || p.colors?.length > 0) && (
-                    <div className="mt-3.5 space-y-1.5">
+                    <div className="mt-3.5 space-y-2">
                       {p.sizes?.length > 0 && (
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-[11px] font-black text-slate-400">المقاسات:</span>
@@ -320,7 +333,6 @@ export default function Products() {
                   )}
                 </div>
 
-                {/* زر الإجراء السفلي */}
                 <div className="mt-5 pt-3.5 border-t border-slate-100">
                   <button
                     type="button"
@@ -337,7 +349,6 @@ export default function Products() {
         </div>
       )}
 
-      {/* Modal إضافة / تعديل منتج */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95">
@@ -420,7 +431,7 @@ export default function Products() {
                         handleAddSize()
                       }
                     }}
-                    placeholder="اكتب المقاس (مثال: 42 أو L) واضغط Enter"
+                    placeholder="اكتب المقاس واضغط Enter"
                     className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
                   />
                   <button
@@ -440,7 +451,11 @@ export default function Products() {
                         className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 border border-slate-200/80 px-2.5 py-1 text-xs font-black text-slate-700"
                       >
                         <span>{s}</span>
-                        <button type="button" onClick={() => handleRemoveSize(s)} className="hover:text-red-500">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSize(s)}
+                          className="text-slate-400 hover:text-red-500"
+                        >
                           <FiX size={12} />
                         </button>
                       </span>
@@ -483,7 +498,11 @@ export default function Products() {
                         className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 text-xs font-black text-emerald-700"
                       >
                         <span>{c}</span>
-                        <button type="button" onClick={() => handleRemoveColor(c)} className="hover:text-red-500">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveColor(c)}
+                          className="text-emerald-500 hover:text-red-500"
+                        >
                           <FiX size={12} />
                         </button>
                       </span>
