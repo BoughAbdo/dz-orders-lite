@@ -129,6 +129,7 @@ export default function NewOrder() {
   const [catalogProducts, setCatalogProducts] = useState([])
   const [selectedCatalogProduct, setSelectedCatalogProduct] = useState(null)
   const [activeSize, setActiveSize] = useState(null)
+  const [activeColor, setActiveColor] = useState(null)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -182,9 +183,19 @@ export default function NewOrder() {
     })
   }
 
+  // دالة بناء اسم المنتج المدمج مع المقاس واللون
+  const buildProductTitle = (productObj, size, color) => {
+    const base = productObj ? productObj.name : form.product
+    let parts = [base]
+    if (size) parts.push(`مقاس ${size}`)
+    if (color) parts.push(color)
+    return parts.join(' - ')
+  }
+
   const handleSelectCatalogProduct = (p) => {
     setSelectedCatalogProduct(p)
     setActiveSize(null)
+    setActiveColor(null)
     setForm((prev) => ({
       ...prev,
       product: p.name,
@@ -196,6 +207,7 @@ export default function NewOrder() {
   const handleResetCatalogSelection = () => {
     setSelectedCatalogProduct(null)
     setActiveSize(null)
+    setActiveColor(null)
     setForm((prev) => ({
       ...prev,
       product: '',
@@ -203,12 +215,21 @@ export default function NewOrder() {
     }))
   }
 
-  const handleSelectSize = (size) => {
-    const baseName = selectedCatalogProduct ? selectedCatalogProduct.name : form.product
-    setActiveSize(size)
+  const handleToggleSize = (size) => {
+    const newSize = activeSize === size ? null : size
+    setActiveSize(newSize)
     setForm((prev) => ({
       ...prev,
-      product: `${baseName} - مقاس ${size}`,
+      product: buildProductTitle(selectedCatalogProduct, newSize, activeColor),
+    }))
+  }
+
+  const handleToggleColor = (color) => {
+    const newColor = activeColor === color ? null : color
+    setActiveColor(newColor)
+    setForm((prev) => ({
+      ...prev,
+      product: buildProductTitle(selectedCatalogProduct, activeSize, newColor),
     }))
   }
 
@@ -277,7 +298,6 @@ export default function NewOrder() {
 
   return (
     <Layout>
-      {/* الترويسة الرئيسية */}
       <div className="mb-6">
         <h2 className="text-2xl font-black tracking-tight text-slate-900">تسجيل طلبية جديدة</h2>
         <p className="text-slate-500 text-xs sm:text-sm font-semibold mt-1">
@@ -376,7 +396,7 @@ export default function NewOrder() {
         <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm">
           <SectionTitle icon={FiPackage} title="بيانات السلعة والمبالغ المالية" color="bg-emerald-50 text-emerald-600" />
 
-          {/* الاختيار السريع المنظم للكتالوج */}
+          {/* الكتالوج السريع */}
           {catalogProducts.length > 0 && (
             <div className="mb-5 rounded-2xl bg-slate-50/80 border border-slate-100 p-3.5">
               <div className="flex items-center justify-between mb-2">
@@ -434,27 +454,56 @@ export default function NewOrder() {
                 placeholder="مثال: حذاء كلاسيكي أسود"
               />
 
-              {/* المقاسات بأزرار واضحة */}
-              {selectedCatalogProduct?.sizes?.length > 0 && (
-                <div className="mt-2.5 flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-black text-slate-400">حدد المقاس:</span>
-                  {selectedCatalogProduct.sizes.map((sz, idx) => {
-                    const isSizeActive = activeSize === sz
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleSelectSize(sz)}
-                        className={`rounded-xl px-3 py-1.5 text-xs font-black transition ${
-                          isSizeActive
-                            ? 'bg-blue-600 text-white shadow-sm'
-                            : 'bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
-                        }`}
-                      >
-                        {sz}
-                      </button>
-                    )
-                  })}
+              {/* المقاسات والألوان المدمجة */}
+              {selectedCatalogProduct && (
+                <div className="mt-3 space-y-2.5">
+                  {/* صف المقاسات */}
+                  {selectedCatalogProduct.sizes?.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-black text-slate-400">المقاس:</span>
+                      {selectedCatalogProduct.sizes.map((sz, idx) => {
+                        const isSizeActive = activeSize === sz
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handleToggleSize(sz)}
+                            className={`rounded-xl px-3 py-1.5 text-xs font-black transition active:scale-95 ${
+                              isSizeActive
+                                ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-600/30'
+                                : 'bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
+                            }`}
+                          >
+                            {sz}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* صف الألوان */}
+                  {selectedCatalogProduct.colors?.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-black text-slate-400">اللون:</span>
+                      {selectedCatalogProduct.colors.map((cl, idx) => {
+                        const isColorActive = activeColor === cl
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handleToggleColor(cl)}
+                            className={`rounded-xl px-3 py-1.5 text-xs font-black transition active:scale-95 ${
+                              isColorActive
+                                ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-600/30'
+                                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            }`}
+                          >
+                            {cl}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -485,7 +534,7 @@ export default function NewOrder() {
               />
             </div>
 
-            {/* شريط الملخص المالي الواضح */}
+            {/* شريط الإجمالي */}
             <div className="mt-2 rounded-2xl bg-slate-900 text-white p-4 flex items-center justify-between shadow-xl shadow-slate-900/10">
               <div className="flex items-center gap-2.5 text-xs sm:text-sm font-black">
                 <FiCheckCircle className="text-emerald-400 shrink-0" size={18} />
