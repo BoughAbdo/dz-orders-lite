@@ -1,5 +1,7 @@
-const mongoose = require('mongoose'); 
+// backend/src/controllers/dashboard.controller.js
+const mongoose = require('mongoose');
 const Order = require('../models/order.model');
+const Product = require('../models/product.model');
 
 exports.getDashboard = async (req, res) => {
   try {
@@ -7,7 +9,6 @@ exports.getDashboard = async (req, res) => {
     const userObjectId = new mongoose.Types.ObjectId(userId);
 
     const now = new Date();
-
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
 
@@ -17,7 +18,7 @@ exports.getDashboard = async (req, res) => {
 
     // بداية الأسبوع - الاثنين
     const startOfWeek = new Date(now);
-    const day = startOfWeek.getDay(); // الأحد = 0، الاثنين = 1
+    const day = startOfWeek.getDay();
     const diffToMonday = day === 0 ? 6 : day - 1;
     startOfWeek.setDate(startOfWeek.getDate() - diffToMonday);
     startOfWeek.setHours(0, 0, 0, 0);
@@ -25,19 +26,10 @@ exports.getDashboard = async (req, res) => {
     const attentionFilter = {
       userId: userObjectId,
       $or: [
-        {
-          status: 'new',
-          createdAt: { $lte: oneDayAgo }
-        },
-        {
-          status: 'confirmed',
-          createdAt: { $lte: oneDayAgo }
-        },
-        {
-          status: 'shipped',
-          createdAt: { $lte: twoDaysAgo }
-        }
-      ]
+        { status: 'new', createdAt: { $lte: oneDayAgo } },
+        { status: 'confirmed', createdAt: { $lte: oneDayAgo } },
+        { status: 'shipped', createdAt: { $lte: twoDaysAgo } },
+      ],
     };
 
     const [
@@ -53,7 +45,10 @@ exports.getDashboard = async (req, res) => {
       weekOrders,
       weekRevenueResult,
       attentionCount,
-      attentionOrdersRaw
+      attentionOrdersRaw,
+      topWilayasRaw,
+      products,
+      deliveredOrders,
     ] = await Promise.all([
       Order.countDocuments({ userId }),
       Order.countDocuments({ userId, status: 'new' }),
@@ -62,72 +57,46 @@ exports.getDashboard = async (req, res) => {
       Order.countDocuments({ userId, status: 'delivered' }),
       Order.countDocuments({ userId, status: 'returned' }),
 
-      // حساب إجمالي المبيعات من سعر المنتج فقط للطلبات المسلّمة
+      // إجمالي المبيعات من الطلبات المسلّمة
       Order.aggregate([
-        {
-          $match: {
-            userId: userObjectId,
-            status: 'delivered'
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            total: {
-              $sum: { $ifNull: ['$price', 0] }
-            }
-          }
-        }
+        { $match: { userId: userObjectId, status: 'delivered' } },
+        { $group: { _id: null, total: { $sum: { $ifNull: ['$price', 0] } } } },
       ]),
 
       // طلبات اليوم
       Order.countDocuments({
         userId,
-        createdAt: { $gte: startOfToday }
+        createdAt: { $gte: startOfToday },
       }),
 
-      // مبيعات اليوم من الطلبات المسلّمة فقط
+      // مبيعات اليوم من المسلّمة
       Order.aggregate([
         {
           $match: {
             userId: userObjectId,
             status: 'delivered',
-            createdAt: { $gte: startOfToday }
-          }
+            createdAt: { $gte: startOfToday },
+          },
         },
-        {
-          $group: {
-            _id: null,
-            total: {
-              $sum: { $ifNull: ['$price', 0] }
-            }
-          }
-        }
+        { $group: { _id: null, total: { $sum: { $ifNull: ['$price', 0] } } } },
       ]),
 
       // طلبات هذا الأسبوع
       Order.countDocuments({
         userId,
-        createdAt: { $gte: startOfWeek }
+        createdAt: { $gte: startOfWeek },
       }),
 
-      // مبيعات هذا الأسبوع من الطلبات المسلّمة فقط
+      // مبيعات هذا الأسبوع من المسلّمة
       Order.aggregate([
         {
           $match: {
             userId: userObjectId,
             status: 'delivered',
-            createdAt: { $gte: startOfWeek }
-          }
+            createdAt: { $gte: startOfWeek },
+          },
         },
-        {
-          $group: {
-            _id: null,
-            total: {
-              $sum: { $ifNull: ['$price', 0] }
-            }
-          }
-        }
+        { $group: { _id: null, total: { $sum: { $ifNull: ['$price', 0] } } } },
       ]),
 
       Order.countDocuments(attentionFilter),
@@ -135,26 +104,31 @@ exports.getDashboard = async (req, res) => {
       Order.find(attentionFilter)
         .sort({ createdAt: 1 })
         .limit(5)
-        .select('customerName phone wilaya product status createdAt')
+        .select('customerName phone wilaya product status createdAt'),
+
+      // أفضل 4 ولايات طلباً
+      Order.aggregate([
+        { $match: { userId: userObjectId } },
+        { $group: { _id: '$wilaya', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 4 },
+      ]),
+
+      // جلب تكاليف المنتجات لحساب صافي الربح
+      Product.find({ userId }).select('name costPrice').lean(),
+
+      // جلب أسماء وأسعار الطلبات المسلّمة لحساب ربحها
+      Order.find({ userId, status: 'delivered' }).select('product price').lean(),
     ]);
 
     const getReason = (order) => {
-      if (order.status === 'new') {
-        return 'طلب جديد لم يتم تأكيده منذ أكثر من 24 ساعة';
-      }
-
-      if (order.status === 'confirmed') {
-        return 'طلب مؤكد لم ينتقل للتوصيل منذ أكثر من 24 ساعة';
-      }
-
-      if (order.status === 'shipped') {
-        return 'طلب قيد التوصيل منذ أكثر من يومين';
-      }
-
+      if (order.status === 'new') return 'طلب جديد لم يتم تأكيده منذ أكثر من 24 ساعة';
+      if (order.status === 'confirmed') return 'طلب مؤكد لم ينتقل للتوصيل منذ أكثر من 24 ساعة';
+      if (order.status === 'shipped') return 'طلب قيد التوصيل منذ أكثر من يومين';
       return 'طلب يحتاج متابعة';
     };
 
-    const attentionOrders = attentionOrdersRaw.map(order => ({
+    const attentionOrders = attentionOrdersRaw.map((order) => ({
       _id: order._id,
       customerName: order.customerName,
       phone: order.phone,
@@ -162,16 +136,47 @@ exports.getDashboard = async (req, res) => {
       product: order.product,
       status: order.status,
       createdAt: order.createdAt,
-      reason: getReason(order)
+      reason: getReason(order),
     }));
 
     const revenue = revenueResult[0]?.total || 0;
     const todayRevenue = todayRevenueResult[0]?.total || 0;
     const weekRevenue = weekRevenueResult[0]?.total || 0;
 
-    const returnRate = total > 0
-      ? Number(((returned / total) * 100).toFixed(1))
+    // نسبة النجاح (نسبة التسليم من الطلبات التي حُسم مصيرها)
+    const finalizedCount = delivered + returned;
+    const deliveryRate = finalizedCount > 0
+      ? Number(((delivered / finalizedCount) * 100).toFixed(1))
       : 0;
+
+    const returnRate = finalizedCount > 0
+      ? Number(((returned / finalizedCount) * 100).toFixed(1))
+      : 0;
+
+    // حساب صافي الأرباح التقديرية
+    const productCostMap = {};
+    products.forEach((p) => {
+      if (p.costPrice > 0 && p.name) {
+        productCostMap[p.name.trim().toLowerCase()] = p.costPrice;
+      }
+    });
+
+    let totalDeliveredCost = 0;
+    deliveredOrders.forEach((o) => {
+      const orderProd = (o.product || '').toLowerCase();
+      const matchedKey = Object.keys(productCostMap).find((k) => orderProd.includes(k));
+      if (matchedKey) {
+        totalDeliveredCost += productCostMap[matchedKey];
+      }
+    });
+
+    const netProfit = Math.max(0, revenue - totalDeliveredCost);
+
+    const topWilayas = topWilayasRaw.map((w) => ({
+      wilaya: w._id || 'غير محدد',
+      count: w.count,
+      percentage: total > 0 ? Math.round((w.count / total) * 100) : 0,
+    }));
 
     res.status(200).json({
       total,
@@ -181,21 +186,22 @@ exports.getDashboard = async (req, res) => {
       delivered,
       returned,
       revenue,
-
+      netProfit,
+      deliveryRate,
+      returnRate,
       todayOrders,
       todayRevenue,
       weekOrders,
       weekRevenue,
-      returnRate,
-
       attentionCount,
-      attentionOrders
+      attentionOrders,
+      topWilayas,
     });
-
   } catch (error) {
+    console.error('Dashboard Controller Error:', error);
     res.status(500).json({
       message: 'خطأ في السيرفر',
-      error: error.message
+      error: error.message,
     });
   }
 };
