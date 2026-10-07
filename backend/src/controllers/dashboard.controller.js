@@ -23,6 +23,11 @@ exports.getDashboard = async (req, res) => {
     startOfWeek.setDate(startOfWeek.getDate() - diffToMonday);
     startOfWeek.setHours(0, 0, 0, 0);
 
+    // نطاق آخر 7 أيام
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
     const attentionFilter = {
       userId: userObjectId,
       $or: [
@@ -47,6 +52,8 @@ exports.getDashboard = async (req, res) => {
       attentionCount,
       attentionOrdersRaw,
       topWilayasRaw,
+      topProductsRaw,
+      recent7DaysRaw,
       products,
       deliveredOrders,
     ] = await Promise.all([
@@ -64,10 +71,7 @@ exports.getDashboard = async (req, res) => {
       ]),
 
       // طلبات اليوم
-      Order.countDocuments({
-        userId,
-        createdAt: { $gte: startOfToday },
-      }),
+      Order.countDocuments({ userId, createdAt: { $gte: startOfToday } }),
 
       // مبيعات اليوم من المسلّمة
       Order.aggregate([
@@ -82,10 +86,7 @@ exports.getDashboard = async (req, res) => {
       ]),
 
       // طلبات هذا الأسبوع
-      Order.countDocuments({
-        userId,
-        createdAt: { $gte: startOfWeek },
-      }),
+      Order.countDocuments({ userId, createdAt: { $gte: startOfWeek } }),
 
       // مبيعات هذا الأسبوع من المسلّمة
       Order.aggregate([
@@ -114,10 +115,39 @@ exports.getDashboard = async (req, res) => {
         { $limit: 4 },
       ]),
 
+      // أفضل 4 منتجات طلباً ومبيعاً
+      Order.aggregate([
+        { $match: { userId: userObjectId } },
+        {
+          $group: {
+            _id: '$product',
+            count: { $sum: 1 },
+            totalAmount: { $sum: '$price' },
+          },
+        },
+        { $sort: { count: -1 } },
+        { $limit: 4 },
+      ]),
+
+      // تدفق الأيام السبعة السابقة
+      Order.aggregate([
+        { $match: { userId: userObjectId, createdAt: { $gte: sevenDaysAgo } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            ordersCount: { $sum: 1 },
+            revenue: {
+              $sum: { $cond: [{ $eq: ['$status', 'delivered'] }, '$price', 0] },
+            },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+
       // جلب تكاليف المنتجات لحساب صافي الربح
       Product.find({ userId }).select('name costPrice').lean(),
 
-      // جلب أسماء وأسعار الطلبات المسلّمة لحساب ربحها
+      // جلب أسماء وأسعار الطلبات المسلّمة
       Order.find({ userId, status: 'delivered' }).select('product price').lean(),
     ]);
 
@@ -143,7 +173,6 @@ exports.getDashboard = async (req, res) => {
     const todayRevenue = todayRevenueResult[0]?.total || 0;
     const weekRevenue = weekRevenueResult[0]?.total || 0;
 
-    // نسبة النجاح (نسبة التسليم من الطلبات التي حُسم مصيرها)
     const finalizedCount = delivered + returned;
     const deliveryRate = finalizedCount > 0
       ? Number(((delivered / finalizedCount) * 100).toFixed(1))
@@ -178,6 +207,33 @@ exports.getDashboard = async (req, res) => {
       percentage: total > 0 ? Math.round((w.count / total) * 100) : 0,
     }));
 
+    const topProducts = topProductsRaw.map((p) => ({
+      name: p._id || 'منتج غير محدد',
+      count: p.count,
+      totalAmount: p.totalAmount,
+    }));
+
+    // معالجة بيانات الأيام السبعة لتشمل الأيام الصفرية دون انقطاع زمني
+    const daysMap = {};
+    recent7DaysRaw.forEach((d) => {
+      daysMap[d._id] = d;
+    });
+
+    const dayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dateKey = d.toISOString().slice(0, 10);
+      const found = daysMap[dateKey];
+      last7Days.push({
+        date: dateKey,
+        dayName: dayNames[d.getDay()],
+        ordersCount: found ? found.ordersCount : 0,
+        revenue: found ? found.revenue : 0,
+      });
+    }
+
     res.status(200).json({
       total,
       newOrders,
@@ -196,6 +252,8 @@ exports.getDashboard = async (req, res) => {
       attentionCount,
       attentionOrders,
       topWilayas,
+      topProducts,
+      last7Days,
     });
   } catch (error) {
     console.error('Dashboard Controller Error:', error);
