@@ -1,3 +1,4 @@
+// frontend/src/pages/Login.jsx
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -9,6 +10,10 @@ import {
   FiMessageCircle,
   FiBarChart2,
   FiAlertTriangle,
+  FiTruck,
+  FiArrowLeft,
+  FiLock,
+  FiMail,
 } from 'react-icons/fi'
 
 const getLoginErrorMessage = (err) => {
@@ -26,18 +31,9 @@ const getLoginErrorMessage = (err) => {
     }
   }
 
-  if (err.response.status >= 500) {
-    return {
-      title: 'تعذر تسجيل الدخول',
-      description: 'الخدمة غير متاحة مؤقتًا، حاول مرة أخرى بعد قليل.',
-    }
-  }
-
   return {
     title: 'تعذر تسجيل الدخول',
-    description:
-      err.response?.data?.message ||
-      'لم نتمكن من تسجيل الدخول، حاول مرة أخرى بعد لحظات.',
+    description: err.response?.data?.message || 'لم نتمكن من تسجيل الدخول، حاول مرة أخرى.',
   }
 }
 
@@ -50,9 +46,7 @@ export default function Login() {
   const { login } = useAuth()
 
   const clearError = () => {
-    if (error) {
-      setError(null)
-    }
+    if (error) setError(null)
   }
 
   const handleChange = (e) => {
@@ -60,50 +54,25 @@ export default function Login() {
     clearError()
   }
 
-  const fillDemoAccount = () => {
-    setForm({
-      email: 'demo@talabiyat.com',
-      password: '12345678',
-    })
-
-    setError(null)
-  }
-
   const validateForm = () => {
     if (!form.email.trim()) {
       return {
         title: 'البريد الإلكتروني مطلوب',
-        description: 'يرجى إدخال البريد الإلكتروني قبل تسجيل الدخول.',
+        description: 'يرجى إدخال البريد الإلكتروني قبل المتابعة.',
       }
     }
-
-    if (!form.email.includes('@')) {
-      return {
-        title: 'البريد الإلكتروني غير صحيح',
-        description: 'يرجى إدخال بريد إلكتروني صحيح مثل example@email.com.',
-      }
-    }
-
     if (!form.password.trim()) {
       return {
         title: 'كلمة المرور مطلوبة',
         description: 'يرجى إدخال كلمة المرور الخاصة بحسابك.',
       }
     }
-
-    if (form.password.length < 6) {
-      return {
-        title: 'كلمة المرور قصيرة',
-        description: 'كلمة المرور يجب أن تحتوي على 6 أحرف على الأقل.',
-      }
-    }
-
     return null
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e?.preventDefault()
     const validationError = validateForm()
-
     if (validationError) {
       setError(validationError)
       return
@@ -129,200 +98,156 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex bg-slate-50" dir="rtl">
-      {/* يسار — خلفية ملونة للشاشات الكبيرة */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-950 via-blue-900 to-blue-700 flex-col items-center justify-center p-12 text-white">
-        <img
-          src="/logo.png"
-          alt=""
-          className="w-24 h-24 mb-6"
-          loading="eager"
-          fetchPriority="high"
-        />
-
-        <h2 className="text-5xl font-black mb-4 tracking-tight text-white">
-          طلبيات
-        </h2>
-
-        <p className="text-blue-100 text-lg font-medium text-center leading-8">
-          نظّم طلبياتك وراسل زبائنك<br />بسهولة وسرعة
-        </p>
-
-        <div className="mt-12 flex flex-col gap-4 w-full max-w-xs">
-          <div className="group flex items-center gap-3 bg-white/10 border border-white/10 rounded-2xl px-5 py-4 shadow-sm backdrop-blur-sm transition-all duration-300 hover:bg-white/15 hover:border-white/20 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-950/20">
-            <FiPackage className="text-2xl flex-shrink-0 text-blue-100 transition-transform duration-300 group-hover:scale-110" />
-            <span className="text-sm font-semibold text-blue-50">
-              تتبع كل طلب بسهولة
-            </span>
+    <div className="min-h-screen flex bg-slate-50 selection:bg-blue-600 selection:text-white" dir="rtl">
+      {/* الجانب الأيمن / العلوي للشاشات الكبيرة — عرض القيمة المضافة والهوية */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-950 via-blue-950 to-blue-900 flex-col justify-between p-12 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-blue-500/10 blur-[100px]" />
+        
+        {/* الشعار بالأعلى */}
+        <div className="flex items-center gap-3">
+          <div className="h-11 w-11 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+            <FiPackage size={22} />
           </div>
-
-          <div className="group flex items-center gap-3 bg-white/10 border border-white/10 rounded-2xl px-5 py-4 shadow-sm backdrop-blur-sm transition-all duration-300 hover:bg-white/15 hover:border-white/20 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-950/20">
-            <FiMessageCircle className="text-2xl flex-shrink-0 text-blue-100 transition-transform duration-300 group-hover:scale-110" />
-            <span className="text-sm font-semibold text-blue-50">
-              راسل زبائنك عبر واتساب
-            </span>
-          </div>
-
-          <div className="group flex items-center gap-3 bg-white/10 border border-white/10 rounded-2xl px-5 py-4 shadow-sm backdrop-blur-sm transition-all duration-300 hover:bg-white/15 hover:border-white/20 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-950/20">
-            <FiBarChart2 className="text-2xl flex-shrink-0 text-blue-100 transition-transform duration-300 group-hover:scale-110" />
-            <span className="text-sm font-semibold text-blue-50">
-              إحصائيات يومية واضحة
-            </span>
+          <div>
+            <h1 className="text-2xl font-black tracking-tight text-white">طلبيات</h1>
+            <p className="text-xs font-semibold text-blue-200">إدارة طلبات المتاجر في الجزائر 🇩🇿</p>
           </div>
         </div>
-      </div>
 
-      {/* يمين — فورم تسجيل الدخول */}
-      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center min-h-screen p-6 bg-slate-50">
-        <div className="w-full max-w-md">
-          {/* شعار للموبايل فقط */}
-          <div className="flex flex-col items-center mb-8 lg:hidden">
-            <img
-              src="/logo.png"
-              alt=""
-              className="w-16 h-16 mb-3"
-              loading="eager"
-              fetchPriority="high"
-            />
+        {/* النص الرئيسي والعناصر المضافة */}
+        <div className="max-w-md my-auto py-10 space-y-6">
+          <h2 className="text-4xl font-black leading-tight tracking-tight text-white">
+            تحكّم في كل طرد، وراقب مبيعاتك لحظة بلحظة.
+          </h2>
+          <p className="text-sm font-medium leading-7 text-blue-200">
+            المنصة المصممة خصيصاً للتجارة بالدفع عند الاستلام (COD): كشوفات شركات التوصيل، رسائل واتساب سريعة، وتحليلات أرباح دقيقة.
+          </p>
 
-            <h1 className="text-3xl font-black tracking-tight text-slate-900">
-              طلبيات
-            </h1>
-
-            <p className="text-slate-500 text-sm font-medium mt-1">
-              نظّم طلبياتك بسهولة
-            </p>
-          </div>
-
-          <div className="bg-white rounded-3xl shadow-[0_18px_60px_rgba(15,23,42,0.08)] border border-slate-100 p-8 md:p-9">
-            <h2 className="text-2xl font-black tracking-tight text-slate-900 mb-1">
-              تسجيل الدخول
-            </h2>
-
-            <p className="text-slate-500 text-sm font-medium mb-6">
-              أدخل بياناتك للمتابعة
-            </p>
-
-            {error && (
-              <ErrorBox
-                title={error.title}
-                description={error.description}
-              />
-            )}
-
-            {/* Demo Account */}
-            <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-              <p className="text-sm font-black text-blue-700">
-                جرّب التطبيق بحساب تجريبي
-              </p>
-
-              <div className="mt-3 space-y-1 text-xs font-bold text-blue-600">
-                <p>البريد: demo@talabiyat.com</p>
-                <p>كلمة المرور: 12345678</p>
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-md">
+              <div className="h-9 w-9 rounded-xl bg-blue-500/20 text-blue-300 flex items-center justify-center shrink-0">
+                <FiTruck size={18} />
               </div>
-
-              <button
-                type="button"
-                onClick={fillDemoAccount}
-                className="mt-3 w-full rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]"
-              >
-                ملء بيانات التجربة
-              </button>
+              <span className="text-xs sm:text-sm font-bold text-blue-100">تصدير إكسل فوري لـ Yalidine و ZR Express</span>
             </div>
 
-            <div className="space-y-5">
+            <div className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-md">
+              <div className="h-9 w-9 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0">
+                <FiMessageCircle size={18} />
+              </div>
+              <span className="text-xs sm:text-sm font-bold text-blue-100">تأكيد أوتوماتيكي عبر واتساب لتقليل الرجوع (Retour)</span>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-md">
+              <div className="h-9 w-9 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center shrink-0">
+                <FiBarChart2 size={18} />
+              </div>
+              <span className="text-xs sm:text-sm font-bold text-blue-100">حساب صافي الأرباح بعد خصم أسعار الشحن</span>
+            </div>
+          </div>
+        </div>
+
+        {/* حقوق أسفل العمود */}
+        <p className="text-xs font-semibold text-blue-300/70">
+          © 2026 طلبيات — جميع الحقوق محفوظة
+        </p>
+      </div>
+
+      {/* الجانب الأيسر — استمارة تسجيل الدخول */}
+      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center min-h-screen p-6 bg-slate-50">
+        <div className="w-full max-w-md">
+          {/* الشعار للهواتف فقط */}
+          <div className="flex items-center gap-3 mb-6 lg:hidden justify-center">
+            <div className="h-10 w-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-md">
+              <FiPackage size={20} />
+            </div>
+            <div>
+              <h1 className="text-xl font-black text-slate-900">طلبيات</h1>
+              <p className="text-[11px] font-bold text-slate-400">إدارة طلبات المتاجر</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/50 p-7 sm:p-9">
+            <div className="mb-6">
+              <h2 className="text-2xl font-black tracking-tight text-slate-950">تسجيل الدخول</h2>
+              <p className="text-xs sm:text-sm font-bold text-slate-400 mt-1">مرحباً بعودتك! أدخل بريدك للمتابعة</p>
+            </div>
+
+            {error && (
+              <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 p-3.5 text-right flex items-start gap-2.5">
+                <FiAlertTriangle className="text-red-500 shrink-0 mt-0.5" size={17} />
+                <div>
+                  <p className="text-xs font-black text-red-700">{error.title}</p>
+                  <p className="text-[11px] font-bold text-red-500 mt-0.5">{error.description}</p>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">
+                <label className="block text-xs font-black text-slate-700 mb-1.5">
                   البريد الإلكتروني
                 </label>
-
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
-                  placeholder="example@email.com"
-                />
+                <div className="relative">
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 pr-10 text-right text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    placeholder="example@mail.com"
+                  />
+                  <FiMail className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">
+                <label className="block text-xs font-black text-slate-700 mb-1.5">
                   كلمة المرور
                 </label>
-
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     name="password"
                     value={form.password}
                     onChange={handleChange}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pl-11 text-right text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 pr-10 pl-10 text-right text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
                     placeholder="••••••••"
                   />
-
+                  <FiLock className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition"
-                    aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
                   >
-                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                   </button>
                 </div>
               </div>
 
               <button
-                onClick={handleSubmit}
+                type="submit"
                 disabled={loading}
-                className="w-full rounded-2xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-[0.99] text-white font-extrabold py-3.5 transition duration-200 text-sm shadow-lg shadow-blue-600/20 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-black py-3.5 text-xs sm:text-sm shadow-lg shadow-blue-600/25 transition disabled:opacity-50"
               >
-                {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
+                <span>{loading ? 'جاري التحقق والدخول...' : 'تسجيل الدخول'}</span>
+                <FiArrowLeft size={16} />
               </button>
+            </form>
+
+            <div className="flex items-center gap-3 my-5">
+              <div className="flex-1 h-px bg-slate-100" />
+              <span className="text-[11px] font-bold text-slate-400">أو</span>
+              <div className="flex-1 h-px bg-slate-100" />
             </div>
 
-            <div className="flex items-center gap-3 my-6">
-              <div className="flex-1 h-px bg-slate-100"></div>
-              <span className="text-xs font-bold text-slate-400">أو</span>
-              <div className="flex-1 h-px bg-slate-100"></div>
-            </div>
-
-            <p className="text-center text-sm font-medium text-slate-500">
-              مستخدم جديد؟{' '}
-              <Link
-                to="/register"
-                className="text-blue-600 font-extrabold hover:text-blue-700 transition"
-              >
-                أنشئ حسابك الآن
+            <p className="text-center text-xs font-bold text-slate-500">
+              ليس لديك حساب بعد؟{' '}
+              <Link to="/register" className="text-blue-600 font-black hover:underline">
+                أنشئ حسابك الآن مجاناً
               </Link>
             </p>
           </div>
-
-          <p className="text-center text-xs font-medium text-slate-400 mt-6">
-            © 2025 طلبيات — جميع الحقوق محفوظة
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ErrorBox({ title, description }) {
-  return (
-    <div className="mb-4 rounded-3xl border border-red-100 bg-red-50 p-4 text-right">
-      <div className="flex items-start gap-3">
-        <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-red-500">
-          <FiAlertTriangle size={20} />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-black text-red-700">
-            {title}
-          </p>
-
-          <p className="mt-1 text-xs font-bold leading-6 text-red-500">
-            {description}
-          </p>
         </div>
       </div>
     </div>
