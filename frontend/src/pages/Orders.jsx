@@ -1,6 +1,6 @@
 // frontend/src/pages/Orders.jsx
 import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import api from '../services/api'
 import { OrderCardSkeleton } from '../components/SkeletonCards'
@@ -98,6 +98,9 @@ function OrdersListSkeleton() {
 }
 
 export default function Orders() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const urlStatus = searchParams.get('status')
+
   const [orders, setOrders] = useState([])
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
@@ -125,13 +128,23 @@ export default function Orders() {
   // Collapsible Filters
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
 
-  const [filter, setFilter] = useState('all')
+  // قراءة الفلتر من الرابط تلقائياً
+  const [filter, setFilter] = useState(urlStatus || 'all')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [wilayaFilter, setWilayaFilter] = useState('all')
   const [dateFilter, setDateFilter] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+
+  // مزامنة حالة الفلتر إذا تغير الرابط من الخارج (مثل العودة من الـ Dashboard)
+  useEffect(() => {
+    if (urlStatus) {
+      setFilter(urlStatus)
+    } else {
+      setFilter('all')
+    }
+  }, [urlStatus])
 
   const scrollToTop = () => {
     setTimeout(() => {
@@ -192,6 +205,17 @@ export default function Orders() {
   useEffect(() => {
     loadOrders()
   }, [filter, debouncedSearch, wilayaFilter, dateFilter, dateFrom, dateTo, page, limit, retryKey])
+
+  // تحديث الرابط عند تغيير فلتر الحالة يدوياً من الأزرار
+  const handleFilterChange = (statusKey) => {
+    setFilter(statusKey)
+    if (statusKey === 'all') {
+      searchParams.delete('status')
+      setSearchParams(searchParams)
+    } else {
+      setSearchParams({ status: statusKey })
+    }
+  }
 
   const toggleSelectOrder = (id, e) => {
     e.stopPropagation()
@@ -354,6 +378,8 @@ export default function Orders() {
     setSearch('')
     setDebouncedSearch('')
     setFilter('all')
+    searchParams.delete('status')
+    setSearchParams(searchParams)
     setWilayaFilter('all')
     setDateFilter('all')
     setDateFrom('')
@@ -387,7 +413,7 @@ export default function Orders() {
             )}
           </div>
 
-          {/* زر طلب جديد على الشاشات الكبيرة والصغيرة */}
+          {/* زر طلب جديد */}
           <div className="flex items-center gap-2">
             <Link
               to="/orders/new"
@@ -399,7 +425,7 @@ export default function Orders() {
           </div>
         </div>
 
-        {/* السطر الثاني: أزرار الإكسل (شبكة ثنائية متساوية على الهاتف، مصفوفة جانبية على الديسكتوب) */}
+        {/* السطر الثاني: أزرار الإكسل */}
         <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-start gap-2 pt-1">
           {/* زر استيراد إكسل الجماعي */}
           <button
@@ -588,7 +614,7 @@ export default function Orders() {
               <button
                 key={f.key}
                 type="button"
-                onClick={() => setFilter(f.key)}
+                onClick={() => handleFilterChange(f.key)}
                 className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-black transition duration-200
                   ${
                     filter === f.key

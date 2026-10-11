@@ -81,6 +81,15 @@ export default function Dashboard() {
     return `منذ ${diffHours} ساعة`
   }
 
+  // دالة التوجيه مع تمرير الفلتر المطلوب لصفحة الطلبات
+  const handleFilterNavigate = (statusKey) => {
+    if (!statusKey || statusKey === 'all') {
+      navigate('/orders')
+    } else {
+      navigate(`/orders?status=${statusKey}`)
+    }
+  }
+
   // بطاقات الحالات مع مفاتيح الفلترة الخاصة بها
   const orderStatuses = stats ? [
     { key: 'all', label: 'الكل', value: stats.total, color: 'text-slate-900 bg-slate-100 hover:bg-slate-200 border-slate-200', icon: FiPackage },
@@ -245,7 +254,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* الرسم البياني التفاعلي لآخر 7 أيام (Interactive Activity Chart) */}
+          {/* الرسم البياني التفاعلي لآخر 7 أيام */}
           <div className="rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -305,7 +314,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* شريط توزيع الحالات التفاعلي (الانتقال الفوري بضغطة زر) */}
+          {/* شريط توزيع الحالات التفاعلي (الانتقال الفوري مع الفلترة التلقائية) */}
           <div>
             <div className="flex items-center justify-between mb-2.5">
               <h3 className="text-xs font-black text-slate-400">توزيع حالات الطلبات (انقر للفلترة والانتقال المباشر)</h3>
@@ -318,7 +327,7 @@ export default function Dashboard() {
                   <button
                     key={i}
                     type="button"
-                    onClick={() => navigate('/orders')}
+                    onClick={() => handleFilterNavigate(st.key)}
                     className={`rounded-2xl border p-3 shadow-sm flex flex-col items-center text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-95 ${st.color}`}
                   >
                     <div className="h-8 w-8 rounded-xl flex items-center justify-center mb-1.5">
