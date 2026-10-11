@@ -133,16 +133,19 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="space-y-6 pb-24">
-          {/* Header ترحيبي مع أزرار اختصار سريعة */}
+          {/* Header ترويسة لوحة التحكم الرسمية */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                  مرحباً {user?.name || ''} 👋
+                  لوحة التحكم
                 </h2>
-                <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" title="متصل الآن" />
+                <span className="rounded-xl bg-slate-100 border border-slate-200/80 px-2.5 py-0.5 text-xs font-bold text-slate-600">
+                  {user?.businessName || user?.name || 'المتجر'}
+                </span>
+                <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" title="متصل الآن" />
               </div>
-              <p className="text-xs sm:text-sm font-semibold text-slate-400 mt-0.5">
+              <p className="text-xs sm:text-sm font-semibold text-slate-400 mt-1">
                 متابعة فورية للمبيعات، الأرباح، وتدفق الطلبيات
               </p>
             </div>
