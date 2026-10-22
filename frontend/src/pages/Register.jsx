@@ -148,24 +148,26 @@ export default function Register() {
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-950 via-blue-950 to-blue-900 flex-col justify-between p-12 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-blue-500/10 blur-[100px]" />
 
-        {/* الشعار */}
-        <div className="flex items-center gap-3">
-          <img
-            src="/logo.png"
-            alt="شعار طلبيات"
-            className="h-12 w-12 object-contain rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm border border-white/15 shadow-lg shadow-blue-950/40"
-            loading="eager"
-          />
+        {/* الشعار الحقيقي في إطار أبيض ناصع */}
+        <div className="flex items-center gap-3.5">
+          <div className="h-12 w-12 rounded-2xl bg-white p-2 flex items-center justify-center shadow-lg shadow-black/25 ring-1 ring-white/20 shrink-0">
+            <img
+              src="/logo.png"
+              alt="شعار طلبيات"
+              className="h-full w-full object-contain"
+              loading="eager"
+            />
+          </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-black tracking-tight text-white">طلبيات</h1>
               <span className="rounded-md bg-blue-500/20 border border-blue-400/30 px-1.5 py-0.5 text-[10px] font-black text-blue-200">DZ</span>
             </div>
-            <p className="text-xs font-semibold text-blue-200">إدارة طلبات المتاجر في الجزائر 🇩🇿</p>
+            <p className="text-xs font-semibold text-blue-200 mt-0.5">إدارة طلبات المتاجر في الجزائر 🇩🇿</p>
           </div>
         </div>
 
-        {/* مميزات الانضمام */}
+        {/* مميزات الانضمام مع المحاذاة لليمين */}
         <div className="max-w-md my-auto py-10 space-y-6">
           <h2 className="text-4xl font-black leading-tight tracking-tight text-white">
             ابدأ تنظيم متجرك مجاناً في دقيقة واحدة.
@@ -175,25 +177,31 @@ export default function Register() {
           </p>
 
           <div className="space-y-3 pt-2">
-            <div className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-md">
+            <div className="flex items-center gap-3.5 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-md">
               <div className="h-9 w-9 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0">
                 <FiCheckCircle size={18} />
               </div>
-              <span className="text-xs sm:text-sm font-bold text-blue-100">تجربة مجانية كاملة الميزات لمدة 30 يوم</span>
+              <span className="text-xs sm:text-sm font-bold text-blue-100 text-right">
+                تجربة مجانية كاملة الميزات لمدة 30 يوم
+              </span>
             </div>
 
-            <div className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-md">
+            <div className="flex items-center gap-3.5 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-md">
               <div className="h-9 w-9 rounded-xl bg-blue-500/20 text-blue-300 flex items-center justify-center shrink-0">
                 <FiClock size={18} />
               </div>
-              <span className="text-xs sm:text-sm font-bold text-blue-100">تفعيل فوري برمز تأكيد OTP على البريد</span>
+              <span className="text-xs sm:text-sm font-bold text-blue-100 text-right">
+                تفعيل فوري برمز تأكيد OTP على البريد
+              </span>
             </div>
 
-            <div className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-md">
+            <div className="flex items-center gap-3.5 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-md">
               <div className="h-9 w-9 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0">
                 <FiShield size={18} />
               </div>
-              <span className="text-xs sm:text-sm font-bold text-blue-100">بيانات متجرك وزبائنك مشفرة ومحمية بالكامل</span>
+              <span className="text-xs sm:text-sm font-bold text-blue-100 text-right">
+                بيانات متجرك وزبائنك مشفرة ومحمية بالكامل
+              </span>
             </div>
           </div>
         </div>
@@ -208,12 +216,14 @@ export default function Register() {
         <div className="w-full max-w-md">
           {/* الشعار للهواتف */}
           <div className="flex items-center gap-3 mb-6 lg:hidden justify-center">
-            <img
-              src="/logo.png"
-              alt="طلبيات"
-              className="h-11 w-11 object-contain"
-              loading="eager"
-            />
+            <div className="h-11 w-11 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-md border border-slate-100">
+              <img
+                src="/logo.png"
+                alt="طلبيات"
+                className="h-full w-full object-contain"
+                loading="eager"
+              />
+            </div>
             <div>
               <h1 className="text-xl font-black text-slate-900">طلبيات</h1>
               <p className="text-[11px] font-bold text-slate-400">إنشاء حساب جديد</p>
